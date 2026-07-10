@@ -1,8 +1,10 @@
 <div align="center">
 
-# 범용 LLM · 회사용 AI
+# LLM-from-scratch
 
 **토크나이저부터 학습 · 추론 · 피드백 루프까지, 외부 LLM 없이 직접 구현**
+
+GPT-2급 Decoder-only Transformer · 범용 LLM · 회사용 AI 실험
 
 <br/>
 
@@ -15,6 +17,8 @@
 <br/>
 
 [한국어](README.md) · [English](README.en.md) · [日本語](README.ja.md)
+
+**Repo:** [github.com/DW-dev-UE/LLM-from-scratch](https://github.com/DW-dev-UE/LLM-from-scratch)
 
 </div>
 

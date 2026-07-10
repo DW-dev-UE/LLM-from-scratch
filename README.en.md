@@ -1,8 +1,10 @@
 <div align="center">
 
-# General-Purpose LLM · In-House AI
+# LLM-from-scratch
 
 **Tokenizer → train → infer → feedback loop, built from scratch (no external LLM weights)**
+
+GPT-2-class decoder-only Transformer · general-purpose and in-house AI experiments
 
 <br/>
 
@@ -15,6 +17,8 @@
 <br/>
 
 [한국어](README.md) · [English](README.en.md) · [日本語](README.ja.md)
+
+**Repo:** [github.com/DW-dev-UE/LLM-from-scratch](https://github.com/DW-dev-UE/LLM-from-scratch)
 
 </div>
 

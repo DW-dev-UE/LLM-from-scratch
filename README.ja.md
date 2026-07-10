@@ -1,8 +1,10 @@
 <div align="center">
 
-# 汎用 LLM · 社内向け AI
+# LLM-from-scratch
 
 **トークナイザーから学習 · 推論 · フィードバックまで、外部 LLM なしで自作**
+
+GPT-2 級 Decoder-only Transformer · 汎用 LLM · 社内向け AI 実験
 
 <br/>
 
@@ -15,6 +17,8 @@
 <br/>
 
 [한국어](README.md) · [English](README.en.md) · [日本語](README.ja.md)
+
+**Repo:** [github.com/DW-dev-UE/LLM-from-scratch](https://github.com/DW-dev-UE/LLM-from-scratch)
 
 </div>
 

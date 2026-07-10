@@ -1,194 +1,468 @@
 <div align="center">
 
-# 벤치마크 리포트 — Base V1
+# Benchmark Report · Base V1
 
-<img src="https://img.shields.io/badge/checkpoint-sft__base__v1-blue?style=flat" alt="sft_base_v1" />
-<img src="https://img.shields.io/badge/params-~327M-informational?style=flat" alt="params" />
-<img src="https://img.shields.io/badge/status-early--stage-orange?style=flat" alt="early-stage" />
+**학습은 어떻게 했고, 데이터는 뭘 썼으며, 질문에 뭐라고 답했는가**
 
-**[한국어](BENCHMARK-v1.md)** &nbsp;·&nbsp; [English](BENCHMARK-v1.en.md) &nbsp;·&nbsp; [日本語](BENCHMARK-v1.ja.md)
+<br/>
 
-[← README.md](README.md) &nbsp;|&nbsp; 원본 JSON: [`llm/ckpt/benchmark_sft_base_v1.json`](llm/ckpt/benchmark_sft_base_v1.json) · [`benchmark_pretrain_base_v1.json`](llm/ckpt/benchmark_pretrain_base_v1.json)
+![ckpt](https://img.shields.io/badge/sft__base__v1-326.7M-3b82f6?style=flat-square)
+![pretrain](https://img.shields.io/badge/pretrain-18k%20steps-22c55e?style=flat-square)
+![sft](https://img.shields.io/badge/SFT-5k%20steps-22c55e?style=flat-square)
+![status](https://img.shields.io/badge/status-early%20stage-f59e0b?style=flat-square)
+
+<br/>
+
+[한국어](BENCHMARK-v1.md) · [English](BENCHMARK-v1.en.md) · [日本語](BENCHMARK-v1.ja.md)
+
+[← README](README.md)
 
 </div>
 
 ---
 
-> **한 줄 요약**  
-> `pretrain_base_v1`은 채팅 형식에 전혀 반응하지 않는다(0/28).  
-> `sft_base_v1`(SFT 5,000 steps)은 **지시 따르기를 시도**하기 시작했지만, 정답률은 아직 낮다.  
-> **THINKING 모드는 전 문항 답변 공란(0/14)** — 당분간 `--no-thinking` 사용을 권장한다.
+### 먼저 한 줄로
+
+| | 결과 |
+|:--|:-----|
+| **Pretrain only** | 채팅 프롬프트에 거의 반응 못 함 (28문항 0점 수준) |
+| **SFT 이후** | 지시 형식은 따라 하려 함. 내용은 자주 틀림 |
+| **THINKING 모드** | 답변이 비는 버그 (14문항 중 답 0개) → 일반 채팅 모드로 평가 |
+
+아직 실사용 단계는 아닙니다.  
+다만 **파이프라인이 실제로 돌아가는지**, SFT가 무엇을 바꾸는지 보여 주는 첫 스냅샷입니다.
+
+---
 
 ## 목차
 
-1. [측정 조건](#1-측정-조건)
-2. [체크포인트](#2-체크포인트)
-3. [핵심 결과 요약](#3-핵심-결과-요약)
-4. [Pretrain vs SFT](#4-pretrain-vs-sft)
-5. [카테고리별 상세](#5-카테고리별-상세)
-6. [코딩 벤치마크](#6-코딩-벤치마크)
-7. [해석과 다음 단계](#7-해석과-다음-단계)
-8. [원본 데이터](#8-원본-데이터)
+1. [학습 과정](#1-학습-과정)  
+2. [데이터셋](#2-데이터셋)  
+3. [어떻게 채점했나](#3-어떻게-채점했나)  
+4. [점수 요약](#4-점수-요약)  
+5. [Pretrain 과 SFT 비교](#5-pretrain-과-sft-비교)  
+6. [질문과 답변](#6-질문과-답변)  
+7. [코딩 문항](#7-코딩-문항)  
+8. [느낀 점 · 다음에 할 일](#8-느낀-점--다음에-할-일)
 
 ---
 
-## 1. 측정 조건
+## 1. 학습 과정
+
+### 모델 한 장 요약
+
+| 항목 | 값 |
+|:-----|:---|
+| 계열 | Decoder-only Transformer (LLaMA 스타일 구성) |
+| 파라미터 | 약 **326.7M** (`base` 프리셋) |
+| 깊이 · 폭 | 24 layer · d_model 1024 |
+| Attention | GQA (Q 16 · KV 4) + RoPE |
+| FFN | SwiGLU |
+| 정규화 | RMSNorm (Pre-Norm) |
+| 기타 | weight tying, bias 없음 |
+
+```text
+입력 토큰
+   │
+임베딩 ──────────────────────────────┐
+   │                                 │ (weight tying)
+[ Block × 24 ]                       │
+  RMSNorm → Attention → +            │
+  RMSNorm → SwiGLU    → +            │
+   │                                 │
+RMSNorm                              │
+   │                                 │
+LM Head ◄────────────────────────────┘
+   │
+다음 토큰 확률
+```
+
+### 학습 순서
+
+```text
+  ① BPE 토크나이저 (vocab 64k)
+           │
+           ▼
+  ② Pretrain · 18,000 step · lr 6e-4
+           │
+           ▼  pretrain_base_v1
+  ③ SFT · 5,000 step · lr 3e-5
+           │
+           ▼  sft_base_v1
+  ④ 벤치마크 (이 문서)
+```
+
+| 단계 | 체크포인트 | steps | 시작점 | 데이터 지문 |
+|:-----|:-----------|------:|:-------|:------------|
+| Pretrain | `pretrain_base_v1` | 18,000 | 처음부터 | `train.bin` · `53f815d47abc4887` |
+| SFT | `sft_base_v1` | 5,000 | pretrain 이어서 | `sft.pt` · `bbc2211091309d3c` |
+
+공통: AdamW (β 0.9 / 0.95, weight decay 0.1), grad clip 1.0, warmup + cosine, CUDA.
+
+### Loss 가 어떻게 내려갔나
+
+**Pretrain**
+
+| step | train | val |
+|----:|------:|----:|
+| 0 | 11.29 | — |
+| 500 | 3.42 | 4.35 |
+| 1,000 | 2.76 | 4.08 |
+| 1,500 | 3.00 | 3.25 |
+| 16,500 | | 2.72 |
+| 17,500 | | 2.81 |
+| 끝 무렵 | 약 2.1 ~ 2.5 | |
+
+**SFT** (pretrain 체크포인트에서 이어감)
+
+| step | train |
+|----:|------:|
+| 0 | 2.67 |
+| 500 | 1.60 |
+| 1,000 | 1.39 |
+| 4,950 | **1.05** |
+
+Loss 가 내려간 것은 “대화 형식에 적응 중”이라는 신호입니다.  
+벤치 점수가 바로 좋아진다는 뜻은 아닙니다. 아래 Q&A 를 보면 그 갭이 드러납니다.
+
+---
+
+## 2. 데이터셋
+
+원본 파일(수십 GB)은 GitHub 에 넣지 않았습니다.  
+공개 HuggingFace 등에서 받아 `data.py` 로 전처리했습니다.
+
+### 토크나이저
+
+| | |
+|:--|:--|
+| 방식 | Byte-level BPE |
+| 크기 | **64,000** vocab |
+| 샘플 | fineweb, wiki(ko/ja), tinystories 등 약 900MB |
+| 특수 토큰 | 역할 토큰, `THINKING` 구간 토큰 |
+
+### Pretrain · 약 19.1억 토큰
+
+`train 1,893,646,391` · `val 19,127,741`
+
+<details>
+<summary><b>자연어 (영어 · 한국어 · 일본어)</b> · 펼치기</summary>
+
+<br/>
+
+| 언어 | 파일 | 출처 | 규모 |
+|:----:|:-----|:-----|:-----|
+| EN | fineweb_edu | HuggingFaceFW/fineweb-edu | ~1.3GB |
+| EN | tinystories | roneneldan/TinyStories | ~2.1GB |
+| KO | fineweb2_ko | HuggingFaceFW/fineweb-2 | ~1.1GB |
+| KO | wikipedia_ko | wikimedia 20231101.ko | ~1.3GB |
+| JA | fineweb2_ja | HuggingFaceFW/fineweb-2 | ~1.1GB |
+| JA | wikipedia_ja | wikimedia 20231101.ja | ~1.6GB |
+
+</details>
+
+<details>
+<summary><b>코드</b> · 펼치기</summary>
+
+<br/>
+
+| 내용 | 출처 | 메모 |
+|:-----|:-----|:-----|
+| python, c, cpp, java, js, ts, go, rust, … | codeparrot/github-code-clean | 언어당 약 1,200 파일 |
+| 함수 단위 | Fsoft-AIC/the-vault-function | 약 4만 rows |
+| 커밋 + diff | bigcode/commitpack | 약 8천 rows |
+
+</details>
+
+<details>
+<summary><b>SFT · 321,367 예제</b> · 펼치기</summary>
+
+<br/>
+
+| 영역 | 출처 | rows |
+|:-----|:-----|----:|
+| 코드 지시 | Magicoder-OSS-Instruct | 75,197 |
+| 영어 일반 | OpenHermes-2.5 | 60,000 |
+| 영어 멀티턴 | UltraChat 200k | 35,000 |
+| 일본어 | shisa / llm-jp / dolly-ja 혼합 | 65,015 |
+| 한국어 | KoAlpaca v1.1a | 21,155 |
+| 수학 CoT | OpenR1-Math | 25,000 |
+| 사고 CoT | OpenThoughts3 | 40,000 |
+
+학습 때 쓰는 한 줄 형식 예시:
+
+```json
+{
+  "user": "2 + 3 * 4 = ?",
+  "thinking": "곱셈이 먼저다. 3*4=12, 2+12=14.",
+  "assistant": "답은 14입니다."
+}
+```
+
+user / system 구간은 loss 에서 빼 둡니다. 모델이 “질문 따라 쓰기”가 아니라 **답 쪽**을 배우게 하려는 것입니다.
+
+</details>
+
+### 구성 비율 감각
+
+```text
+Pretrain 토큰
+  영어 웹·스토리  ████████
+  한·일 wiki·웹   ████████
+  코드            ██
+
+SFT 예제 (대략)
+  영어 대화       ██████████  ~30%
+  코드 지시       ████████    ~23%
+  일본어          ██████      ~20%
+  사고·수학       ██████      ~20%
+  한국어          ██          ~7%
+```
+
+---
+
+## 3. 어떻게 채점했나
 
 | 항목 | 내용 |
-|---|---|
-| 프롬프트 수 | 14개 × 2 모드(THINKING on / off) = **28 생성** |
-| 카테고리 | 한국어 QA·요약 · 일본어 QA·번역 · 영어 QA·요약 · Python 코딩 5문항 |
-| QA / open 채점 | 0~5점 (트랜스크립트 기반 정성 채점) |
-| 코딩 채점 | 유닛테스트 실행 (객관식 pass/fail) |
-| 생성 일시 | 2026-07-09 |
-| 채점 일시 | 2026-07-10 |
-
-동일 문항·동일 채점 기준으로 pretrain 체크포인트와 SFT 체크포인트를 비교했다.
+|:-----|:-----|
+| 문항 수 | 14개 질문 × 2모드 = 28 생성 |
+| 모드 | THINKING 켬 / 끔 |
+| QA · 서술 | 0~5점 (답변 전문을 읽고 채점) |
+| 코딩 | 유닛테스트 통과 개수 |
+| 일시 | 생성 2026-07-09 · 채점 2026-07-10 |
 
 ---
 
-## 2. 체크포인트
+## 4. 점수 요약
 
-| 이름 | 경로 | 학습 | 역할 |
-|---|---|---|---|
-| **pretrain_base_v1** | `ckpt/pretrain_base_v1.pt` | pretrain 18,000 steps, preset `base` | 순수 next-token 사전학습 |
-| **sft_base_v1** | `ckpt/sft_base_v1.pt` | SFT 5,000 steps ← pretrain 위 | 대화·지시 미세조정 (본 리포트 주 대상) |
+### sft_base_v1
 
-- 파라미터: 약 **326.7M** (`base` 프리셋)
-- 토크나이저: BPE vocab 64k (실전 학습 버전)
-- 메타: [`llm/ckpt/SFT_base_v1/sft_base_v1.json`](llm/ckpt/SFT_base_v1/sft_base_v1.json)
+| 모드 | 결과 |
+|:-----|:-----|
+| THINKING **켬** | 답 생성 **0 / 14** · 평균 0.0 |
+| 일반 채팅 · 한국어 | 평균 **1.33 / 5** |
+| 일반 채팅 · 일본어 | 평균 **0.33 / 5** |
+| 일반 채팅 · 영어 | 평균 **2.67 / 5** |
+| 일반 채팅 · 코딩 | 테스트 **4 / 17** · 문제 완전 통과 **1 / 5** |
 
----
-
-## 3. 핵심 결과 요약
-
-### sft_base_v1 — THINKING 모드
-
-| 지표 | 값 |
-|---|---|
-| 답변 생성 성공 | **0 / 14 (0%)** |
-| 평균 점수 | **0.0** |
-
-> **치명적 이슈**  
-> 모든 THINKING 생성에서 모델이 `</THINKING>`을 닫기 전에 `<|eos|>`를 내보낸다.  
-> `infer.py`는 이 경우 출력을 전부 thinking 버킷에 넣고 **answer를 빈 문자열로 반환**한다.  
-> → 이 체크포인트로 채팅할 때는 **`--no-thinking`** 을 쓴다.
-
-### sft_base_v1 — no-thinking 모드
-
-| 영역 | 평균 / 통과율 |
-|---|---|
-| 한국어 (3문항) | **1.33 / 5** |
-| 일본어 (3문항) | **0.33 / 5** |
-| 영어 (3문항) | **2.67 / 5** |
-| 코딩 테스트 | **4 / 17 (23.5%)** |
-| 코딩 문제 완전 통과 | **1 / 5** (`is_palindrome`만) |
-
-영어 사실 회상(Paris)이 가장 강하고, 한·일 사실/연산 QA와 지시 수행(번역·요약)은 약하다. 코딩은 대부분 실패, 회문 검사 1문항만 완전 정답.
+THINKING 모드에서는 닫는 태그를 쓰기 전에 생성이 끝나 버립니다.  
+추론 코드가 그 경우 답을 비워 두므로, **이 체크포인트는 일반 채팅 모드로 쓰는 편이 맞습니다.**
 
 ---
 
-## 4. Pretrain vs SFT
+## 5. Pretrain 과 SFT 비교
 
-| 지표 | pretrain_base_v1 | sft_base_v1 |
-|---|---|---|
-| 전체 점수(28문항) | **0 / 28** | non-zero 다수 (no-think QA·open 6/9 등) |
-| 코딩 테스트 (양쪽 모드) | **0 / 34** | no-think **4 / 17** |
-| 지시 따르기 | 질문 에코 / 반복 루프 | 형식을 맞추려 시도 (내용은 자주 틀림) |
-| 해석 | chat 토큰·THINKING 미학습 → 기대한 실패 | SFT로 “시도는 하는” 단계로 점프 |
+| | Pretrain | SFT 이후 |
+|:--|:---------|:---------|
+| 전체 점수 | 사실상 전부 0 | 일반 모드에서 점수 발생 |
+| 코딩 테스트 | 0 / 34 | 4 / 17 (일반 모드) |
+| 행동 | 질문 따라 쓰기, 같은 말 반복 | 답 형식을 맞추려 함 (내용은 자주 틀림) |
 
-SFT 5,000 step만으로도 *“전혀 지시 불가 → 지시 시도(내용 오류 다수)”* 로의 점프는 분명하다. 다만 실사용 품질과는 아직 거리가 있다.
-
----
-
-## 5. 카테고리별 상세
-
-점수는 **no-thinking** 기준 (THINKING은 전부 score 0 · 답 공란).
-
-### 5.1 한국어
-
-| ID | 유형 | 점수 | 키워드 | 요약 |
-|---|---|---|---|---|
-| `ko_fact_1` | QA | **2** | 서울 ✓ | “서울”은 나오나 자기모순·순환 논리 |
-| `ko_math_1` | QA | **1** | 2 ✗ | 뺄셈 미수행, 오답 |
-| `ko_summary_1` | open | **1** | — | 요약 대신 원문 그대로 반복 |
-
-### 5.2 일본어
-
-| ID | 유형 | 점수 | 키워드 | 요약 |
-|---|---|---|---|---|
-| `ja_fact_1` | QA | **0** | 東京 ✗ | 수도 대신 인구 얘기, 순환 논리 |
-| `ja_math_1` | QA | **1** | 5 ✗ | 질문 재진술만, 연산 없음 |
-| `ja_translate_1` | open | **0** | — | 영어 번역 지시 무시, 일본어만 출력 |
-
-### 5.3 영어
-
-| ID | 유형 | 점수 | 키워드 | 요약 |
-|---|---|---|---|---|
-| `en_fact_1` | QA | **4** | Paris ✓ | 핵심 정답, 이후 지리 환각·장황함 |
-| `en_math_1` | QA | **1** | 120 ✗ | 잘못된 계수(×0.5), 120 미도출 |
-| `en_summary_1` | open | **3** | — | 요지 파악, but 4문장 + 환각 디테일 |
+SFT 5,000 step 만으로도  
+**“전혀 못 따름 → 형식은 시도함”** 으로 한 단계 올라갑니다.  
+그 위 품질은 아직 멀었습니다.
 
 ---
 
-## 6. 코딩 벤치마크
+## 6. 질문과 답변
 
-프롬프트는 함수 시그니처 수준(`is_prime(n)` 등). 추출 코드를 유닛테스트로 실행.
-
-### no-thinking
-
-| ID | 함수 | 테스트 | 점수 | 비고 |
-|---|---|---|---|---|
-| `code_prime` | `is_prime` | 0/5 | 0 | 사실상 `is_even` 로직 |
-| `code_reverse` | `reverse_string` | 0/3 | 0 | `.lower()` 반환 + 마크다운 fence 누출 SyntaxError |
-| `code_factorial` | `factorial` | 0/3 | 1 | 재귀 형태는 맞으나 `n==0` base 누락 |
-| `code_palindrome` | `is_palindrome` | **3/3** | **5** | 전체 코딩 중 **유일한 완전 통과** |
-| `code_maxlist` | `find_max` | 1/3 | 1 | 변수 섀도잉·비교 오류, 단일 원소만 우연 통과 |
-
-### THINKING 모드 (코딩)
-
-5문항 전부 **0/테스트 · score 0** — `</THINKING>` 미종료로 코드 추출 불가(또는 산문만 추출).
+점수는 모두 **sft_base_v1 · 일반 채팅 모드** 기준입니다.  
+THINKING 모드는 대부분 답이 비어 있어, 필요할 때만 짧게 적습니다.
 
 ---
 
-## 7. 해석과 다음 단계
+### 한국어
 
-### 잘된 점
+#### 사실 · 수도
 
-- Pretrain → SFT 전환이 **벤치마크로 측정 가능한 능력 점프**를 만듦
-- 영어 사실 QA·일부 지시 형식, 회문 코드 1건은 신호로 유효
-- 실패 모드가 문서화된 로드맵(초기 검증 단계)과 일치 — 회귀가 아님
+| | |
+|:--|:--|
+| **점수** | 2 / 5 |
+| **질문** | 대한민국의 수도는 어디인가요? |
+| **기대** | 서울 |
+| **모델 답** | 서울은 수도로서, 수도의 역할을 하는 도시인 수도는 서울이 아닌 다른 지역의 수도입니다… 서울은 수도이며, 수도는 따로 없습니다. |
+| **코멘트** | “서울”은 나오지만 문장이 앞뒤가 안 맞음 |
 
-### 막힌 점
-
-1. **THINKING 종료 버그** — 실사용 블로커 (v2에서 대부분 완화, 별도 벤치 예정)
-2. **산술·다국어 사실** — 한·일 약함
-3. **지시 엄수** — 요약·번역에서 에코·지시 무시
-4. **코딩** — 1/5 완전 통과 수준
-
-### 권장 후속 (프로젝트 로드맵과 정합)
-
-- THINKING 종료 패턴을 강화한 SFT (이미 v2 방향)
-- 코딩·산술 SFT / RLVR 비중 확대
-- DPO·교정 SFT로 지시 따르기 정렬
-- 동일 14문항 세트로 버전 간 비교 유지
+THINKING 모드: 답 칸 비어 있음. (사고 조각에는 “서울”이 잠깐 보임)
 
 ---
 
-## 8. 원본 데이터
+#### 연산 · 사과
 
-| 파일 | 내용 |
-|---|---|
-| [`llm/ckpt/benchmark_sft_base_v1.json`](llm/ckpt/benchmark_sft_base_v1.json) | SFT v1 전체 문항·점수·노트 |
-| [`llm/ckpt/benchmark_pretrain_base_v1.json`](llm/ckpt/benchmark_pretrain_base_v1.json) | Pretrain 동일 문항 비교 |
-| [`llm/ckpt/SFT_base_v1/sft_base_v1.json`](llm/ckpt/SFT_base_v1/sft_base_v1.json) | 학습 메타(steps, lr, 데이터 해시) |
+| | |
+|:--|:--|
+| **점수** | 1 / 5 |
+| **질문** | 철수는 사과를 5개 가지고 있었는데, 3개를 먹었습니다. 남은 사과는 몇 개인가요? |
+| **기대** | 2 |
+| **모델 답** | 사과는 3개의 사과를 가지고 있습니다. |
+| **코멘트** | 뺄셈을 하지 않음 |
 
-이 리포트는 위 JSON을 사람이 읽기 쉽게 정리한 것이다. 수치·인용은 원본 JSON을 따른다.
+---
+
+#### 요약
+
+| | |
+|:--|:--|
+| **점수** | 1 / 5 |
+| **질문** | 다음 문장을 한 문장으로 요약해 주세요. *「오늘 날씨가 매우 좋아서 공원에 산책을 나갔다. 사람들이 많이 나와 있었고, 아이들은 뛰어놀고 있었다.」* |
+| **모델 답** | 원문을 거의 그대로 다시 씀 |
+| **코멘트** | 요약이 아니라 따라 쓰기 |
+
+---
+
+### 일본어
+
+#### 사실 · 수도
+
+| | |
+|:--|:--|
+| **점수** | 0 / 5 |
+| **질문** | 日本の首都はどこですか? |
+| **기대** | 東京 |
+| **모델 답** | 日本は世界でも最も人口の多い国であり、人口が多い国の一つです… |
+| **코멘트** | 수도가 아니라 인구 이야기 |
+
+---
+
+#### 연산 · 사과
+
+| | |
+|:--|:--|
+| **점수** | 1 / 5 |
+| **질문** | 太郎はりんごを7個持っていて、2個食べました。残りは何個ですか? |
+| **기대** | 5 |
+| **모델 답** | 太郎は2個食べています。 |
+| **코멘트** | 문제 다시 말하기만 함 |
+
+---
+
+#### 번역
+
+| | |
+|:--|:--|
+| **점수** | 0 / 5 |
+| **질문** | 「今日は天気が良いので公園に散歩に行った。」を英語に翻訳してください。 |
+| **모델 답** | 「公園で散歩をするのは素晴らしいね。今日は天気が良いので…」(일본어 유지) |
+| **코멘트** | 영어 번역 지시를 무시 |
+
+---
+
+### 영어
+
+#### 사실 · 수도
+
+| | |
+|:--|:--|
+| **점수** | **4 / 5** |
+| **질문** | What is the capital of France? |
+| **기대** | Paris |
+| **모델 답** | The capital of France is Paris. The capital of France is also located in the heart of France, which is part of the Loire Valley… |
+| **코멘트** | 핵심은 맞음. 뒤에 지리가 조금 이상해짐. **이번 벤치에서 가장 괜찮은 신호** |
+
+Pretrain 만 쓰면: 질문을 독일 수도 물음으로 바꿔 되묻기 → 0점.
+
+---
+
+#### 연산 · 기차
+
+| | |
+|:--|:--|
+| **점수** | 1 / 5 |
+| **질문** | If a train travels at 60 km/h for 2 hours, how far does it go? |
+| **기대** | 120 |
+| **모델 답** | … 60 km/h * 0.5 hours = 60 km … |
+| **코멘트** | 시간·거리 관계가 틀림 |
+
+---
+
+#### 요약
+
+| | |
+|:--|:--|
+| **점수** | 3 / 5 |
+| **질문** | Summarize in one sentence: *“The weather was nice today so I went for a walk in the park, and there were many people and children playing.”* |
+| **모델 답** | 네 문장으로 늘려 씀. swings, flowers 등 없는 내용 추가 |
+| **코멘트** | 분위기는 비슷, “한 문장” 지시는 실패 |
+
+---
+
+## 7. 코딩 문항
+
+함수 시그니처만 주고, 뽑힌 코드를 테스트로 돌렸습니다.  
+아래는 **일반 채팅 모드** (THINKING 모드 코딩은 전부 실패).
+
+| 문제 | 테스트 | 점수 | 한 줄 평 |
+|:-----|:------:|:----:|:---------|
+| is_prime | 0 / 5 | 0 | 짝수 판별로 변질 |
+| reverse_string | 0 / 3 | 0 | lower 만 하고 끝 |
+| factorial | 0 / 3 | 1 | 재귀 뼈대는 있으나 0 처리 없음 |
+| **is_palindrome** | **3 / 3** | **5** | **유일하게 깔끔한 정답** |
+| find_max | 1 / 3 | 1 | 변수 덮어쓰기, 운 좋게 한 케이스 |
+
+### 잘 된 답 (is_palindrome)
+
+```python
+def is_palindrome(s):
+    s = ''.join(e for e in s if e.isalnum())
+    return s == s[::-1]
+```
+
+### 실패한 예 (is_prime → 사실상 짝수 검사)
+
+```python
+def is_prime(n):
+    if n <= 1:
+        return False
+    return n % 2 == 0
+```
+
+### 실패한 예 (reverse_string)
+
+```python
+def reverse_string(s):
+    return s.lower()
+```
+
+---
+
+## 8. 느낀 점 · 다음에 할 일
+
+### 잘 된 것
+
+- Pretrain loss 11 → 약 2, SFT 2.67 → 약 1.05 → **학습 루프는 정상**
+- SFT 후 “형식 시도”가 벤치에 잡힘
+- 영어 사실 1문항, 회문 코드 1문항은 분명한 신호
+
+### 아직 막힌 것
+
+1. THINKING 닫기 실패  
+2. 한·일 사실 · 산술 약함  
+3. 요약 · 번역 지시 무시  
+4. 코딩 완전 통과 1 / 5
+
+### 다음에
+
+- THINKING 종료 패턴을 더 넣은 SFT (v2 방향)  
+- 코딩 · 산술 비중 확대, 필요 시 RLVR  
+- DPO / 교정 SFT  
+- **같은 14문항**으로 버전 비교 유지
+
+---
+
+### 원본 파일 (로컬)
+
+| 경로 | 내용 |
+|:-----|:-----|
+| `llm/ckpt/benchmark_sft_base_v1.json` | SFT 전체 문항 |
+| `llm/ckpt/benchmark_pretrain_base_v1.json` | Pretrain 비교 |
+| `llm/DATA_SOURCES.md` | 데이터 출처 목록 |
+
+가중치와 원본 코퍼스는 공개 저장소에 포함하지 않습니다.
+
+---
 
 <div align="center">
 
----
-
-[← README.md](README.md) &nbsp;|&nbsp; [ARCHITECTURE.md](ARCHITECTURE.md) &nbsp;|&nbsp; [POST-TRAINING.md](POST-TRAINING.md)
+[README](README.md) · [ARCHITECTURE](ARCHITECTURE.md) · [POST-TRAINING](POST-TRAINING.md)
 
 </div>

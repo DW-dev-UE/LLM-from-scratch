@@ -1,5 +1,3 @@
----
-
 > **This repo is actively updated.**  
 > Training results, benchmarks, and docs change over time. Prefer the latest commit. Issues and PRs welcome.
 

@@ -1,60 +1,37 @@
-<div align="center">
-
-# Benchmark Report · Base V1
-
-**How it was trained, what data was used, and what the model actually answered**
-
-<br/>
-
-![ckpt](https://img.shields.io/badge/sft__base__v1-326.7M-3b82f6?style=flat-square)
-![pretrain](https://img.shields.io/badge/pretrain-18k%20steps-22c55e?style=flat-square)
-![sft](https://img.shields.io/badge/SFT-5k%20steps-22c55e?style=flat-square)
-![status](https://img.shields.io/badge/status-early%20stage-f59e0b?style=flat-square)
-
-<br/>
-
 [한국어](BENCHMARK-v1.md) · [English](BENCHMARK-v1.en.md) · [日本語](BENCHMARK-v1.ja.md)
 
 [← README](README.en.md)
 
-</div>
-
 ---
 
-### In one glance
+This doc is a record of actually training **base ~327M**.
+The point is not a pretty score table. It is:
+
+- how training was run
+- what data was used
+- what the model answered to each question
+
+### In one line first
 
 | | Result |
 |:--|:-------|
-| **Pretrain only** | Almost no chat-format ability (~0 / 28) |
-| **After SFT** | Tries to follow format; content often wrong |
-| **Thinking mode** | Empty answers (0 / 14) → grade normal chat instead |
+| **Pretrain only** | Almost no reaction to chat prompts (~0 / 28) |
+| **After SFT** | Tries to follow instruction format; content often wrong |
+| **Thinking mode** | Empty-answer bug (0 answers / 14) → evaluate normal chat instead |
 
-Not production quality yet.  
-This is the first snapshot that shows the **pipeline works** and what SFT changes.
-
----
-
-## Contents
-
-1. [Training](#1-training)  
-2. [Datasets](#2-datasets)  
-3. [Scoring](#3-scoring)  
-4. [Score summary](#4-score-summary)  
-5. [Pretrain vs SFT](#5-pretrain-vs-sft)  
-6. [Questions and answers](#6-questions-and-answers)  
-7. [Coding items](#7-coding-items)  
-8. [Takeaways](#8-takeaways)
+Not production quality yet.
+It is the first snapshot that shows the **pipeline actually runs**, and what SFT changes.
 
 ---
 
-## 1. Training
+## 1. Training process
 
 ### Model card
 
 | Item | Value |
 |:-----|:------|
 | Family | Decoder-only Transformer (LLaMA-style parts) |
-| Params | ~**326.7M** (`base`) |
+| Params | ~**326.7M** (`base` preset) |
 | Depth · width | 24 layers · d_model 1024 |
 | Attention | GQA (Q 16 · KV 4) + RoPE |
 | FFN | SwiGLU |
@@ -62,10 +39,10 @@ This is the first snapshot that shows the **pipeline works** and what SFT change
 | Other | weight tying, no bias |
 
 ```text
-tokens
+input tokens
    │
 embedding ───────────────────────────┐
-   │                                 │ (tied)
+   │                                 │ (weight tying)
 [ Block × 24 ]                       │
   RMSNorm → Attention → +            │
   RMSNorm → SwiGLU    → +            │
@@ -74,7 +51,7 @@ RMSNorm                              │
    │                                 │
 LM Head ◄────────────────────────────┘
    │
-next-token logits
+next-token probs
 ```
 
 ### Order of work
@@ -89,23 +66,23 @@ next-token logits
   ③ SFT · 5,000 steps · lr 3e-5
            │
            ▼  sft_base_v1
-  ④ This benchmark
+  ④ Benchmark (this doc)
 ```
 
 | Stage | Checkpoint | steps | Init | Data fingerprint |
 |:------|:-----------|------:|:-----|:-----------------|
-| Pretrain | `pretrain_base_v1` | 18,000 | scratch | `train.bin` · `53f815d47abc4887` |
-| SFT | `sft_base_v1` | 5,000 | from pretrain | `sft.pt` · `bbc2211091309d3c` |
+| Pretrain | `pretrain_base_v1` | 18,000 | from scratch | `train.bin` · `53f815d47abc4887` |
+| SFT | `sft_base_v1` | 5,000 | continued from pretrain | `sft.pt` · `bbc2211091309d3c` |
 
-Shared: AdamW (β 0.9 / 0.95, wd 0.1), grad clip 1.0, warmup + cosine, CUDA.
+Shared: AdamW (β 0.9 / 0.95, weight decay 0.1), grad clip 1.0, warmup + cosine, CUDA.
 
-### Loss
+### How loss came down
 
 **Pretrain**
 
 | step | train | val |
 |----:|------:|----:|
-| 0 | 11.29 | |
+| 0 | 11.29 | — |
 | 500 | 3.42 | 4.35 |
 | 1,000 | 2.76 | 4.08 |
 | 1,500 | 3.00 | 3.25 |
@@ -113,7 +90,7 @@ Shared: AdamW (β 0.9 / 0.95, wd 0.1), grad clip 1.0, warmup + cosine, CUDA.
 | 17,500 | | 2.81 |
 | late | ~2.1–2.5 | |
 
-**SFT**
+**SFT** (continued from the pretrain checkpoint)
 
 | step | train |
 |----:|------:|
@@ -122,14 +99,15 @@ Shared: AdamW (β 0.9 / 0.95, wd 0.1), grad clip 1.0, warmup + cosine, CUDA.
 | 1,000 | 1.39 |
 | 4,950 | **1.05** |
 
-Lower loss means “adapting to chat format,” not automatic benchmark wins. See Q&A below.
+Loss going down is a signal of “adapting to chat format.”
+It does not mean benchmark scores instantly improve. The Q&A below shows that gap.
 
 ---
 
 ## 2. Datasets
 
-Raw multi-GB files are **not** in the GitHub repo.  
-Public HF sources were downloaded and prepared with `data.py`.
+Raw multi-GB files are not in the GitHub repo.
+They were downloaded from public HuggingFace (etc.) and prepared with `data.py`.
 
 ### Tokenizer
 
@@ -137,15 +115,15 @@ Public HF sources were downloaded and prepared with `data.py`.
 |:--|:--|
 | Type | Byte-level BPE |
 | Size | **64,000** vocab |
-| Sample | fineweb, wiki (ko/ja), tinystories (~900MB) |
-| Specials | role tokens, thinking span tokens |
+| Sample | fineweb, wiki (ko/ja), tinystories, etc. ~900MB |
+| Specials | role tokens, `THINKING` span tokens |
 
 ### Pretrain · ~1.91B tokens
 
 `train 1,893,646,391` · `val 19,127,741`
 
 <details>
-<summary><b>Natural language (EN / KO / JA)</b></summary>
+<summary><b>Natural language (EN / KO / JA)</b> · expand</summary>
 
 <br/>
 
@@ -161,20 +139,20 @@ Public HF sources were downloaded and prepared with `data.py`.
 </details>
 
 <details>
-<summary><b>Code</b></summary>
+<summary><b>Code</b> · expand</summary>
 
 <br/>
 
 | Content | Source | Note |
 |:--------|:-------|:-----|
-| 11 languages | codeparrot/github-code-clean | ~1,200 files each |
-| Functions | Fsoft-AIC/the-vault-function | ~40k rows |
+| python, c, cpp, java, js, ts, go, rust, … | codeparrot/github-code-clean | ~1,200 files per language |
+| Function-level | Fsoft-AIC/the-vault-function | ~40k rows |
 | Commits + diffs | bigcode/commitpack | ~8k rows |
 
 </details>
 
 <details>
-<summary><b>SFT · 321,367 examples</b></summary>
+<summary><b>SFT · 321,367 examples</b> · expand</summary>
 
 <br/>
 
@@ -188,7 +166,7 @@ Public HF sources were downloaded and prepared with `data.py`.
 | Math CoT | OpenR1-Math | 25,000 |
 | Thinking CoT | OpenThoughts3 | 40,000 |
 
-Example line:
+Example training line:
 
 ```json
 {
@@ -198,11 +176,11 @@ Example line:
 }
 ```
 
-User / system tokens are masked out of the loss.
+User / system spans are masked out of the loss. Goal is learning the **answer side**, not echoing the question.
 
 </details>
 
-### Mix (rough)
+### Mix (rough feel)
 
 ```text
 Pretrain tokens
@@ -210,7 +188,7 @@ Pretrain tokens
   KO/JA wiki · web   ████████
   code               ██
 
-SFT examples
+SFT examples (approx.)
   EN chat            ██████████  ~30%
   code instruct      ████████    ~23%
   Japanese           ██████      ~20%
@@ -220,14 +198,14 @@ SFT examples
 
 ---
 
-## 3. Scoring
+## 3. How scoring worked
 
 | Item | Detail |
 |:-----|:-------|
 | Items | 14 prompts × 2 modes = 28 generations |
 | Modes | thinking on / off |
-| QA · open | 0–5 (full transcript) |
-| Coding | unit tests |
+| QA · open | 0–5 (full transcript read) |
+| Coding | unit-test pass counts |
 | Dates | generated 2026-07-09 · scored 2026-07-10 |
 
 ---
@@ -244,8 +222,8 @@ SFT examples
 | Chat · English | avg **2.67 / 5** |
 | Chat · coding | tests **4 / 17** · full pass **1 / 5** |
 
-Thinking mode ends before the close tag, so the runtime returns an empty answer.  
-**Use normal chat mode with this checkpoint.**
+In thinking mode, generation ends before the close tag is written.
+The inference code then leaves the answer empty, so **this checkpoint is better used in normal chat mode**.
 
 ---
 
@@ -253,19 +231,20 @@ Thinking mode ends before the close tag, so the runtime returns an empty answer.
 
 | | Pretrain | After SFT |
 |:--|:---------|:----------|
-| Overall | ~all zeros | scores appear in chat mode |
-| Coding tests | 0 / 34 | 4 / 17 (chat) |
-| Behavior | echo / loops | tries answer shape (often wrong) |
+| Overall scores | essentially all zeros | scores appear in normal mode |
+| Coding tests | 0 / 34 | 4 / 17 (normal mode) |
+| Behavior | echo the question, loop the same phrase | tries answer format (content often wrong) |
 
-Five thousand SFT steps move the model from  
-**“cannot follow” → “tries to follow.”**  
-Quality beyond that is still far away.
+With only 5,000 SFT steps, the model moves one step from  
+**“cannot follow at all → tries the format.”**  
+Quality above that is still far away.
 
 ---
 
 ## 6. Questions and answers
 
-Scores are **sft_base_v1 · normal chat** unless noted.
+Scores are **sft_base_v1 · normal chat** unless noted.  
+Thinking mode is empty for most items, so it is only mentioned briefly when needed.
 
 ---
 
@@ -278,10 +257,10 @@ Scores are **sft_base_v1 · normal chat** unless noted.
 | **Score** | 2 / 5 |
 | **Prompt** | 대한민국의 수도는 어디인가요? |
 | **Expect** | Seoul |
-| **Answer** | Mentions Seoul but with self-contradictory, circular wording |
-| **Note** | Keyword hit, logic broken |
+| **Answer** | 서울은 수도로서, 수도의 역할을 하는 도시인 수도는 서울이 아닌 다른 지역의 수도입니다… 서울은 수도이며, 수도는 따로 없습니다. |
+| **Note** | “Seoul” appears, but the sentences contradict themselves |
 
-Thinking mode: empty answer field.
+Thinking mode: empty answer field. (a fragment of thinking briefly shows “서울”)
 
 ---
 
@@ -290,9 +269,9 @@ Thinking mode: empty answer field.
 | | |
 |:--|:--|
 | **Score** | 1 / 5 |
-| **Prompt** | 철수는 사과를 5개… 3개를 먹었습니다. 남은 사과는? |
+| **Prompt** | 철수는 사과를 5개 가지고 있었는데, 3개를 먹었습니다. 남은 사과는 몇 개인가요? |
 | **Expect** | 2 |
-| **Answer** | Claims there are 3 apples |
+| **Answer** | 사과는 3개의 사과를 가지고 있습니다. |
 | **Note** | No subtraction |
 
 ---
@@ -302,9 +281,9 @@ Thinking mode: empty answer field.
 | | |
 |:--|:--|
 | **Score** | 1 / 5 |
-| **Prompt** | Summarize in one sentence (Korean park / weather text) |
-| **Answer** | Echoes the source |
-| **Note** | Instruction ignored |
+| **Prompt** | 다음 문장을 한 문장으로 요약해 주세요. *「오늘 날씨가 매우 좋아서 공원에 산책을 나갔다. 사람들이 많이 나와 있었고, 아이들은 뛰어놀고 있었다.」* |
+| **Answer** | Nearly rewrites the source as-is |
+| **Note** | Echo, not summary |
 
 ---
 
@@ -317,8 +296,8 @@ Thinking mode: empty answer field.
 | **Score** | 0 / 5 |
 | **Prompt** | 日本の首都はどこですか? |
 | **Expect** | 東京 |
-| **Answer** | Talks about population, not capital |
-| **Note** | Off-topic |
+| **Answer** | 日本は世界でも最も人口の多い国であり、人口が多い国の一つです… |
+| **Note** | Talks about population, not capital |
 
 ---
 
@@ -327,10 +306,10 @@ Thinking mode: empty answer field.
 | | |
 |:--|:--|
 | **Score** | 1 / 5 |
-| **Prompt** | 太郎はりんごを7個…2個食べました。残りは? |
+| **Prompt** | 太郎はりんごを7個持っていて、2個食べました。残りは何個ですか? |
 | **Expect** | 5 |
-| **Answer** | “Taro ate 2.” |
-| **Note** | Restates, no math |
+| **Answer** | 太郎は2個食べています。 |
+| **Note** | Restates the problem only |
 
 ---
 
@@ -339,9 +318,9 @@ Thinking mode: empty answer field.
 | | |
 |:--|:--|
 | **Score** | 0 / 5 |
-| **Prompt** | Translate the Japanese sentence into English |
-| **Answer** | Stays in Japanese |
-| **Note** | Ignores translation request |
+| **Prompt** | 「今日は天気が良いので公園に散歩に行った。」を英語に翻訳してください。 |
+| **Answer** | 「公園で散歩をするのは素晴らしいね。今日は天気が良いので…」(stays Japanese) |
+| **Note** | Ignores the English translation request |
 
 ---
 
@@ -354,10 +333,10 @@ Thinking mode: empty answer field.
 | **Score** | **4 / 5** |
 | **Prompt** | What is the capital of France? |
 | **Expect** | Paris |
-| **Answer** | “The capital of France is Paris…” then mild geo rambling |
-| **Note** | Best factual signal in this run |
+| **Answer** | The capital of France is Paris. The capital of France is also located in the heart of France, which is part of the Loire Valley… |
+| **Note** | Core is correct; geography after that gets a bit weird. **Best factual signal in this run** |
 
-Pretrain-only: rewrites as a Germany capital question → 0.
+Pretrain only: rewrites the question as a Germany capital question → 0.
 
 ---
 
@@ -366,10 +345,10 @@ Pretrain-only: rewrites as a Germany capital question → 0.
 | | |
 |:--|:--|
 | **Score** | 1 / 5 |
-| **Prompt** | 60 km/h for 2 hours → how far? |
+| **Prompt** | If a train travels at 60 km/h for 2 hours, how far does it go? |
 | **Expect** | 120 |
-| **Answer** | Uses 0.5 hours → 60 km |
-| **Note** | Broken arithmetic |
+| **Answer** | … 60 km/h * 0.5 hours = 60 km … |
+| **Note** | Time–distance relation is wrong |
 
 ---
 
@@ -378,26 +357,26 @@ Pretrain-only: rewrites as a Germany capital question → 0.
 | | |
 |:--|:--|
 | **Score** | 3 / 5 |
-| **Prompt** | Summarize the park walk sentence in **one** sentence |
-| **Answer** | Four sentences + invented swings/flowers |
-| **Note** | Gist ok, instruction fail |
+| **Prompt** | Summarize in one sentence: *“The weather was nice today so I went for a walk in the park, and there were many people and children playing.”* |
+| **Answer** | Stretches into four sentences; invents swings, flowers, etc. |
+| **Note** | Mood is similar; “one sentence” instruction fails |
 
 ---
 
 ## 7. Coding items
 
-Function-level prompts, unit-tested.  
-**Normal chat only** (thinking mode: all fail).
+Function signatures only; generated code run against unit tests.  
+Below is **normal chat mode** (thinking-mode coding all failed).
 
-| Task | Tests | Score | Note |
-|:-----|:-----:|:-----:|:-----|
-| is_prime | 0 / 5 | 0 | becomes is_even |
-| reverse_string | 0 / 3 | 0 | only `.lower()` |
-| factorial | 0 / 3 | 1 | missing zero base |
-| **is_palindrome** | **3 / 3** | **5** | **only clean pass** |
-| find_max | 1 / 3 | 1 | shadowing, lucky case |
+| Task | Tests | Score | One-line note |
+|:-----|:-----:|:-----:|:--------------|
+| is_prime | 0 / 5 | 0 | Degrades into even-check |
+| reverse_string | 0 / 3 | 0 | Only `.lower()` then stops |
+| factorial | 0 / 3 | 1 | Recursive skeleton, no zero base case |
+| **is_palindrome** | **3 / 3** | **5** | **Only clean pass** |
+| find_max | 1 / 3 | 1 | Variable shadowing; one lucky case |
 
-### Pass
+### Pass (is_palindrome)
 
 ```python
 def is_palindrome(s):
@@ -405,7 +384,7 @@ def is_palindrome(s):
     return s == s[::-1]
 ```
 
-### Fail (prime → even)
+### Fail (is_prime → effectively is_even)
 
 ```python
 def is_prime(n):
@@ -414,7 +393,7 @@ def is_prime(n):
     return n % 2 == 0
 ```
 
-### Fail (reverse)
+### Fail (reverse_string)
 
 ```python
 def reverse_string(s):
@@ -423,44 +402,40 @@ def reverse_string(s):
 
 ---
 
-## 8. Takeaways
+## 8. Takeaways · next steps
 
-### What works
+### What worked
 
 - Pretrain loss 11 → ~2, SFT 2.67 → ~1.05 → **training loop is real**
-- SFT creates a measurable “tries to answer” jump
-- One English fact and one coding pass are clear signals
+- After SFT, “tries the format” shows up in the bench
+- One English fact item and one palindrome coding pass are clear signals
 
-### What’s stuck
+### Still stuck
 
-1. Thinking close-tag bug  
+1. Thinking close-tag failure  
 2. Weak KO/JA facts and arithmetic  
-3. Summary / translate instruction ignores  
+3. Summary / translate instruction ignored  
 4. Coding full pass 1 / 5  
 
 ### Next
 
-- SFT that closes thinking tags (v2 direction)  
-- More coding · math, optional RLVR  
-- DPO / corrective SFT  
-- Keep the **same 14 prompts** across versions  
+- SFT with more thinking-close patterns (v2 direction)  
+- More coding · arithmetic share; RLVR if needed  
+- DPO / correction SFT  
+- Keep the **same 14 prompts** for version comparison  
 
 ---
 
-### Local sources
+### Local source files
 
 | Path | Content |
 |:-----|:--------|
 | `llm/ckpt/benchmark_sft_base_v1.json` | Full SFT items |
 | `llm/ckpt/benchmark_pretrain_base_v1.json` | Pretrain compare |
-| `llm/DATA_SOURCES.md` | Dataset manifest |
+| `llm/DATA_SOURCES.md` | Dataset source list |
 
-Weights and raw corpora are not published on GitHub.
+Weights and raw corpora are not in the public repo.
 
 ---
 
-<div align="center">
-
-[README](README.en.md) · [Architecture](ARCHITECTURE.en.md) · [Post-training](POST-TRAINING.en.md)
-
-</div>
+[README](README.en.md) · [ARCHITECTURE](ARCHITECTURE.en.md) · [POST-TRAINING](POST-TRAINING.en.md)

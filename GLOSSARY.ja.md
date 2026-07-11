@@ -1,112 +1,114 @@
-<div align="center">
+[한국어](GLOSSARY.md) · [English](GLOSSARY.en.md) · [日本語](GLOSSARY.ja.md)
 
-# 用語集
-
-[한국어](GLOSSARY.md) &nbsp;·&nbsp; [English](GLOSSARY.en.md) &nbsp;·&nbsp; **[日本語](GLOSSARY.ja.md)**
-
-[← README.mdに戻る](README.ja.md)
-
-</div>
+[← README](README.ja.md)
 
 ---
 
-LLMを初めて触る人でも[ARCHITECTURE.md](ARCHITECTURE.ja.md)や[POST-TRAINING.md](POST-TRAINING.ja.md)を
-読めるように、本文に出てくる用語をここに先にまとめておく。知ってる用語は飛ばして、読んでて詰まった単語が
-出てきたらここに戻って調べればいい。
-
-## モデル構造の用語
-
-| 用語 | 説明 |
-|---|---|
-| **Transformer(トランスフォーマー)** | Self-Attentionを中核の演算に使うニューラルネット構造。2017年以降に出たほぼすべてのLLM(GPT、Llama、DeepSeekなど)はこの上で動いている。 |
-| **Decoder-only** | Transformerの中でも「これまで出たトークンを見て次のトークンを予測する」デコーダブロックだけを積み重ねた構造。GPT系列がここに属していて、このプロジェクトもこの方式を使っている。 |
-| **Parameter(パラメータ)** | 学習を通じて値が変わる数字の総数。「300Mモデル」と言えばパラメータが3億個あるという意味で、モデルの「大きさ」を表す指標としてよく使われる。 |
-| **Weight(重み)** | パラメータが実際に持っている値。例えば`nn.Linear(768, 768)`層1つは768×768個の重みを持っていて、学習はこの数字を少しずつ調整していく過程だ。 |
-| **Weight tying** | 入力埋め込み層と出力層(LM Head)に同じ重み行列を共有させる手法。パラメータ数を減らし、学習を安定させる。 |
-| **トークナイザー(Tokenizer)** | テキストをモデルが処理できる整数のトークンIDに変換する道具。例えば「Pythonは」が辞書(vocab)にあれば、これを4123のような整数1つに変換する。この結果はベクトルではなく整数であり、整数を実際の数値ベクトルに変換するのは、すぐ次のEmbeddingの仕事だ。 |
-| **Embedding(埋め込み)** | トークン一つひとつを固定長の数値ベクトルに変換する層。文字そのものではなく、ベクトル演算で言語を扱えるようにしてくれる。 |
-| **Vision Encoder(ビジョンエンコーダ)** | 画像をモデルが理解できるベクトルに変換する別の構造。「画像も結局ピクセル、つまり数字」という理由だけでテキストLLMが画像を理解できるようになるわけではなく、この構造が別途必要だ。このプロジェクトは現在テキスト・コード専用のため、Vision Encoderは持っていない。 |
-| **RMSNorm** | レイヤー正規化(値の大きさを一定範囲に揃えて学習を安定させる手法)の一種。従来のLayerNormより計算がシンプルなのに性能はほぼ同等。 |
-| **Pre-Norm** | 正規化をattention・FFN演算の「前」に適用する配置方式。層が深くなっても学習が崩れにくい。 |
-| **RoPE(Rotary Position Embedding)** | 各トークンが「何番目の位置か」を回転変換でattentionの計算に織り込む位置エンコーディング方式。位置を学習パラメータとして固定するのではなく数式で計算するので、学習型の絶対位置埋め込みよりコンテキスト長を伸ばす拡張(NTK-aware scaling、YaRNなど)がやりやすい。ただし補正なしで学習時よりずっと長い文にそのまま使うと性能が落ちるのはRoPEも例外ではない。 |
-| **Self-Attention** | 文中のすべてのトークンが互いを見て「このトークンとあのトークンがどれだけ関連しているか」を計算する演算。Transformerの核心だ。 |
-| **Causal masking** | 未来のトークンを先読みできないように隠す仕組み。「次のトークン予測」という目標を守るには欠かせない。 |
-| **MHA(Multi-Head Attention)** | Self-Attentionを複数の独立した「head」に分けて並列に計算する方式。headごとに文法・意味など違う種類の関係を学習できる。 |
-| **GQA(Grouped-Query Attention)** | Query headの数よりKey/Value headの数を少なくすることで、推論時に保持しておくKVキャッシュのサイズを減らすattentionの変種。MHAよりメモリを節約できる。 |
-| **KVキャッシュ(Key-Value Cache)** | 推論中にすでに計算したKey/Valueの値を保存しておき、次のトークン生成時に再利用する手法。トークンを生成するたびに文全体を最初から計算し直さなくて済む。 |
-| **Flash Attention / SDPA** | Self-Attentionの演算をGPUメモリを節約しながら高速に計算できるよう実装したカーネル。PyTorchの`F.scaled_dot_product_attention`がこれを提供している。 |
-| **FFN(Feed-Forward Network)** | Attentionの後に来る、トークンごとに独立して適用される全結合ニューラルネット。 |
-| **SwiGLU** | FFNで使う活性化関数の組み合わせ。従来のGELUより性能が良いとされ、最近のLLMで広く採用されている。 |
-| **Residual connection(残差接続)** | 層に入ってきた入力をそのまま出力にもう一度足し込む接続。層を深く積んでも情報が消えず、学習が安定する。 |
-| **LM Head** | モデル最後のhidden stateをvocabサイズのスコア(logits)に変換する最終線形層。 |
-| **Logits** | ソフトマックスを適用する前の、「次のトークン候補それぞれがどれだけもっともらしいか」を表す生のスコアベクトル。 |
-
-## 学習(Training)関連の用語
-
-| 用語 | 説明 |
-|---|---|
-| **Pretraining(事前学習)** | 大量の生テキスト・コードでnext-token predictionを学習させ、言語構造・知識・コーディングパターンを体に叩き込む最初の学習段階。 |
-| **Next-token prediction** | 「これまでのトークンを見て、次に来るトークンを当てろ」という、LLM学習でいちばん基本になる目標。例:「Pythonは」→「プログラミング」を予測→「Pythonはプログラミング」を再入力→「言語です。」を予測→これを繰り返すと「Pythonはプログラミング言語です。」が完成する。 |
-| **Fine-tuning(微調整)** | 事前学習を終えたモデルを、もっと小さくて目的のはっきりしたデータでもう一段学習させること。 |
-| **SFT(Supervised Fine-Tuning、教師ありファインチューニング)** | 人が作成・検収した(質問, お手本の回答)のペアで、教師あり学習の形でファインチューニングすること。 |
-| **Instruction tuning** | ユーザーの指示にちゃんと従えるよう、対話形式のデータでファインチューニングすること。SFTの一形態だ。 |
-| **Loss(損失)** | モデルの予測が正解とどれだけ違うかを数値化したもの。学習はこの値を下げる方向にパラメータを少しずつ動かしていく過程だ。 |
-| **Cross-entropy** | 言語モデルの学習でいちばんよく使われる損失関数。正解トークンに低い確率しか割り当てられなかった分だけ損失が大きくなる。 |
-| **Loss masking(損失マスキング)** | 特定のトークン(例:ユーザーの質問部分)を損失計算から除外し(`-100`とマークする)、モデルにその部分を生成する学習をさせず、正解部分だけを学習させる手法。 |
-| **Perplexity** | validation lossを指数変換した指標。モデルが次のトークンをどれだけうまく予測できているかを表し、低いほど良い。 |
-| **Epoch / Step / Batch** | 全データを1周する単位(epoch)、パラメータを1回更新する単位(step)、一度にまとめて処理するデータの塊(batch)。 |
-| **Gradient accumulation** | GPUメモリの制約で大きなバッチを一度に載せられないとき、複数ステップにわたってgradientを積み重ねてからまとめて更新する手法。 |
-| **Optimizer / AdamW** | 損失を減らす方向にパラメータを実際に更新するアルゴリズム。AdamWは今やLLM学習の事実上の標準だ。 |
-| **Learning rate / Warmup / Cosine decay** | パラメータを一度にどれだけ動かすかを決める歩幅(learning rate)を、最初はゆっくり上げていき(warmup)、その後コサインカーブを描きながら徐々に下げていく(decay)学習率スケジュール。 |
-| **Gradient clipping** | gradientの大きさが過大になるのを防ぎ、学習が発散しないようにする手法。 |
-| **Mixed precision / bfloat16** | 計算量の大きい部分(行列積、activationなど)は16ビット(bfloat16)で計算して速度とメモリを稼ぎ、精度が重要なマスター重み・オプティマイザ状態は32ビットで保持する学習手法。2つの精度を混ぜて使うのでmixed precisionと呼ばれる。 |
-| **Checkpoint(チェックポイント)** | 学習の途中や終了後に、モデルの重みの状態を保存したファイル。`ckpt/sft_nano.pt`のようなファイルがこれにあたる。 |
-| **Chinchilla scaling law / Compute-optimal** | 定められた計算量(compute)の中で、モデルサイズと学習トークン数をどんな比率で増やすのが一番効率的かを示す経験則。[README.mdの§2](README.ja.md#2-パラメータ数)で詳しく扱う。 |
-| **FIM(Fill-In-the-Middle)** | 文(コード)の前後を与えて、その間を埋めさせるよう学習させる課題。コード補完には欠かせない能力だ。 |
-
-## 推論(Inference)・生成関連の用語
-
-| 用語 | 説明 |
-|---|---|
-| **Context window(コンテキストウィンドウ)** | モデルが一度に参照できる最大トークン長。 |
-| **Sampling(サンプリング)** | logitsから確率分布を作り、そこから次のトークンをランダムに選ぶ過程。毎回同じ答えにならず、いろんな答えが出るようにしてくれる。 |
-| **Temperature** | サンプリング時に確率分布をどれだけ平らに(多様に)、あるいは尖らせて(確信を持って)作るかを調整する値。 |
-| **Top-p(nucleus sampling)** | 累積確率がpを超える上位候補トークンの中だけからサンプリングする手法。意味の通らない珍しいトークンが選ばれるのを防いでくれる。 |
-| **THINKINGモード(Chain-of-Thought)** | 最終回答の前に`<THINKING>...</THINKING>`区間で思考過程を先に生成させ、複雑な問題の正答率を上げる手法。[ARCHITECTURE.md](ARCHITECTURE.ja.md)で詳しく扱う。 |
-| **Prefill** | プロンプト全体を一度に通してKVキャッシュをあらかじめ埋めておく推論の段階。 |
-
-## RAG / Tool 関連の用語
-
-| 用語 | 説明 |
-|---|---|
-| **RAG(Retrieval-Augmented Generation)** | 質問に関連する文書を外部ストレージから検索(retrieval)し、プロンプトに一緒に入れてから回答を生成させる手法。モデルを再学習しなくても最新の知識を反映できる。 |
-| **Tool use / Function calling** | モデルが自分で「今は電卓を、今はコード実行機を使うべきだ」と判断して外部ツールを呼び出す能力。 |
-
-## 後続学習(Post-Training)・アライメント(Alignment)関連の用語
-
-| 用語 | 説明 |
-|---|---|
-| **RLHF(Reinforcement Learning from Human Feedback)** | 人間の選好フィードバックを報酬信号として、強化学習でモデルをアライメント(人が望む方向に合わせること)する方法論全体を指す言葉。 |
-| **Preference pair / Chosen / Rejected(選好ペア)** | 同じ質問に対する2つの回答のうち、良い方(chosen)とそうでない方(rejected)を人がラベル付けしたデータペア。 |
-| **DPO(Direct Preference Optimization)** | 別途の報酬モデルを用意せず、選好ペアのデータだけで直接モデルをアライメントする手法。RLHFより実装がシンプルで安定している。 |
-| **Reward Model、RM(報酬モデル)** | 回答にスコアをつけるよう学習されたモデル。既存LLMの最後の層をスカラー(数値1つ)の出力に置き換えて学習させる。 |
-| **GRPO(Group Relative Policy Optimization)** | 同じ質問に対して複数の回答を一度にサンプリングし、そのグループ内での相対的な優劣(advantage)でモデルを更新する強化学習の手法。PPOと違って別途value modelがいらない分シンプルだ。 |
-| **RLVR(Reinforcement Learning from Verifiable Rewards)** | 数学・コーディングのように正解を自動採点できる問題で、報酬モデルの代わりに「正解と一致しているか」のようなルールベースの報酬を使う強化学習。 |
-| **KL divergence / KL penalty** | 新しく学習されるモデルが元の(参照)モデルから大きく逸脱しすぎないよう抑えるペナルティ項。アライメントの過程でモデルが変な方向に壊れるのを防いでくれる。 |
-| **Rejection sampling** | 複数の回答候補のうち、一定の基準(スコアなど)を通過したものだけを選んで学習データとして再利用する手法。 |
-| **Reward hacking(報酬ハッキング)** | モデルが実際の回答品質を上げずに、報酬スコアだけを稼ぐ抜け道を学習してしまう現象。 |
-
-## 評価(Evaluation)関連の用語
-
-| 用語 | 説明 |
-|---|---|
-| **Benchmark(ベンチマーク)** | モデルの特定の能力を標準化された問題セットで測る評価方法。例:HellaSwag・ARC・MMLU(言語理解)、HumanEval・MBPP(コーディング)、GSM8K(数学)。 |
-| **pass@1** | コード生成の評価で、モデルが1回生成したコードがテストを通る割合。 |
-
-<div align="center">
+この文書は辞書です。
+[ARCHITECTURE](ARCHITECTURE.ja.md) や [POST-TRAINING](POST-TRAINING.ja.md) を読んでいて詰まったら、ここに戻ってきてください。
+最初から全部覚える必要はありません。知らない単語だけ探せば十分です。
 
 ---
 
-[← README.md](README.ja.md) &nbsp;|&nbsp; [ARCHITECTURE.md →](ARCHITECTURE.ja.md)
+## モデル構造
 
-</div>
+| 用語 | 説明 |
+|---|---|
+| **Transformer (トランスフォーマー)** | Self-Attention を中核演算に使うニューラルネット構造。2017 年以降に出たほぼすべての LLM (GPT、Llama、DeepSeek など) がこの上で動いている。 |
+| **Decoder-only** | 「これまで出たトークンを見て次のトークンを予測する」デコーダブロックだけを積み重ねた構造。GPT 系列。このプロジェクトもこの方式。 |
+| **Parameter (パラメータ)** | 学習で値が変わる数字の個数。「300M モデル」ならパラメータが 3 億個。よくモデルの「大きさ」と呼ばれる。 |
+| **Weight (重み)** | パラメータが実際に持っている値。例: `nn.Linear(768, 768)` は 768×768 個の重み。学習はこの数字を少しずつ動かす過程。 |
+| **Weight tying** | 入力埋め込みと出力層 (LM Head) が同じ重み行列を共有。パラメータを減らし、学習を安定させる。 |
+| **トークナイザー (Tokenizer)** | テキストを整数トークン ID に変える道具。「Pythonは」→ 4123 のような感じ。結果はベクトルではなく整数で、ベクトルにするのは次の Embedding の仕事。 |
+| **Embedding (埋め込み)** | トークン一つを固定長の数値ベクトルに変える層。文字そのものではなく、ベクトル演算で言語を扱えるようにする。 |
+| **Vision Encoder (ビジョンエンコーダ)** | 画像をモデルが理解できるベクトルに変える別構造。「画像もピクセル=数字」だからといって、テキスト LLM がすぐ画像を理解するわけではない。このプロジェクトはテキスト・コード専用なので持っていない。 |
+| **RMSNorm** | 層正規化の一種。LayerNorm より計算がシンプルで、性能は同程度。 |
+| **Pre-Norm** | 正規化を attention・FFN の **前** に適用。層が深くても学習が崩れにくい。 |
+| **RoPE (Rotary Position Embedding)** | トークン位置を回転変換で attention に入れる方式。数式で計算するので長さ拡張 (NTK-aware、YaRN など) が比較的しやすい。それでも学習長よりずっと長く使うと性能は落ちる。 |
+| **Self-Attention** | 文中のトークン同士が互いを見て関連度を計算する演算。Transformer の核心。 |
+| **Causal masking** | 未来のトークンを先読みできないように隠す。next-token prediction に必須。 |
+| **MHA (Multi-Head Attention)** | Self-Attention を複数 head に分けて並列計算。head ごとに違う関係 (文法、意味など) を学習できる。 |
+| **GQA (Grouped-Query Attention)** | Query head より KV head を少なくして、推論時の KV キャッシュを減らす。MHA よりメモリ節約。 |
+| **KV キャッシュ (Key-Value Cache)** | すでに計算した Key/Value を保存し、次のトークンで再利用。毎トークン全体を再計算しない。 |
+| **Flash Attention / SDPA** | Self-Attention を GPU メモリ少なめ・速めに回すカーネル。PyTorch `F.scaled_dot_product_attention`。 |
+| **FFN (Feed-Forward Network)** | Attention のあとに来る、トークンごとに独立適用される全結合網。 |
+| **SwiGLU** | FFN 活性化の組み合わせ。GELU より良いとされ、最近の LLM がよく使う。 |
+| **Residual connection (残差接続)** | 層の入力を出力にもう一度足す。深く積んでも情報が消えにくく、学習が安定。 |
+| **LM Head** | 最後の hidden state を vocab サイズの logits に変える最終線形層。 |
+| **Logits** | ソフトマックス前、次トークン候補ごとの「どれくらいもっともらしいか」の生スコア。 |
+
+---
+
+## 学習 (Training)
+
+| 用語 | 説明 |
+|---|---|
+| **Pretraining (事前学習)** | 大量の生テキスト・コードで next-token prediction。言語構造・知識・コーディングパターンを体に染み込ませる最初の段階。 |
+| **Next-token prediction** | 「これまでのトークンを見て、すぐ次を当てろ」。例: 「Pythonは」→「プログラミング」→ … 繰り返すと文が完成する。 |
+| **Fine-tuning (微調整)** | 事前学習モデルを、より小さく目的がはっきりしたデータでもう一度学習。 |
+| **SFT (Supervised Fine-Tuning)** | (質問, お手本の答) ペアで教師あり学習する微調整。 |
+| **Instruction tuning** | 指示に従えるよう対話形式で微調整。SFT の一形態。 |
+| **Loss (損失)** | 予測が正解とどれだけ違うか。学習はこの値を下げる方向にパラメータを動かす。 |
+| **Cross-entropy** | 言語モデルでいちばんよく使う損失。正解トークンに低い確率を与えるほど大きくなる。 |
+| **Loss masking (損失マスキング)** | 特定トークン (例: ユーザーの質問) を損失から除外 (`-100`)。モデルがその部分を「生成」するよう学ばせず、答側だけを学ばせる。 |
+| **Perplexity** | validation loss を指数に変換。低いほど次トークン予測がうまくいっている。 |
+| **Epoch / Step / Batch** | 全体一周 (epoch)、パラメータ一回更新 (step)、一度にまとめるデータ (batch)。 |
+| **Gradient accumulation** | 大きなバッチを載せられないとき、複数ステップの gradient を積んでから一度に更新。 |
+| **Optimizer / AdamW** | 損失を下げる方向にパラメータを実際に更新。AdamW が事実上の標準。 |
+| **Learning rate / Warmup / Cosine decay** | 歩幅 (lr) を最初はゆっくり上げ (warmup)、その後コサインで下げる (decay)。 |
+| **Gradient clipping** | gradient が大きくなりすぎないよう切り、発散を防ぐ。 |
+| **Mixed precision / bfloat16** | 重い演算は 16 ビット (bfloat16)、重要な重み・オプティマイザ状態は 32 ビット。速度とメモリ節約。 |
+| **Checkpoint (チェックポイント)** | 重みのスナップショットファイル。`ckpt/sft_nano.pt` のようなもの。 |
+| **Chinchilla scaling law** | 決まった compute の中で、モデルサイズとトークン数をどの比率で伸ばすか。[README §2](README.ja.md#2-パラメータはゆっくり大きくする)。 |
+| **FIM (Fill-In-the-Middle)** | 前後を与えて真ん中を埋めさせる学習。コード補完に重要。 |
+
+---
+
+## 推論 · 生成
+
+| 用語 | 説明 |
+|---|---|
+| **Context window (コンテキストウィンドウ)** | 一度に参照できる最大トークン長。 |
+| **Sampling (サンプリング)** | logits → 確率分布 → 次トークンをランダムに選ぶ。毎回同じ答にならないようにする。 |
+| **Temperature** | 分布を平らに (多様) / 尖らせて (確信) 調整。 |
+| **Top-p (nucleus sampling)** | 累積確率 p を超える上位候補だけ残してサンプリング。変な希少トークンを減らす。 |
+| **THINKING モード (Chain-of-Thought)** | 答の前に `<THINKING>...</THINKING>` で思考過程を先に書かせる。[ARCHITECTURE](ARCHITECTURE.ja.md)。 |
+| **Prefill** | プロンプト全体を一度通して KV キャッシュを先に埋める段階。 |
+
+---
+
+## RAG / Tool
+
+| 用語 | 説明 |
+|---|---|
+| **RAG (Retrieval-Augmented Generation)** | 関連文書を外部から検索してプロンプトに入れ、生成。再学習なしで最新知識を入れられる。 |
+| **Tool use / Function calling** | モデルが「いまは電卓 / コード実行」のような外部ツールを呼ぶ能力。 |
+
+---
+
+## 後続学習 · 整列
+
+| 用語 | 説明 |
+|---|---|
+| **RLHF** | 人の選好フィードバックを報酬にして、強化学習でモデルを合わせる方法一式。 |
+| **Preference pair / Chosen / Rejected** | 同じ質問への二つの答のうち、良い方 (chosen) とそうでない方 (rejected)。 |
+| **DPO (Direct Preference Optimization)** | 報酬モデルなしで選好ペアだけで整列。RLHF より実装が単純で安定。 |
+| **Reward Model, RM** | 答に点をつけるよう学習したモデル。最後の層をスカラー出力に差し替える。 |
+| **GRPO** | 同じ質問に複数答をサンプリングし、グループ内の相対優劣 (advantage) で更新。PPO と違い value モデル不要。 |
+| **RLVR** | 数学・コーディングのように自動採点できる問題で、RM の代わりに「正解一致」などのルール報酬。 |
+| **KL divergence / KL penalty** | 新しいモデルが参照モデルから遠く離れすぎないように抑える項。 |
+| **Rejection sampling** | 複数候補のうち基準を通ったものだけを選んで学習データにする。 |
+| **Reward hacking (報酬ハッキング)** | 実際の品質は上げず、報酬スコアだけ稼ぐ抜け道を学んでしまう現象。 |
+
+---
+
+## 評価
+
+| 用語 | 説明 |
+|---|---|
+| **Benchmark (ベンチマーク)** | 標準問題セットで能力を測る。例: HellaSwag・MMLU (言語)、HumanEval・MBPP (コーディング)、GSM8K (数学)。 |
+| **pass@1** | コードを一回生成したとき、テストを通る割合。 |
+
+---
+
+[README](README.ja.md) · [ARCHITECTURE](ARCHITECTURE.ja.md) · [POST-TRAINING](POST-TRAINING.ja.md)

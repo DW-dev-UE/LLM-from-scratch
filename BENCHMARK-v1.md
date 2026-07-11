@@ -1,25 +1,17 @@
-<div align="center">
-
-# Benchmark Report · Base V1
-
-**학습은 어떻게 했고, 데이터는 뭘 썼으며, 질문에 뭐라고 답했는가**
-
-<br/>
-
-![ckpt](https://img.shields.io/badge/sft__base__v1-326.7M-3b82f6?style=flat-square)
-![pretrain](https://img.shields.io/badge/pretrain-18k%20steps-22c55e?style=flat-square)
-![sft](https://img.shields.io/badge/SFT-5k%20steps-22c55e?style=flat-square)
-![status](https://img.shields.io/badge/status-early%20stage-f59e0b?style=flat-square)
-
-<br/>
-
 [한국어](BENCHMARK-v1.md) · [English](BENCHMARK-v1.en.md) · [日本語](BENCHMARK-v1.ja.md)
 
 [← README](README.md)
 
-</div>
-
 ---
+
+이 문서는 **base 약 327M** 을 실제로 학습해 보고 남긴 기록입니다.
+예쁜 점수표가 목적이 아니라,
+
+- 학습은 어떻게 했고
+- 데이터는 뭘 썼고
+- 질문에 뭐라고 답했는지
+
+를 남기는 쪽입니다.
 
 ### 먼저 한 줄로
 
@@ -29,21 +21,8 @@
 | **SFT 이후** | 지시 형식은 따라 하려 함. 내용은 자주 틀림 |
 | **THINKING 모드** | 답변이 비는 버그 (14문항 중 답 0개) → 일반 채팅 모드로 평가 |
 
-아직 실사용 단계는 아닙니다.  
-다만 **파이프라인이 실제로 돌아가는지**, SFT가 무엇을 바꾸는지 보여 주는 첫 스냅샷입니다.
-
----
-
-## 목차
-
-1. [학습 과정](#1-학습-과정)  
-2. [데이터셋](#2-데이터셋)  
-3. [어떻게 채점했나](#3-어떻게-채점했나)  
-4. [점수 요약](#4-점수-요약)  
-5. [Pretrain 과 SFT 비교](#5-pretrain-과-sft-비교)  
-6. [질문과 답변](#6-질문과-답변)  
-7. [코딩 문항](#7-코딩-문항)  
-8. [느낀 점 · 다음에 할 일](#8-느낀-점--다음에-할-일)
+아직 실사용 단계는 아닙니다.
+다만 **파이프라인이 실제로 도는지**, SFT가 무엇을 바꾸는지 보여 주는 첫 스냅샷입니다.
 
 ---
 
@@ -122,14 +101,14 @@ LM Head ◄───────────────────────
 | 1,000 | 1.39 |
 | 4,950 | **1.05** |
 
-Loss 가 내려간 것은 “대화 형식에 적응 중”이라는 신호입니다.  
+Loss 가 내려간 것은 “대화 형식에 적응 중”이라는 신호입니다.
 벤치 점수가 바로 좋아진다는 뜻은 아닙니다. 아래 Q&A 를 보면 그 갭이 드러납니다.
 
 ---
 
 ## 2. 데이터셋
 
-원본 파일(수십 GB)은 GitHub 에 넣지 않았습니다.  
+원본 파일(수십 GB)은 GitHub 에 넣지 않았습니다.
 공개 HuggingFace 등에서 받아 `data.py` 로 전처리했습니다.
 
 ### 토크나이저
@@ -245,7 +224,7 @@ SFT 예제 (대략)
 | 일반 채팅 · 영어 | 평균 **2.67 / 5** |
 | 일반 채팅 · 코딩 | 테스트 **4 / 17** · 문제 완전 통과 **1 / 5** |
 
-THINKING 모드에서는 닫는 태그를 쓰기 전에 생성이 끝나 버립니다.  
+THINKING 모드에서는 닫는 태그를 쓰기 전에 생성이 끝나 버립니다.
 추론 코드가 그 경우 답을 비워 두므로, **이 체크포인트는 일반 채팅 모드로 쓰는 편이 맞습니다.**
 
 ---
@@ -438,14 +417,14 @@ def reverse_string(s):
 1. THINKING 닫기 실패  
 2. 한·일 사실 · 산술 약함  
 3. 요약 · 번역 지시 무시  
-4. 코딩 완전 통과 1 / 5
+4. 코딩 완전 통과 1 / 5  
 
 ### 다음에
 
 - THINKING 종료 패턴을 더 넣은 SFT (v2 방향)  
 - 코딩 · 산술 비중 확대, 필요 시 RLVR  
 - DPO / 교정 SFT  
-- **같은 14문항**으로 버전 비교 유지
+- **같은 14문항**으로 버전 비교 유지  
 
 ---
 
@@ -461,8 +440,4 @@ def reverse_string(s):
 
 ---
 
-<div align="center">
-
 [README](README.md) · [ARCHITECTURE](ARCHITECTURE.md) · [POST-TRAINING](POST-TRAINING.md)
-
-</div>

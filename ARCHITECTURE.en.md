@@ -1,39 +1,21 @@
-<div align="center">
+[한국어](ARCHITECTURE.md) · [English](ARCHITECTURE.en.md) · [日本語](ARCHITECTURE.ja.md)
 
-# Model Architecture · Training · Inference
-
-<img src="https://img.shields.io/badge/CUDA-enabled-76B900?style=flat&logo=nvidia&logoColor=white" alt="CUDA" />
-<img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=flat&logo=pytorch&logoColor=white" alt="PyTorch" />
-
-[한국어](ARCHITECTURE.md) &nbsp;·&nbsp; **[English](ARCHITECTURE.en.md)** &nbsp;·&nbsp; [日本語](ARCHITECTURE.ja.md)
-
-[← README.en.md](README.en.md) &nbsp;|&nbsp; New to the terminology? Start with [GLOSSARY.en.md](GLOSSARY.en.md)
-
-</div>
+[← README](README.en.md) · Stuck on a term? [GLOSSARY](GLOSSARY.en.md)
 
 ---
 
-This covers building, training, and running inference on a small general-purpose LLM that's at least
-GPT-2 (the original GPT) caliber — including bolting on a `<THINKING>`-tag-based thinking mode along the way.
-
-## Table of Contents
-
-1. [Overall Roadmap](#1-overall-roadmap)
-2. [Model Architecture Design](#2-model-architecture-design)
-3. [Tokenizer](#3-tokenizer)
-4. [Dataset Strategy](#4-dataset-strategy)
-5. [Training Pipeline](#5-training-pipeline)
-6. [Inference Engine](#6-inference-engine)
-7. [Evaluation](#7-evaluation)
-8. [Realistic Expectations and Scaling Paths](#8-realistic-expectations-and-scaling-paths)
+This doc is about how the model is built, trained, and run for inference.
+It's the process of writing a small general-purpose LLM at roughly GPT-2 scale, then bolting on a `<THINKING>` reasoning mode.
 
 ---
 
-## 1. Overall Roadmap
+## 1. Overall roadmap
+
+I didn't start with a perfect pipeline. Roughly, work went in this order.
 
 | Stage | What it covers | Output |
 |---|---|---|
-| 0 | Set up the environment (PyTorch + CUDA) | Dev environment |
+| 0 | Environment setup (PyTorch + CUDA) | Dev environment |
 | 1 | Tokenizer (BPE) | `tokenizer.json` |
 | 2 | Model architecture (decoder-only Transformer) | `model.py` |
 | 3 | Pretraining | base checkpoint |
@@ -44,13 +26,13 @@ GPT-2 (the original GPT) caliber — including bolting on a `<THINKING>`-tag-bas
 
 ---
 
-## 2. Model Architecture Design
+## 2. Model architecture design
 
-### 2.1 Basic Structure — Decoder-only Transformer (Modern Recipe)
+### 2.1 Basic structure — Decoder-only Transformer
 
-This uses more modern components than vanilla GPT-2 — basically the LLaMA-style recipe. If any of
-these component names throw you off, look them up one at a time in
-[GLOSSARY.en.md](GLOSSARY.en.md#model-architecture-terms).
+At first I wondered if plain GPT-2 would be enough.
+Looking at recent recipes (the LLaMA side of things), there is quite a bit worth changing.
+If a term is unfamiliar, see [GLOSSARY](GLOSSARY.en.md#model-architecture).
 
 ```
 Input Tokens
@@ -70,15 +52,17 @@ RMSNorm (final)
 LM Head (Linear → vocab logits)
 ```
 
-| Component | GPT-2 (2019) | This design (recommended) | Why |
+| Component | GPT-2 (2019) | This design | Why |
 |---|---|---|---|
 | Normalization | LayerNorm | **RMSNorm** | Simpler, more stable training |
-| Positional info | Learned absolute position | **RoPE** | Extending context length later is comparatively easy |
+| Positional info | Learned absolute position | **RoPE** | Context extension is relatively easier later |
 | Activation | GELU | **SwiGLU** | Better performance |
 | Attention | MHA | **GQA** (Grouped-Query) | Saves KV cache memory |
 | Bias | Present | **Removed** | Saves parameters, more stable |
 
-### 2.2 Model Sizes (Three Tiers by GPU Budget)
+In one line: I picked these so **training breaks less, inference uses less memory, and length extension is at least somewhat easier**.
+
+### 2.2 Model sizes (by GPU budget)
 
 | Preset | Parameters | layers | d_model | heads (Q/KV) | ctx | VRAM needed (training) |
 |---|---|---|---|---|---|---|
@@ -89,11 +73,10 @@ LM Head (Linear → vocab logits)
 - vocab: **32,000** (BPE) — bump to 48k–64k if Korean is in the mix
 - FFN hidden: `d_model × 8/3` (for SwiGLU, e.g. 768 → 2048)
 
-> The actual implementation in this repo ([llm/](llm/)) has been verified end-to-end on the **nano**
-> preset — training, inference, the whole feedback loop, all of it working. Scaling up to small/base
-> just follows the same strategy laid out in [README.en.md §2](README.en.md#2-parameter-count).
+The actual implementation ([llm/](llm/)) has been run end-to-end on **nano** — training, inference, and the feedback loop.
+Scaling to small/base follows the same path as [README §2](README.en.md#2-scale-parameters-slowly).
 
-### 2.3 Core Code Skeleton (PyTorch)
+### 2.3 Core code skeleton (PyTorch)
 
 <details>
 <summary><b>View the full model.py code</b> (click to expand)</summary>
@@ -199,8 +182,8 @@ class GPT(nn.Module):
 
 ## 3. Tokenizer
 
-- **BPE (byte-level)** — uses the HuggingFace `tokenizers` library
-- Special-token design (this is the key part for thinking mode):
+- **BPE (byte-level)** — HuggingFace `tokenizers`
+- Special tokens (important because of thinking mode):
 
 ```
 <|bos|>  <|eos|>  <|pad|>
@@ -221,28 +204,28 @@ tok.save("tokenizer.json")
 
 ---
 
-## 4. Dataset Strategy
+## 4. Dataset strategy
 
-> **Implementation status**: real Korean/English/Japanese natural-language and 11-language code datasets
-> have been downloaded from non-gated public sources per the strategy below, and are organized under
-> [llm/datasets/](llm/datasets/) — about 11GB total, spanning pretraining text plus 320k+ SFT/thinking-mode
-> rows. Full inventory and sources: [llm/datasets/README.md](llm/datasets/README.md) (Korean only).
+Per the plan below, Korean / English / Japanese natural language plus code in 11 languages
+was downloaded from non-gated public sources and organized under [llm/datasets/](llm/datasets/).
+About 11GB total: pretraining text plus ~320k SFT/thinking rows.
+Inventory and sources: [llm/datasets/README.md](llm/datasets/README.md).
 
 ### 4.1 Pretraining
 
 | Preset | Dataset | Token count | Notes |
 |---|---|---|---|
-| nano | **TinyStories** | ~500M | Doable in a day, good for confirming grammatical generation |
-| small | **FineWeb-Edu (10B sample)** | 5-10B | Roughly GPT-2-reproduction quality |
-| base | FineWeb-Edu + **The Stack (smol)** | 10-30B | **Coding performance** hinges on a 15-25% code-data ratio |
-| Korean | + AI Hub / Modu Corpus / ko-wikipedia | +α | If Korean capability is needed |
+| nano | **TinyStories** | ~500M | Finish in a day; check grammatical generation |
+| small | **FineWeb-Edu (10B sample)** | 5–10B | Roughly GPT-2 reproduction level |
+| base | FineWeb-Edu + **The Stack (smol)** | 10–30B | **Coding** hinges on a 15–25% code ratio |
+| Korean | + AI Hub / Modu Corpus / ko-wikipedia | +α | When Korean capability is needed |
 
-> **Chinchilla scaling law** (see [README.en.md §2](README.en.md#2-parameter-count)): optimal token
-> count ≈ parameters × 20 (so a 124M model needs at least 2.5B tokens).
+Chinchilla in short ([README §2](README.en.md#2-scale-parameters-slowly)): optimal tokens ≈ parameters × 20  
+(so a 124M model needs at least 2.5B tokens).
 
-### 4.2 SFT (Conversational Format)
+### 4.2 SFT (chat format)
 
-- Public instruction datasets like **OpenHermes-2.5**, **UltraChat**, **KoAlpaca** (Korean)
+- Public instruction data such as **OpenHermes-2.5**, **UltraChat**, **KoAlpaca**
 - Format:
 
 ```
@@ -251,10 +234,9 @@ tok.save("tokenizer.json")
 <|assistant|>...code...<|eos|>
 ```
 
-### 4.3 Thinking-Mode Data (Core)
+### 4.3 Thinking-mode data
 
-- Convert public reasoning-trace datasets like **OpenThoughts / OpenR1-Math / Raiden-DeepSeek-R1**
-  into the `<THINKING>` format
+- Convert reasoning-trace datasets like **OpenThoughts / OpenR1-Math / Raiden-DeepSeek-R1** into the `<THINKING>` format
 - Format:
 
 ```
@@ -266,13 +248,12 @@ The largest 3-digit number is 999. 999=3×333, composite. 998 is even. Check 997
 The largest 3-digit prime is **997**.<|eos|>
 ```
 
-- **Loss masking**: user tokens get marked `-100` (excluded from the loss), while the loss is applied
-  across the *entire* assistant span — `<THINKING>` block included — so the model actually learns to
-  produce the reasoning process on its own.
+- **Loss masking**: user tokens get `-100` (excluded from loss).  
+  Loss is applied over the whole assistant span, including `<THINKING>`, so the model learns to write the reasoning process itself.
 
 ---
 
-## 5. Training Pipeline
+## 5. Training pipeline
 
 ### 5.1 Hyperparameters (small preset)
 
@@ -281,12 +262,12 @@ The largest 3-digit prime is **997**.<|eos|>
 | Optimizer | AdamW (β1=0.9, β2=0.95, wd=0.1) |
 | LR schedule | Warmup 2k steps → cosine decay |
 | Peak LR | 6e-4 (pretrain) / 2e-5 (SFT) |
-| Batch | ~0.5M effective tokens (via gradient accumulation) |
+| Batch | ~0.5M effective tokens (gradient accumulation) |
 | Precision | bfloat16 (mixed precision) |
 | Grad clip | 1.0 |
 | Other | `torch.compile`, Flash Attention (SDPA) |
 
-### 5.2 Training Loop Skeleton
+### 5.2 Training loop skeleton
 
 ```python
 model = GPT(cfg).cuda()
@@ -305,22 +286,22 @@ for step, (x, y) in enumerate(loader):        # x,y: (B, T), recommend uint16 me
         save_checkpoint(model, opt, step)      # + log val loss
 ```
 
-### 5.3 Step-by-Step Order
+### 5.3 Step-by-step order
 
 ```
 [1] Pretraining  : raw text + code, next-token prediction        (days~weeks)
 [2] SFT          : conversational format, user-turn masking       (hours)
 [3] Thinking SFT : <THINKING> data mixed in (general:thinking = 3:7)  (hours)
-    ※ Steps 2 and 3 can be merged into one pass. Thinking mode on/off can be
-      controlled via the system prompt ("think step by step in <THINKING>")
-[4] (optional) DPO/GRPO : RL on math/coding problems with verifiable answers → improves reasoning quality (see POST-TRAINING.md)
+    ※ Steps 2 and 3 can be merged into one pass. Thinking mode on/off
+      can be controlled via the system prompt ("think step by step in <THINKING>")
+[4] (optional) DPO/GRPO : RL on math/coding with verifiable answers → better reasoning (POST-TRAINING.en.md)
 ```
 
 ---
 
-## 6. Inference Engine
+## 6. Inference engine
 
-### 6.1 Generation Loop (KV Cache + Thinking Mode)
+### 6.1 Generation loop (KV cache + thinking mode)
 
 ```python
 @torch.no_grad()
@@ -344,24 +325,20 @@ def generate(model, tok, prompt, thinking=True,
         if next_id.item() == tok.token_to_id("<|eos|>"):
             break
         out.append(next_id.item())
-        x = next_id                             # thanks to the cache, only the single new token needs a forward pass
+        x = next_id                             # thanks to the cache, only the new token is forwarded
 
     text = tok.decode(out)
-    # split off the thinking span → handled as collapse/hide in the UI
+    # split thinking span → collapse/hide in the UI
     thought, _, answer = text.partition("</THINKING>")
     return {"thinking": thought.strip(), "answer": answer.strip()}
 ```
 
-### 6.2 How Thinking Mode Actually Works
+### 6.2 How thinking mode works
 
-1. **Training**: SFT on assistant responses that include `<THINKING>...</THINKING>` → the model
-   internalizes a "think first, answer second" pattern.
-2. **Inference**: right as the assistant turn starts, prefill the `<THINKING>` token to force
-   reasoning to kick in (thinking-off mode just skips the prefill and swaps the system prompt).
-3. **Post-processing**: split thinking from the answer at `</THINKING>`, and store **only the
-   answer** in multi-turn history (saves context).
-4. **Safety net**: if the thinking-token count blows past a cap (say, 1024), force-insert
-   `</THINKING>`.
+1. **Training**: SFT on assistant replies that contain `<THINKING>...</THINKING>` → the model picks up “think first, answer second”  
+2. **Inference**: prefill `<THINKING>` right after the assistant turn to force reasoning (off = skip prefill + change system prompt)  
+3. **Post-processing**: split thinking / answer at `</THINKING>`. Multi-turn history stores **answer only** (saves context)  
+4. **Safety net**: if thinking tokens pass a cap (e.g. 1024), force-insert `</THINKING>`  
 
 ---
 
@@ -371,30 +348,22 @@ def generate(model, tok, prompt, thinking=True,
 |---|---|---|
 | Language understanding | HellaSwag, ARC, MMLU (subset) | `lm-evaluation-harness` |
 | Coding | **HumanEval, MBPP** | pass@1 scoring script |
-| Math / reasoning | GSM8K | Compare thinking-mode on/off → verify that thinking mode is actually helping |
+| Math / reasoning | GSM8K | compare thinking on/off |
 | Basic | validation loss / perplexity | in-house |
 
 ---
 
-## 8. Realistic Expectations and Scaling Paths
+## 8. Realistic expectations and scaling
 
-- **Pretraining nano/small from scratch**: you get fluent generation on par with the original
-  GPT-2, plus basic instruction-following. Don't expect real coding ability out of this — it's not
-  going to happen at this scale.
-- **To actually move the needle on coding performance**: ① raise the code-data ratio (The Stack),
-  ② scale the model up to 350M-1B+, ③ add thinking mode plus coding SFT data (e.g.,
-  Magicoder-OSS-Instruct).
-- **The shortcut (and the recommended track)**: grab a public small base model (Qwen2.5-0.5B/1.5B,
-  etc.) and just run the SFT → Thinking → inference pipeline from
-  [POST-TRAINING.en.md](POST-TRAINING.en.md) yourself. You pick up the exact same architectural
-  knowledge, while ending up with real-world usable quality that blows the original GPT-2 out of
-  the water.
-- Reference implementations: `karpathy/nanoGPT`, `karpathy/build-nanogpt`, HuggingFace `smol-course`.
-
-<div align="center">
+- **Pretraining nano/small from scratch**: fluent generation around original GPT-2 level, plus simple instructions, is realistic.  
+  Real coding ability is not something to expect at this scale.
+- **To actually improve coding**: ① raise the code-data ratio (The Stack), ② scale to 350M–1B+,  
+  ③ add thinking mode plus coding SFT (e.g. Magicoder-OSS-Instruct).
+- **Shortcut**: grab a public small base (Qwen2.5-0.5B/1.5B, etc.) and only run  
+  SFT → Thinking → inference from [POST-TRAINING](POST-TRAINING.en.md).  
+  You still learn the same pipeline, and end up with quality far more usable than original GPT-2.
+- References: `karpathy/nanoGPT`, `karpathy/build-nanogpt`, HuggingFace `smol-course`.
 
 ---
 
-[← GLOSSARY.en.md](GLOSSARY.en.md) &nbsp;|&nbsp; [README.en.md](README.en.md) &nbsp;|&nbsp; [POST-TRAINING.en.md →](POST-TRAINING.en.md)
-
-</div>
+[GLOSSARY](GLOSSARY.en.md) · [README](README.en.md) · [POST-TRAINING](POST-TRAINING.en.md) · [BENCHMARK](BENCHMARK-v1.en.md)

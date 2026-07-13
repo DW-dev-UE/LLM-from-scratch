@@ -141,7 +141,7 @@ So the rule is:
 | 3B | in-house tool integration candidate |
 | 7B+ | minimum size worth external exposure |
 
-The published V1 benchmark checkpoint is **base ~327M**. → [BENCHMARK v1](BENCHMARK-v1.en.md)
+The latest published benchmark checkpoint is **`sft_base_v3`** (base ~327M). → [§6 Benchmark snapshot](#6-benchmark-snapshot) · v1 write-up [BENCHMARK v1](BENCHMARK-v1.en.md)
 
 ---
 
@@ -232,24 +232,41 @@ For real runs, swap in public corpora / SFT jsonl and scale with `small` / `base
 
 ## 6. Benchmark snapshot
 
-Same 14 prompts × THINKING on/off, `base` (~327M).
+Same 14 prompts × THINKING on/off, `base` (~327M).  
+Latest snapshot: **`sft_base_v3`** (`ckpt/benchmark_sft_base_v3.json`, 2026-07-13).
 
 | Checkpoint | Takeaway |
 |:-----------|:---------|
 | pretrain v1 | effectively 0 on chat format (no instruction training) |
-| **sft v1** | tries to follow instructions; accuracy still low |
+| sft v1 | tries to follow instructions; accuracy still low. THINKING answers 0/14 (close-tag bug) |
+| sft v2 | THINKING closure mostly fixed (non-empty answers 13/14). Coding still weak |
+| **sft v3** | **coding (normal chat) 4/5 fully pass.** English strong; Korean 0 on all items. THINKING coding still 0/5 |
 
-**sft_base_v1 · normal chat (THINKING off)**
+**sft_base_v3 · normal chat (THINKING off)** · avg score 2.57 / 5
 
 | Area | Result |
 |:-----|:-------|
-| Korean | avg 1.33 / 5 |
-| Japanese | avg 0.33 / 5 |
-| English | avg 2.67 / 5 |
-| Coding | 4 / 17 tests (1 / 5 fully pass) |
-| THINKING on | 0 / 14 answers (close-tag issue) |
+| Korean | avg **0.00 / 5** |
+| Japanese | avg 1.33 / 5 |
+| English | avg **4.00 / 5** |
+| Coding | **20 / 25** tests (**4 / 5** fully pass) |
+| THINKING on | avg 0.21 / 5 · non-empty answers 12/14 · coding fully pass 0/5 |
 
-Training process, datasets, and per-item Q&A:
+v3 highlights (vs v2):
+
+- Coding fully pass: **0/5 → 4/5** (`is_prime`, `factorial`, `is_palindrome`, `find_max`). `reverse_string` body is correct but a top-level `print` causes NameError
+- English fact/math recovered (Paris, 120 km)
+- Korean category collapsed (0/5 on all 6 Korean items)
+- THINKING-mode coding still emits prose only (no code)
+
+Raw scoring JSON:
+
+- [ckpt/benchmark_sft_base_v3.json](ckpt/benchmark_sft_base_v3.json) (latest)
+- [ckpt/benchmark_sft_base_v2.json](ckpt/benchmark_sft_base_v2.json)
+- [ckpt/benchmark_sft_base_v1.json](ckpt/benchmark_sft_base_v1.json)
+- [ckpt/benchmark_pretrain_base_v1.json](ckpt/benchmark_pretrain_base_v1.json)
+
+Training process, datasets, and per-item Q&A (v1-era write-up):
 
 - [BENCHMARK-v1.md](BENCHMARK-v1.md) (Korean)  
 - [BENCHMARK-v1.en.md](BENCHMARK-v1.en.md)  

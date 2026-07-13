@@ -142,7 +142,7 @@ LLM 내부를 손으로 짜 보지 않으면, 결국 남의 코드를 빌려 쓰
 | 3B | 사내 도구 연동 후보 |
 | 7B+ | 외부 노출을 고민할 최소 규모 |
 
-현재 벤치에 올린 실학습 체크포인트는 **base 약 327M** 입니다. → [BENCHMARK v1](BENCHMARK-v1.md)
+현재 벤치에 올린 최신 체크포인트는 **`sft_base_v3`** (base 약 327M) 입니다. → [§6 벤치마크 한눈에](#6-벤치마크-한눈에) · v1 상세 기록 [BENCHMARK v1](BENCHMARK-v1.md)
 
 ---
 
@@ -234,24 +234,41 @@ python eval_gate.py --old ckpt/sft_nano.pt --new ckpt/dpo_nano_v1.pt
 
 ## 6. 벤치마크 한눈에
 
-`base` (~327M) 기준, 동일 14문항 × THINKING on/off.
+`base` (~327M) 기준, 동일 14문항 × THINKING on/off.  
+최신 스냅샷: **`sft_base_v3`** (`ckpt/benchmark_sft_base_v3.json`, 2026-07-13).
 
 | 체크포인트 | 요약 |
 |:-----------|:-----|
 | pretrain v1 | 채팅 형식에서 사실상 0점 (지시 미학습) |
-| **sft v1** | 지시는 시도함. 정답률은 아직 낮음 |
+| sft v1 | 지시는 시도함. 정답률은 낮음. THINKING 답 0/14 (태그 미종료) |
+| sft v2 | THINKING 종료 대부분 복구 (비어 있지 않은 답 13/14). 코딩은 여전히 약함 |
+| **sft v3** | **코딩(일반 채팅) 4/5 완전 통과.** 영어 강세, 한국어 전 문항 0점. THINKING 코딩은 여전히 0/5 |
 
-**sft_base_v1 · 일반 채팅 모드 (THINKING 끔)**
+**sft_base_v3 · 일반 채팅 모드 (THINKING 끔)** · 평균 점수 2.57 / 5
 
 | 영역 | 결과 |
 |:-----|:-----|
-| 한국어 | 평균 1.33 / 5 |
-| 일본어 | 평균 0.33 / 5 |
-| 영어 | 평균 2.67 / 5 |
-| 코딩 | 테스트 4 / 17 (완전 통과 1/5) |
-| THINKING 켬 | 답 0 / 14 (태그 미종료 이슈) |
+| 한국어 | 평균 **0.00 / 5** |
+| 일본어 | 평균 1.33 / 5 |
+| 영어 | 평균 **4.00 / 5** |
+| 코딩 | 테스트 **20 / 25** (완전 통과 **4 / 5**) |
+| THINKING 켬 | 평균 0.21 / 5 · 비어 있지 않은 답 12/14 · 코딩 완전 통과 0/5 |
 
-학습 과정, 데이터셋, 문항별 질문·답변은 여기:
+v3 하이라이트 (v2 대비):
+
+- 코딩 완전 통과: **0/5 → 4/5** (`is_prime`, `factorial`, `is_palindrome`, `find_max`). `reverse_string` 본문은 맞지만 top-level `print`로 NameError
+- 영어 fact/math 회복 (Paris, 120 km)
+- 한국어 카테고리 붕괴 (6문항 전부 0점)
+- THINKING 모드 코딩은 여전히 산문만 출력 (코드 없음)
+
+원본 채점 JSON:
+
+- [ckpt/benchmark_sft_base_v3.json](ckpt/benchmark_sft_base_v3.json) (최신)
+- [ckpt/benchmark_sft_base_v2.json](ckpt/benchmark_sft_base_v2.json)
+- [ckpt/benchmark_sft_base_v1.json](ckpt/benchmark_sft_base_v1.json)
+- [ckpt/benchmark_pretrain_base_v1.json](ckpt/benchmark_pretrain_base_v1.json)
+
+학습 과정·데이터셋·문항별 Q&A (v1 시점 기록):
 
 - [BENCHMARK-v1.md](BENCHMARK-v1.md) (한국어)  
 - [BENCHMARK-v1.en.md](BENCHMARK-v1.en.md)  

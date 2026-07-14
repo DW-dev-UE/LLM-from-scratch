@@ -11,13 +11,13 @@
 
 | | |
 |:--|:--|
-| 🆕 **Latest** | `sft_base_v3` · 2026-07-13 |
+| 🆕 **Latest** | `sft_base_v5` · 2026-07-14 |
 | 📦 **Model** | Decoder-only · ~**326.7M** (`base`) |
 | 🧪 **Set** | Same **14 prompts × THINKING on/off** (for version comparison) |
-| 📁 **Raw** | [`ckpt/benchmark_sft_base_v3.json`](ckpt/benchmark_sft_base_v3.json) |
+| 📁 **Raw** | [`ckpt/benchmark_sft_base_v5.json`](ckpt/benchmark_sft_base_v5.json) |
 
 > ⚠️ **Not production-ready.**  
-> These snapshots show whether the pipeline runs and what repeated SFT changes.
+> These snapshots show whether the pipeline runs and what changes when checkpoints or protocols change.
 
 ### 📑 Contents
 
@@ -25,7 +25,7 @@
 2. [Training process](#2-training-process)
 3. [Datasets](#3-datasets)
 4. [Scoring](#4-scoring)
-5. [sft_base_v3 · latest](#5-sft_base_v3--latest)
+5. [sft_base_v5 · latest](#5-sft_base_v5--latest)
 6. [Earlier versions](#6-earlier-versions)
 7. [Takeaways · next](#7-takeaways--next)
 
@@ -35,23 +35,44 @@
 
 Bold column = **current latest**.
 
-| | Pretrain | SFT v1 | SFT v2 | ⭐ **SFT v3** |
-|:--|:--------:|:------:|:------:|:------------:|
-| Normal-chat feel | ~0 | low | low | **2.57 / 5** |
-| Coding full pass | 0/5 | 1/5 | 1/5 | **4/5** |
-| THINKING answers | — | **0/14** | **13/14** | **12/14** |
-| Read | no chat | tries format | close-tag fixed | coding↑ · KO↓ |
+> ⚠️ **How to read the table**  
+> · **Protocol**: v1–v4 use temp `0.7` single-sample · **v5 is greedy (temp `0.0`)**  
+> · **Base fork**: v1–v4 sit on `pretrain_base_v1` · **v5 is SFT on `pretrain_base_v2`**  
+> · So **do not** read v5 > v4 > v3 as a pure SFT ladder.  
+> · For coding, compare **full-pass N/5** (test denominators differ: 17 vs 25).
+
+| | Pretrain v1 | SFT v1 | SFT v2 | SFT v3 | SFT v4 | ⭐ **SFT v5** |
+|:--|:-----------:|:------:|:------:|:------:|:------:|:------------:|
+| No-think avg | ~0 | low† | low† | 2.57 | 2.07 | **3.21 / 5** |
+| Coding full pass (NT) | 0/5 | 1/5 | 1/5 | 4/5 | 3/5 | **5/5** |
+| Coding full pass (T) | 0/5 | 0/5 | 0/5 | 0/5 | 0/5 | **0/5** |
+| THINKING nonempty ans | — | **0/14** | **13/14** | 12/14 | 11/14 | **10/14** |
+| THINKING avg | ~0 | 0.0 | 0.71 | 0.21 | 0.50 | **0.50** |
+| Korean total (T+NT) | 0/30 | — | 2/30 | 0/30 | 1/30 | **8/30** |
+| Base | v1 | v1 | v1 | v1 | v1 | **v2** |
+| Sampling | 0.7 | 0.7 | 0.7 | 0.7 | 0.7 | **0.0 greedy** |
+| Read | no chat | format try | close-tag fix | coding↑ · KO↓ | lateral · noise | coding perfect · KO↑ |
+
+† v1/v2 no-think only logged per-language avgs:  
+v1 KO **1.33** / JA **0.33** / EN **2.67** · v2 KO **0.33** / JA **2.0** / EN **1.0**
 
 ```text
-pretrain ──► sft_v1 ──► sft_v2 ──► sft_v3 ★
-  chat ~0      format try   THINKING close   coding 4/5
+                    ┌─► sft_v1 ─► sft_v2 ─► sft_v3 ─► sft_v4
+pretrain_v1 ────────┤   format    close-tag   coding 4/5   KO mix · lateral
+   18k · lr 6e-4    │
+                    └─► pretrain_v2 (25k · lr 1e-4 · corpus v2)
+                              │
+                              └─► sft_v5 ★  (same sft.pt as v4 · greedy bench)
+                                    coding 5/5 · NT 3.21 · KO 8/30
 ```
 
 | Ver | What worked | What broke |
 |:---:|:------------|:-----------|
 | v1 | Starts following instruction format | THINKING answers all empty |
 | v2 | Most `</THINKING>` closures restored | Coding / quality still weak |
-| **v3** | **Coding 4/5**, EN fact/math recovered | **Korean collapse**, THINKING coding 0/5 |
+| v3 | Coding **4/5**, EN fact/math recovered | **Korean collapse**, THINKING coding 0/5 |
+| v4 | Higher KO SFT share · Seoul appears inside thinking | Bench KO barely recovers · item flips |
+| **v5** | **Coding 5/5**, NT **3.21**, KO **8/30** | **thinking→answer handoff** · T coding 0/5 |
 
 ---
 
@@ -90,33 +111,41 @@ next-token probs
 ```text
 ① Tokenizer (BPE · vocab 64k)
         ▼
-② Pretrain · 18k steps · lr 6e-4
+② Pretrain v1 · 18k steps · lr 6e-4
         ▼  pretrain_base_v1
-③ SFT v1 · 5k steps · lr 3e-5
-        ▼  sft_base_v1
-④ SFT v2 · reinforce THINKING close patterns
-        ▼  sft_base_v2
-⑤ SFT v3 · coding data augmentation
-        ▼  sft_base_v3  ★ this doc
+        ├─► ③ SFT v1 · 5k · lr 3e-5 ──► sft_base_v1
+        ├─► ④ SFT v2 · ~5.7k · reinforce THINKING close ──► sft_base_v2
+        ├─► ⑤ SFT v3 · 8k · coding data aug ──► sft_base_v3
+        ├─► ⑥ SFT v4 · 9.2k · Korean SFT aug ──► sft_base_v4
+        │
+        └─► ②′ Pretrain v2 · 25k · lr 1e-4 · corpus v2
+                ▼  pretrain_base_v2
+                └─► ⑦ SFT v5 · 9.2k · (same sft.pt as v4) ──► sft_base_v5 ★
 ```
 
-| Stage | Checkpoint | steps | Note |
-|:------|:-----------|------:|:-----|
-| Pretrain | `pretrain_base_v1` | 18,000 | from scratch · `53f815d47abc4887` |
-| SFT v1 | `sft_base_v1` | 5,000 | from pretrain · `bbc2211091309d3c` |
-| SFT v2 | `sft_base_v2` | ~5.6k–5.7k | goal: THINKING closure |
-| ⭐ SFT v3 | `sft_base_v3` | augmented SFT | coding full pass **4/5** |
+| Stage | Checkpoint | steps | init | Data hash · note |
+|:------|:-----------|------:|:-----|:-----------------|
+| Pretrain v1 | `pretrain_base_v1` | 18,000 | — | `53f815d47abc4887` · lr 6e-4 |
+| SFT v1 | `sft_base_v1` | 5,000 | pretrain_v1 | `bbc2211091309d3c` |
+| SFT v2 | `sft_base_v2` | 5,700 | pretrain_v1 | `fc177a36965df49a` · THINKING close |
+| SFT v3 | `sft_base_v3` | 8,000 | pretrain_v1 | `db63d09ddfa41388` · coding aug |
+| SFT v4 | `sft_base_v4` | 9,200 | pretrain_v1 | `975c1771bfff1919` · KO +70k |
+| Pretrain v2 | `pretrain_base_v2` | 25,000 | pretrain_v1 | `4ad58fc7307962c0` · lr 1e-4 |
+| ⭐ SFT v5 | `sft_base_v5` | 9,200 | **pretrain_v2** | **`975c1771bfff1919`** (same as v4) |
 
-Shared: **AdamW** (β 0.9 / 0.95, wd 0.1) · grad clip 1.0 · warmup + cosine · CUDA
+Shared: **AdamW** (β 0.9 / 0.95, wd 0.1) · grad clip 1.0 · warmup + cosine · CUDA · SFT lr `3e-5`
 
-### 📉 Loss (base · v1 era)
+> 🔑 **v5’s main variable is the base (pretrain_v2), not a new SFT mix.**  
+> v4 and v5 share the same `sft.pt` (`975c…`) and 9,200 steps — only init weights differ.
+
+### 📉 Loss
 
 <details>
-<summary><b>Pretrain · SFT v1 loss tables</b></summary>
+<summary><b>Pretrain · SFT loss tables</b></summary>
 
 <br/>
 
-**Pretrain**
+**Pretrain v1**
 
 | step | train | val |
 |----:|------:|----:|
@@ -128,7 +157,7 @@ Shared: **AdamW** (β 0.9 / 0.95, wd 0.1) · grad clip 1.0 · warmup + cosine ·
 | 17,500 | | 2.81 |
 | late | ~2.1–2.5 | |
 
-**SFT v1**
+**SFT v1** (init = pretrain_v1)
 
 | step | train |
 |----:|------:|
@@ -137,10 +166,20 @@ Shared: **AdamW** (β 0.9 / 0.95, wd 0.1) · grad clip 1.0 · warmup + cosine ·
 | 1,000 | 1.39 |
 | 4,950 | **1.05** |
 
+**SFT v5** (init = pretrain_v2 · same sft mix)
+
+| step | train |
+|----:|------:|
+| 0 | **2.35** (lower than ~2.8-class init on v1-lineage) |
+| 500 | 1.32 |
+| 1,000 | 1.40 |
+| late | ~1.1–1.5 band |
+
 </details>
 
 > 💡 Falling loss = *adapting to chat format*.  
-> It does **not** mean benchmark scores instantly rise.
+> It does **not** mean benchmark scores instantly rise.  
+> v5’s **lower SFT init loss** is a hint that corpus-v2 continued pretrain helps the SFT stage.
 
 ---
 
@@ -158,12 +197,12 @@ Downloaded from public HuggingFace etc., prepared with `data.py`.
 | Sample | fineweb, wiki(ko/ja), tinystories, … ~900MB |
 | Specials | role tokens · `THINKING` span tokens |
 
-### 📚 Pretrain · ~1.91B tokens
+### 📚 Pretrain
 
-`train 1,893,646,391` · `val 19,127,741`
+**v1** · ~1.91B tokens · `train 1,893,646,391` · `val 19,127,741` · hash `53f815…`
 
 <details>
-<summary><b>🌍 Natural language (EN / KO / JA)</b></summary>
+<summary><b>🌍 Natural language (EN / KO / JA) · v1 scale</b></summary>
 
 <br/>
 
@@ -179,7 +218,7 @@ Downloaded from public HuggingFace etc., prepared with `data.py`.
 </details>
 
 <details>
-<summary><b>💻 Code</b></summary>
+<summary><b>💻 Code · v1</b></summary>
 
 <br/>
 
@@ -191,8 +230,17 @@ Downloaded from public HuggingFace etc., prepared with `data.py`.
 
 </details>
 
+**v2** · continued pretrain from v1 · **25,000 steps · lr 1e-4** · data hash `4ad58f…`  
+Expanded/retokenized corpus v2 (larger fineweb_edu, finemath added, etc.).  
+Some sources (vault/commitpack) failed during the download pipeline.
+
+> Note: ko-wiki val loss slightly worsened vs v1 (reported 2.504 → 2.605),  
+> but SFT init loss and downstream bench favored the **v2 base**.
+
+### 🗣️ SFT mix evolution
+
 <details>
-<summary><b>🗣️ SFT · 321,367 examples (v1 mix)</b></summary>
+<summary><b>v1 mix · 321,367 examples</b></summary>
 
 <br/>
 
@@ -209,32 +257,65 @@ Downloaded from public HuggingFace etc., prepared with `data.py`.
 ```json
 {
   "user": "2 + 3 * 4 = ?",
-  "thinking": "Multiply first. 3*4=12, then 2+12=14.",
+  "thinking": "Multiplication first. 3*4=12, 2+12=14.",
   "assistant": "The answer is 14."
 }
 ```
 
-User / system spans are masked from loss — learn the **answer side**, not the question echo.
-
-v2/v3 continue this mix:  
-→ v2 reinforces THINKING close patterns · v3 reinforces coding quality.
+user / system spans are masked from loss — learn the **answer side** only.
 
 </details>
 
-### Mix feel (v1)
+<details>
+<summary><b>v3 mix · 446,771 examples (coding/math aug)</b></summary>
+
+<br/>
+
+Added on top of v1 (with multipliers):
+
+| Add | rows × mult |
+|:----|------------:|
+| gsm8k | 7,473 ×4 |
+| mbpp | 474 ×8 |
+| codealpaca_20k | 20,016 ×2 |
+| orca_math_ko | 25,000 ×1 |
+| jamard_gsm8k_ja | 6,672 ×4 |
+
+→ coding full pass **1/5 → 4/5** (no-think)
+
+</details>
+
+<details>
+<summary><b>v4 / v5 mix · 516,771 examples (Korean aug) · hash `975c…`</b></summary>
+
+<br/>
+
+Added on top of v3:
+
+| Add | rows |
+|:----|----:|
+| kullm_v2 | 40,000 |
+| ko_wikidata_qa | 30,000 |
+
+Korean share ~**10.3% → 22.5%**.  
+**v4 and v5 share this exact `sft.pt`.** Only the init base differs.
+
+</details>
+
+### Mix sketch (v1)
 
 ```text
 Pretrain tokens
-  EN web · stories   ████████
-  KO/JA wiki · web   ████████
-  code               ██
+  EN web·stories    ████████
+  KO/JA wiki·web    ████████
+  Code              ██
 
-SFT examples
-  EN chat            ██████████  ~30%
-  code instruct      ████████    ~23%
-  Japanese           ██████      ~20%
-  thinking · math    ██████      ~20%
-  Korean             ██          ~7%
+SFT examples (v1)
+  EN chat           ██████████  ~30%
+  Code instruct     ████████    ~23%
+  Japanese          ██████      ~20%
+  Thinking·math     ██████      ~20%
+  Korean            ██          ~7%
 ```
 
 ---
@@ -243,107 +324,122 @@ SFT examples
 
 | Item | Detail |
 |:-----|:-------|
-| Items | **14 prompts × 2 modes = 28 gens** (same every version) |
+| Items | **14 prompts × 2 modes = 28 gens** (identical across versions) |
 | Modes | 🧠 THINKING on / 💬 normal chat |
-| QA · open | 0–5 (full transcript graded) |
-| Coding | unit tests executed |
-| v3 gen | temp `0.7` · top_p `0.9` · max_new `256` · seed `0` · 1 sample |
-| Dates | v1 `07-09/10` · v2 `07-10` · **v3 `07-13`** (2026) |
+| QA · open | 0–5 (full transcript graded · Claude) |
+| Coding | Unit tests executed on extracted code |
+| v1–v4 gen | temp **`0.7`** · top_p `0.9` · max_new `256` · seed `0` · **1 sample** |
+| **v5 gen** | temp **`0.0` greedy** · top_p `0.9` · max_new `256` · seed `0` |
+| Dates | v1 `07-09/10` · v2 `07-10` · v3 `07-13` · v4 `07-13` · **v5 `07-14`** (2026) |
 
-> 📌 Coding denominators: v1/v2 total **17** · v3 total **25** (5 cases / task).  
-> Prefer **full pass N/5** for cross-version comparison.
+> 📌 Coding test totals: v1/v2 sum **17** · v3+ sum **25** (5 cases / problem).  
+> Prefer **full-pass N/5** for cross-version coding.
+
+> 🎲 **Sampling noise (v4 lesson)**  
+> Under temp 0.7 single-sample, v3↔v4 item flips were large  
+> (e.g. en_fact 5→0, code_prime 5→0, code_maxlist 5→0, code_reverse 0→5).  
+> **v5 switches to greedy** to kill within-version noise.  
+> Cross-version deltas still need the **protocol caveat**.
+
+> 🇰🇷 Korean total: 3 items × 2 modes × 0–5 = **max 30**.
 
 ---
 
-## 5. sft_base_v3 · latest
+## 5. sft_base_v5 · latest
 
 | | |
 |:--|:--|
-| 🏁 Checkpoint | `ckpt/sft_base_v3.pt` |
-| 📁 JSON | [`benchmark_sft_base_v3.json`](ckpt/benchmark_sft_base_v3.json) |
+| 🏁 Checkpoint | `ckpt/sft_base_v5.pt` |
+| 🧱 Base | `pretrain_base_v2` (25k · lr 1e-4 · corpus v2) |
+| 📦 SFT data | same as v4 `sft.pt` · `975c1771bfff1919` · 9,200 steps |
+| 🎲 Decode | **greedy · temp 0.0** (deterministic) |
+| 📁 JSON | [`benchmark_sft_base_v5.json`](ckpt/benchmark_sft_base_v5.json) |
 
-### 5.1 Score cards
+### 5.1 Scorecards
 
-#### 💬 Normal chat (THINKING off) — overall avg **2.57 / 5**
+#### 💬 Normal chat (THINKING off) — overall avg **3.21 / 5**
 
 | Area | Score | Status |
 |:-----|:-----:|:------:|
-| 🇰🇷 Korean | **0.00 / 5** | 🔴 |
-| 🇯🇵 Japanese | **1.33 / 5** | 🟡 |
-| 🇺🇸 English | **4.00 / 5** | 🟢 |
-| 💻 Coding | **20/25** tests · **4/5** full pass | 🟢 |
+| 🇰🇷 Korean | **1.67 / 5** (2 / 0 / 3) | 🟡 recovering |
+| 🇯🇵 Japanese | **1.33 / 5** (4 / 0 / 0) | 🟡 fact only |
+| 🇺🇸 English | **3.67 / 5** (5 / 3 / 3) | 🟢 |
+| 💻 Coding | **25/25** tests · **5/5** full pass | 🟢 first perfect |
 
-#### 🧠 THINKING on
+#### 🧠 THINKING on — avg **0.50 / 5**
 
 | Metric | Value | Status |
 |:-------|:-----:|:------:|
-| Avg score | **0.21 / 5** | 🔴 |
-| Non-empty answers | **12 / 14** | 🟢 (closure mostly OK) |
+| Avg score | **0.50 / 5** | 🔴 |
+| Nonempty answers | **10 / 14** | 🟡 (v4 11/14 · v3 12/14) |
 | Coding full pass | **0 / 5** | 🔴 prose only |
+| Korean sum (think) | 3 / 15 | math partial only |
 
-### 5.2 v2 → v3 highlights
+### 5.2 v4 → v5 highlights (protocol · base caveats)
 
 | | Change |
 |:--|:-------|
-| ✅ | Coding full pass **0/5 → 4/5** (`is_prime`, `factorial`, `is_palindrome`, `find_max`) |
-| ✅ | EN Paris **5/5**, 120 km **5/5** (recovered from v2 Burgundy) |
-| ⚠️ | `reverse_string` body `s[::-1]` correct · top-level `print` → NameError → **0/5** |
-| ❌ | All 6 Korean items (thinking + normal) **score 0** — category collapse |
+| ✅ | Coding full pass **3/5 → 5/5** (first perfect · deterministic greedy) |
+| ✅ | No-think avg **2.07 → 3.21** |
+| ✅ | Korean total **1/30 → 8/30** (first KO summary success · correct number in think-math) |
+| ✅ | Better SFT init loss signal (pretrain_v2 effect) |
+| ⚠️ | **Same SFT mix**, different base + greedy protocol → not “SFT alone got better” |
 | ❌ | THINKING coding still **no code 0/5** |
-| 🔍 | Correct mid-chain arithmetic then wrong finals more often (e.g. 7−2=5 → ×7=35) |
+| ❌ | Correct content stranded in thinking with **empty answer** (ko_fact, ja_fact, en_summary) |
+| ❌ | KO/JA arithmetic answers still often collapse |
 
 ---
 
 ### 5.3 Q&A · normal chat
 
-Scores are **sft_base_v3 · THINKING off**.
+Scores are **sft_base_v5 · THINKING off · greedy**.
 
-#### 🇰🇷 Korean — avg 0.00
+#### 🇰🇷 Korean — avg 1.67
 
-| Item | Score | Expect | What the model did | Note |
-|:-----|:-----:|:------:|:-------------------|:-----|
-| Capital | **0** | Seoul | GDP/area hallucination, no “서울” | worse than v1 (2) |
-| Apples 5−3 | **0** | 2 | restates “ate 3” | no subtraction |
-| Summary | **0** | one sentence | infinite phrase loop | degenerate |
+| Item | Score | Expected | What the model did | Note |
+|:-----|:-----:|:--------:|:-------------------|:-----|
+| Capital | **2** | Seoul | “largest city is Seoul” · capital weakly stated | better than v3/v4 (0) |
+| Apples 5−3 | **0** | 2 | “3 apples left” | still wrong |
+| Summary | **3** | one sentence | “오늘 날씨가 매우 좋아서 공원에 산책을 나갔다.” | **first successful KO summary** 🟢 |
 
-> 🧠 THINKING capital: reaches “서울” inside thinking, but **empty answer** after the close tag.
+> 🧠 THINKING capital: thinking = `대한민국의 수도는 서울특별시입니다.` **perfect** · empty answer → score 0.  
+> 🧠 THINKING apples: answer contains `2` (wrong verb) → **3** · first partial KO math.
 
 #### 🇯🇵 Japanese — avg 1.33
 
-| Item | Score | Expect | What the model did | Note |
-|:-----|:-----:|:------:|:-------------------|:-----|
-| Capital | **4** | 東京 | 「首都は東京です」+ landmark spam | correct, slight deduct |
-| Apples 7−2 | **0** | 5 | `7−8=2` collapse | no 5 |
-| Translate | **0** | English | “Hopper's Park is a park for kids.” | unrelated |
+| Item | Score | Expected | What the model did | Note |
+|:-----|:-----:|:--------:|:-------------------|:-----|
+| Capital | **4** | 東京 | 「首都は東京です」+ circular repeat | correct, slight penalty |
+| Apples 7−2 | **0** | 5 | restates “ate 2” | no answer 5 |
+| Translate | **0** | English | park essay derail | no English |
 
-> 🧠 THINKING: capital has 東京 in thinking, empty answer (regressed from v2 thinking 5).  
-> Math finds 7−2=5 then derails to 35.
+> 🧠 THINKING capital: 東京 inside thinking · empty answer.
 
-#### 🇺🇸 English — avg 4.00
+#### 🇺🇸 English — avg 3.67
 
-| Item | Score | Expect | What the model did | Note |
-|:-----|:-----:|:------:|:-------------------|:-----|
-| Capital | **5** | Paris | “The capital of France is Paris.” | recovered 🟢 |
-| Train 60×2 | **5** | 120 | Distance = Speed × Time → 120 km | clean 🟢 |
-| Summary | **2** | one sentence | “The weather was nice today.” | drops detail |
+| Item | Score | Expected | What the model did | Note |
+|:-----|:-----:|:--------:|:-------------------|:-----|
+| Capital | **5** | Paris | “The capital of France is Paris.” | perfect 🟢 |
+| Train 60×2 | **3** | 120 | leads with 120 km · later self-contradicts | partial |
+| Summary | **3** | one sentence | kids/park focus · weather dropped | OK |
 
 ---
 
 ### 5.4 Coding · normal chat
 
-Function signatures only; extracted code **executed** on unit tests.  
-🧠 THINKING-mode coding (5 tasks) → prose only → **0/5**.
+Only function signatures are given; extracted code is **run against unit tests**.  
+🧠 THINKING coding ×5 → all prose → **0/5**.
 
-| Task | Tests | Score | One-line |
-|:-----|:-----:|:-----:|:---------|
+| Problem | Tests | Score | One-liner |
+|:--------|:-----:|:-----:|:----------|
 | `is_prime` | **5/5** | **5** | ✅ √n trial division |
-| `reverse_string` | 0/5 | 0 | ⚠️ body OK · `print` NameError |
-| `factorial` | **5/5** | **5** | ✅ recursive base case (fixes v2) |
-| `is_palindrome` | **5/5** | **5** | ✅ lower + reverse (fixes always-True) |
-| `find_max` | **5/5** | **5** | ✅ hand-rolled loop (vs builtin `max`) |
+| `reverse_string` | **5/5** | **5** | ✅ `s[::-1]` (no top-level print) |
+| `factorial` | **5/5** | **5** | ✅ recursive base case |
+| `is_palindrome` | **5/5** | **5** | ✅ lower + reverse (harmless dup line) |
+| `find_max` | **5/5** | **5** | ✅ builtin `max()` · passes |
 
 <details>
-<summary><b>✅ Passing code</b></summary>
+<summary><b>✅ v5 passing code</b></summary>
 
 <br/>
 
@@ -356,6 +452,9 @@ def is_prime(n):
             return False
     return True
 
+def reverse_string(s):
+    return s[::-1]
+
 def factorial(n):
     if n == 0:
         return 1
@@ -364,42 +463,125 @@ def factorial(n):
 
 def is_palindrome(s):
     s = s.lower()
+    s = s.lower()
     return s == s[::-1]
 
 def find_max(lst):
-    max_num = lst[0]
-    for num in lst:
-        if num > max_num:
-            max_num = num
+    max_num = max(lst)
     return max_num
 ```
 
 </details>
 
-<details>
-<summary><b>⚠️ Near-miss · reverse_string</b></summary>
+---
 
-<br/>
+### 5.5 THINKING handoff — the sharpest remaining bottleneck
 
-```python
-def reverse_string(s):
-    return s[::-1]
+4/14 thinking runs ended with **empty answers**; 3 of those had usable content inside thinking.
 
-print(reverse_string(s))  # NameError: s is not defined → executed 0/5
-```
+| Item | Inside thinking | Answer field | Score |
+|:-----|:----------------|:-------------|:-----:|
+| ko_fact | `대한민국의 수도는 서울특별시입니다.` | (empty) | 0 |
+| ja_fact | includes 東京 | (empty) | 0 |
+| en_summary | decent summary | (empty) | 0 |
+| ko_summary | copies source | (empty) | 0 |
 
-The function is correct; a stray top-level `print` breaks the harness.
-
-</details>
+> Retrieval/summary **often works now**; **copying into the answer field after the tag** still fails.  
+> Different from v1’s “never closes” bug (now it closes, but doesn’t hand off).
 
 ---
 
 ## 6. Earlier versions
 
-Archive for comparison — expand only when needed.
+For comparison. Expand only when needed.
 
 <details>
-<summary><b>📘 sft_base_v2 · 2026-07-10</b></summary>
+<summary><b>📕 sft_base_v4 · 2026-07-13 · pretrain_v1 · temp 0.7</b></summary>
+
+<br/>
+
+📁 [`benchmark_sft_base_v4.json`](ckpt/benchmark_sft_base_v4.json)
+
+Korean SFT augmentation (+kullm-v2 40k, +ko_wikidata_QA 30k · KO share 10.3%→22.5%).  
+**Lateral overall.** Bench Korean barely recovered.
+
+#### Scores
+
+| Mode | Result |
+|:-----|:-------|
+| No-think avg | **2.07 / 5** |
+| 🧠 THINKING avg | **0.50 / 5** · nonempty **11/14** |
+| 🇰🇷 no-think | **0.33/5** (0 / 0 / 1) |
+| 🇯🇵 no-think | **1.67/5** (5 / 0 / 0) |
+| 🇺🇸 no-think | **2.67/5** (0 / 5 / 3) |
+| 💻 no-think | full **3/5** · tests 15/25 |
+| 🇰🇷 total (T+NT) | **1/30** |
+
+#### Coding (no-think · temp 0.7)
+
+| Problem | Tests | Note |
+|:--------|:-----:|:-----|
+| is_prime | 0/5 | empty body → IndentationError — possible sampling noise |
+| **reverse_string** | **5/5** | `s[::-1]` (fixes v3 print side-effect) |
+| factorial | 5/5 | recursive base case |
+| is_palindrome | 5/5 | alnum filter + lower · more robust |
+| find_max | 0/5 | variable shadowing bug |
+
+#### Highlights
+
+| | |
+|:--|:--|
+| ✅ | First perfect Korean capital sentence **inside thinking** (`서울특별시`) — answer empty |
+| ✅ | First thinking-mode math perfect: en_math **5/5** |
+| ⚠️ | Large item flips vs v3 → **temp 0.7 single-sample noise** dominates |
+| ❌ | Korean bench 1/30 — SFT share alone insufficient → pretrain lever recommended |
+
+</details>
+
+<details>
+<summary><b>📘 sft_base_v3 · 2026-07-13 · pretrain_v1 · temp 0.7</b></summary>
+
+<br/>
+
+📁 [`benchmark_sft_base_v3.json`](ckpt/benchmark_sft_base_v3.json)
+
+Coding-aug goal achieved. Korean category collapsed.
+
+#### Scores
+
+| Mode | Result |
+|:-----|:-------|
+| No-think avg | **2.57 / 5** |
+| 🧠 THINKING avg | **0.21 / 5** · nonempty **12/14** |
+| 🇰🇷 no-think | **0.00/5** |
+| 🇯🇵 no-think | **1.33/5** |
+| 🇺🇸 no-think | **4.00/5** |
+| 💻 no-think | tests **20/25** · full **4/5** |
+| 🇰🇷 total | **0/30** |
+
+#### Coding (no-think)
+
+| Problem | Tests | Note |
+|:--------|:-----:|:-----|
+| is_prime | 5/5 | √n trial division |
+| reverse_string | 0/5 | body OK · top-level `print` → NameError |
+| factorial | 5/5 | recursive base (fixes v2 infinite recursion) |
+| is_palindrome | 5/5 | lower + reverse (fixes v2 always-True) |
+| find_max | 5/5 | hand-rolled loop |
+
+#### No-think glance
+
+| Item | Score | Note |
+|:-----|:-----:|:-----|
+| ko_fact / math / summary | 0 / 0 / 0 | Korean collapse |
+| ja_fact / math / translate | **4** / 0 / 0 | 東京 correct |
+| en_fact / math / summary | **5** / **5** / 2 | Paris·120 recovered |
+| coding full pass | 4/5 | reverse only fail |
+
+</details>
+
+<details>
+<summary><b>📗 sft_base_v2 · 2026-07-10 · pretrain_v1 · temp 0.7</b></summary>
 
 <br/>
 
@@ -409,44 +591,35 @@ Archive for comparison — expand only when needed.
 
 | Mode | Result |
 |:-----|:-------|
-| 🧠 THINKING | answers **13/14** · avg **0.71/5** |
-| 🇰🇷 normal | **0.33/5** |
-| 🇯🇵 normal | **2.00/5** |
-| 🇺🇸 normal | **1.00/5** |
-| 💻 normal | tests **9/17** · full **1/5** (`find_max` via builtin `max()`) |
+| 🧠 THINKING | ans **13/14** · avg **0.71/5** |
+| 🇰🇷 no-think | **0.33/5** |
+| 🇯🇵 no-think | **2.00/5** |
+| 🇺🇸 no-think | **1.00/5** |
+| 💻 no-think | tests **9/17** · full **1/5** (`find_max` → builtin `max()`) |
 
 #### v1 → v2
 
 | | |
 |:--|:--|
-| ✅ | THINKING close mostly fixed (0/14 → 13/14) |
+| ✅ | THINKING close largely fixed (0/14 → 13/14) |
 | ✅ | First thinking-mode perfect: `ja_fact` **5/5** |
 | ⚠️ | EN fact = Burgundy hallucination (temp 0.7 · single sample) |
-| ❌ | Coding still weak · no thinking-mode code |
+| ❌ | Coding still weak · thinking produces no code |
 
-#### Normal chat at a glance
+#### Coding (no-think)
 
-| Item | Score | Note |
-|:-----|:-----:|:-----|
-| ko_fact / math / summary | 0 / 0 / 1 | Korean weak |
-| ja_fact / math / translate | **5** / 1 / 0 | 東京 correct |
-| en_fact / math / summary | 0 / 2 / 1 | Burgundy |
-| coding full | 1/5 | `find_max` only |
-
-#### Coding (normal)
-
-| Task | Tests | Note |
-|:-----|:-----:|:-----|
+| Problem | Tests | Note |
+|:--------|:-----:|:-----|
 | is_prime | 2/5 | partial |
 | reverse_string | 2/3 | partial |
 | factorial | 0/3 | infinite recursion etc. |
-| is_palindrome | 2/3 | always-True class |
+| is_palindrome | 2/3 | always-True family |
 | **find_max** | **3/3** | delegates to `max()` |
 
 </details>
 
 <details>
-<summary><b>📗 sft_base_v1 · 2026-07-09/10</b></summary>
+<summary><b>📙 sft_base_v1 · 2026-07-09/10 · pretrain_v1 · temp 0.7</b></summary>
 
 <br/>
 
@@ -456,44 +629,34 @@ Archive for comparison — expand only when needed.
 
 | Mode | Result |
 |:-----|:-------|
-| 🧠 THINKING | answers **0/14** · avg 0.0 🔴 |
-| 🇰🇷 normal | **1.33/5** |
-| 🇯🇵 normal | **0.33/5** |
-| 🇺🇸 normal | **2.67/5** |
-| 💻 normal | tests **4/17** · full **1/5** |
+| 🧠 THINKING | ans **0/14** · avg 0.0 🔴 |
+| 🇰🇷 no-think | **1.33/5** |
+| 🇯🇵 no-think | **0.33/5** |
+| 🇺🇸 no-think | **2.67/5** |
+| 💻 no-think | tests **4/17** · full **1/5** |
 
-> 🧠 Generation ends before the close tag → inference leaves answer empty.  
-> Prefer **normal chat mode** for this checkpoint.
+> 🧠 Generation ends before the closing tag → runtime empties the answer.  
+> Prefer **no-thinking** mode for this checkpoint.
 
 #### Pretrain vs SFT v1
 
 | | Pretrain | SFT v1 |
 |:--|:---------|:-------|
-| Scores | essentially all zero | scores appear in normal mode |
+| Scores | essentially all 0 | scores appear in no-think |
 | Coding | 0/34 | 4/17 |
 | Behavior | echo · loops | tries format (content often wrong) |
 
-With 5,000 SFT steps: **“cannot follow → tries the format.”**
+5,000 SFT steps alone move the model from **cannot follow at all → tries the format**.
 
-#### Q&A · normal chat
+#### Coding (no-think)
 
-| Lang | Items | Scores | Note |
-|:----:|:------|:------:|:-----|
-| 🇰🇷 | capital / apples / summary | 2 / 1 / 1 | “서울” present, sentences contradict |
-| 🇯🇵 | capital / apples / translate | 0 / 1 / 0 | population talk · ignores instruction |
-| 🇺🇸 | capital / train / summary | **4** / 1 / 3 | Paris was the strongest signal then |
-
-Pretrain only (en_fact): rewrites as Germany capital question → 0.
-
-#### Coding (normal)
-
-| Task | Tests | Score | Note |
-|:-----|:-----:|:-----:|:-----|
-| is_prime | 0/5 | 0 | becomes even-check |
+| Problem | Tests | Score | Note |
+|:--------|:-----:|:-----:|:-----|
+| is_prime | 0/5 | 0 | degrades to even-check |
 | reverse_string | 0/3 | 0 | only `.lower()` |
-| factorial | 0/3 | 1 | recursive skeleton, no zero base |
-| **is_palindrome** | **3/3** | **5** | ✅ only clean pass |
-| find_max | 1/3 | 1 | one lucky case |
+| factorial | 0/3 | 1 | recursive skeleton, no n==0 |
+| **is_palindrome** | **3/3** | **5** | ✅ only clean full pass |
+| find_max | 1/3 | 1 | lucky single case |
 
 ```python
 # ✅ v1 pass
@@ -511,7 +674,7 @@ def is_prime(n):
 </details>
 
 <details>
-<summary><b>📙 pretrain_base_v1 · chat ~0</b></summary>
+<summary><b>📓 pretrain_base_v1 · chat ~0</b></summary>
 
 <br/>
 
@@ -519,12 +682,15 @@ def is_prime(n):
 
 | | Result |
 |:--|:-------|
-| Chat reaction | almost none · ~0 / 28 |
-| Coding | 0 / 34 |
-| Behavior | echo · loops · rewrite the question |
+| Chat response | almost none · ~0 / 28 |
+| Coding | 0 / 34 (both modes) |
+| Behavior | echo · repetition loops · rephrased questions |
 
-Before SFT, **instruction format itself is untrained**.  
-After v1 SFT, “tries the format” first appears on the bench.
+Before SFT, **chat format itself is untrained**.  
+After v1 SFT, “tries the format” first shows up on the bench.
+
+> 📭 **No standalone chat bench for pretrain_base_v2 yet.**  
+> v2’s effect is observed only downstream via **sft_base_v5**.
 
 </details>
 
@@ -534,29 +700,42 @@ After v1 SFT, “tries the format” first appears on the bench.
 
 ### ✅ What worked across versions
 
-- Pretrain loss 11 → ~2, SFT v1 2.67 → ~1.05 → **training loop is real**
-- v1: “tries the format” shows up on the bench
-- v2: THINKING **closure** mostly restored (0/14 → 13/14)
-- v3: normal-chat **coding 4/5** — data-augmentation goal hit
-- EN fact/math stable again in v3
+- Pretrain loss 11 → ~2, SFT loop healthy · pipeline validated
+- v1: “format attempt” shows up on the bench
+- v2: THINKING **close** mostly restored (0/14 → 13/14)
+- v3: no-think **coding 4/5** — data-aug goal hit
+- v4: higher KO SFT share · first clean Korean capital inside thinking (handoff fails)
+- **v5: no-think coding 5/5 · avg 3.21 · KO 8/30** — best so far · greedy-reproducible
+- Continued pretrain (v2) lifts downstream **even with the same SFT mix**
 
-### 🚧 Still stuck
+### 🚧 Still blocked (priority order)
 
-1. 🧠 THINKING-mode coding → still prose only (0/5)
-2. 🇰🇷 Korean → category collapse in v3
-3. Unstable arithmetic / instruction following (right mid-chain, wrong final)
-4. Failures like `reverse_string`: **correct body + unsafe top-level**
-5. Far from usable product quality
+1. 🧠 **thinking → answer handoff** — retrieval works, answer field empty
+2. 🧠 THINKING **coding 0/5** — still prose only
+3. 🇰🇷 Korean — improved (8/30) but **not fixed** (fact/math unstable)
+4. KO/JA arithmetic and instruction-following still flaky
+5. Far from production quality
 
 ### 🧭 Next
 
 | Pri | Action |
 |:---:|:-------|
-| 1 | SFT / constrained decoding so THINKING **emits code and closes tags** |
-| 2 | Rebalance Korean fact · math · summary (repair collapse) |
-| 3 | Safer coding output format (no harness-breaking side effects) |
-| 4 | DPO / correction SFT / RLVR |
-| 5 | Keep the **same 14 prompts** for version comparison |
+| 1 | SFT / constrained decoding that **forces an answer after** `</THINKING>` |
+| 2 | Format training so THINKING mode **emits code** (kill 0/5 coding) |
+| 3 | More Korean fact/arithmetic (pretrain + SFT together) |
+| 4 | Lock comparison protocol to **greedy or multi-sample** |
+| 5 | Add standalone pretrain_v2 chat bench (isolate base effect) |
+| 6 | DPO / correction SFT / RLVR |
+| 7 | Keep the **same 14 prompts** for version comparison |
+
+### 📐 Interpretation guide (once more)
+
+```text
+❌  “More SFT ⇒ v5 > v4 > v3”
+✅  “Separate base fork + protocol change”
+    · v3→v4: same base · same temp0.7 · SFT mix change (lateral + noise)
+    · v4→v5: same SFT mix · different base · greedy switch (best scores)
+```
 
 ---
 
@@ -564,12 +743,15 @@ After v1 SFT, “tries the format” first appears on the bench.
 
 | Path | Content |
 |:-----|:--------|
-| [`ckpt/benchmark_sft_base_v3.json`](ckpt/benchmark_sft_base_v3.json) | ⭐ **latest** SFT v3 |
+| [`ckpt/benchmark_sft_base_v5.json`](ckpt/benchmark_sft_base_v5.json) | ⭐ **latest** SFT v5 (greedy · pretrain_v2) |
+| [`ckpt/benchmark_sft_base_v4.json`](ckpt/benchmark_sft_base_v4.json) | SFT v4 |
+| [`ckpt/benchmark_sft_base_v3.json`](ckpt/benchmark_sft_base_v3.json) | SFT v3 |
 | [`ckpt/benchmark_sft_base_v2.json`](ckpt/benchmark_sft_base_v2.json) | SFT v2 |
 | [`ckpt/benchmark_sft_base_v1.json`](ckpt/benchmark_sft_base_v1.json) | SFT v1 |
-| [`ckpt/benchmark_pretrain_base_v1.json`](ckpt/benchmark_pretrain_base_v1.json) | Pretrain |
+| [`ckpt/benchmark_pretrain_base_v1.json`](ckpt/benchmark_pretrain_base_v1.json) | Pretrain v1 |
+| — | pretrain_v2 chat bench **not measured** |
 
-> Weights (`.pt`) and raw corpora are not in the public repo.
+> Weights (`.pt`) and raw corpora are not included in the public repo.
 
 ---
 

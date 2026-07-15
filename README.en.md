@@ -141,7 +141,7 @@ So the rule is:
 | 3B | in-house tool integration candidate |
 | 7B+ | minimum size worth external exposure |
 
-The latest published benchmark checkpoint is **`sft_base_v3`** (base ~327M). → [§6 Benchmark snapshot](#6-benchmark-snapshot) · v1 write-up [BENCHMARK v1](BENCHMARK-v1.en.md)
+The latest published benchmark checkpoint is **`sft_base_v6`** (base ~327M). → [§6 Benchmark snapshot](#6-benchmark-snapshot) · per-version write-up [BENCHMARK v1](BENCHMARK-v1.en.md)
 
 ---
 
@@ -233,40 +233,48 @@ For real runs, swap in public corpora / SFT jsonl and scale with `small` / `base
 ## 6. Benchmark snapshot
 
 Same 14 prompts × THINKING on/off, `base` (~327M).  
-Latest snapshot: **`sft_base_v3`** (`ckpt/benchmark_sft_base_v3.json`, 2026-07-13).
+Latest snapshot: **`sft_base_v6`** (`ckpt/benchmark_sft_base_v6.json`, 2026-07-15).
 
 | Checkpoint | Takeaway |
 |:-----------|:---------|
 | pretrain v1 | effectively 0 on chat format (no instruction training) |
 | sft v1 | tries to follow instructions; accuracy still low. THINKING answers 0/14 (close-tag bug) |
 | sft v2 | THINKING closure mostly fixed (non-empty answers 13/14). Coding still weak |
-| **sft v3** | **coding (normal chat) 4/5 fully pass.** English strong; Korean 0 on all items. THINKING coding still 0/5 |
+| sft v3 | coding (normal chat) 4/5 fully pass. English strong; Korean 0 on all items. THINKING coding still 0/5 |
+| sft v4 | higher Korean SFT share (10.3%→22.5%). Bench is mostly lateral, Korean barely recovers |
+| sft v5 | swapped base to pretrain_v2 + greedy decoding. First perfect coding (5/5), Korean starts recovering (8/30) |
+| **sft v6** | **THINKING handoff fixed.** A prep_sft preprocessing change + split decode budget alone moved thinking avg 0.50→2.93, first thinking-mode coding pass (4/5) |
 
-**sft_base_v3 · normal chat (THINKING off)** · avg score 2.57 / 5
+**sft_base_v6 · normal chat (THINKING off)** · avg score 3.93 / 5
 
 | Area | Result |
 |:-----|:-------|
-| Korean | avg **0.00 / 5** |
-| Japanese | avg 1.33 / 5 |
-| English | avg **4.00 / 5** |
-| Coding | **20 / 25** tests (**4 / 5** fully pass) |
-| THINKING on | avg 0.21 / 5 · non-empty answers 12/14 · coding fully pass 0/5 |
+| Korean | avg **2.67 / 5** (first perfect fact score) |
+| Japanese | avg 3.00 / 5 |
+| English | avg **4.33 / 5** |
+| Coding | **25 / 25** tests (**5 / 5** fully pass) |
+| THINKING on | avg **2.93 / 5** · non-empty answers **14/14** · coding fully pass **4/5** (+prime partial 3/5) |
 
-v3 highlights (vs v2):
+v6 highlights (vs v5):
 
-- Coding fully pass: **0/5 → 4/5** (`is_prime`, `factorial`, `is_palindrome`, `find_max`). `reverse_string` body is correct but a top-level `print` causes NameError
-- English fact/math recovered (Paris, 120 km)
-- Korean category collapsed (0/5 on all 6 Korean items)
-- THINKING-mode coding still emits prose only (no code)
+- **THINKING handoff bug fixed**: empty answers 4/14 → 0/14 (every prompt gets an answer), THINKING avg 0.50 → 2.93 (~6x)
+- THINKING coding **0/5 → 4/5** — first working code output in six versions (`+prime` partial pass 3/5)
+- No-think avg rose alongside it: **3.21 → 3.93**, coding still perfect at 5/5
+- First-ever perfect Korean fact score · first correct Japanese math in both modes (Korean total 8/30 → 10/30)
+- Base and SFT source mix are identical to v5 — the only change is data preprocessing (`prep_sft`) and a split decode budget
+- Remaining issues: Korean arithmetic still collapses, repetition/degeneration in long generations, JA→EN translation never formed
 
 Raw scoring JSON:
 
-- [ckpt/benchmark_sft_base_v3.json](ckpt/benchmark_sft_base_v3.json) (latest)
+- [ckpt/benchmark_sft_base_v6.json](ckpt/benchmark_sft_base_v6.json) (latest)
+- [ckpt/benchmark_sft_base_v5.json](ckpt/benchmark_sft_base_v5.json)
+- [ckpt/benchmark_sft_base_v4.json](ckpt/benchmark_sft_base_v4.json)
+- [ckpt/benchmark_sft_base_v3.json](ckpt/benchmark_sft_base_v3.json)
 - [ckpt/benchmark_sft_base_v2.json](ckpt/benchmark_sft_base_v2.json)
 - [ckpt/benchmark_sft_base_v1.json](ckpt/benchmark_sft_base_v1.json)
 - [ckpt/benchmark_pretrain_base_v1.json](ckpt/benchmark_pretrain_base_v1.json)
 
-Training process, datasets, and per-item Q&A (v1-era write-up):
+Training process, datasets, and per-item Q&A (per-version write-up):
 
 - [BENCHMARK-v1.md](BENCHMARK-v1.md) (Korean)  
 - [BENCHMARK-v1.en.md](BENCHMARK-v1.en.md)  

@@ -142,7 +142,7 @@ LLM 내부를 손으로 짜 보지 않으면, 결국 남의 코드를 빌려 쓰
 | 3B | 사내 도구 연동 후보 |
 | 7B+ | 외부 노출을 고민할 최소 규모 |
 
-현재 벤치에 올린 최신 체크포인트는 **`sft_base_v3`** (base 약 327M) 입니다. → [§6 벤치마크 한눈에](#6-벤치마크-한눈에) · v1 상세 기록 [BENCHMARK v1](BENCHMARK-v1.md)
+현재 벤치에 올린 최신 체크포인트는 **`sft_base_v6`** (base 약 327M) 입니다. → [§6 벤치마크 한눈에](#6-벤치마크-한눈에) · 버전별 상세 기록 [BENCHMARK v1](BENCHMARK-v1.md)
 
 ---
 
@@ -235,40 +235,48 @@ python eval_gate.py --old ckpt/sft_nano.pt --new ckpt/dpo_nano_v1.pt
 ## 6. 벤치마크 한눈에
 
 `base` (~327M) 기준, 동일 14문항 × THINKING on/off.  
-최신 스냅샷: **`sft_base_v3`** (`ckpt/benchmark_sft_base_v3.json`, 2026-07-13).
+최신 스냅샷: **`sft_base_v6`** (`ckpt/benchmark_sft_base_v6.json`, 2026-07-15).
 
 | 체크포인트 | 요약 |
 |:-----------|:-----|
 | pretrain v1 | 채팅 형식에서 사실상 0점 (지시 미학습) |
 | sft v1 | 지시는 시도함. 정답률은 낮음. THINKING 답 0/14 (태그 미종료) |
 | sft v2 | THINKING 종료 대부분 복구 (비어 있지 않은 답 13/14). 코딩은 여전히 약함 |
-| **sft v3** | **코딩(일반 채팅) 4/5 완전 통과.** 영어 강세, 한국어 전 문항 0점. THINKING 코딩은 여전히 0/5 |
+| sft v3 | 코딩(일반 채팅) 4/5 완전 통과. 영어 강세, 한국어 전 문항 0점. THINKING 코딩은 여전히 0/5 |
+| sft v4 | 한국어 SFT 비중↑ (10.3%→22.5%). 벤치는 거의 횡보, 한국어 회복은 미미 |
+| sft v5 | 베이스를 pretrain_v2로 교체 + greedy 디코딩. 코딩 첫 만점(5/5), 한국어 회복 시작(8/30) |
+| **sft v6** | **THINKING 핸드오프 해결.** prep_sft 전처리 + 추론 예산 분리만으로 사고 평균 0.50→2.93, 사고 코딩 첫 통과(4/5) |
 
-**sft_base_v3 · 일반 채팅 모드 (THINKING 끔)** · 평균 점수 2.57 / 5
+**sft_base_v6 · 일반 채팅 모드 (THINKING 끔)** · 평균 점수 3.93 / 5
 
 | 영역 | 결과 |
 |:-----|:-----|
-| 한국어 | 평균 **0.00 / 5** |
-| 일본어 | 평균 1.33 / 5 |
-| 영어 | 평균 **4.00 / 5** |
-| 코딩 | 테스트 **20 / 25** (완전 통과 **4 / 5**) |
-| THINKING 켬 | 평균 0.21 / 5 · 비어 있지 않은 답 12/14 · 코딩 완전 통과 0/5 |
+| 한국어 | 평균 **2.67 / 5** (fact 문항 첫 만점) |
+| 일본어 | 평균 3.00 / 5 |
+| 영어 | 평균 **4.33 / 5** |
+| 코딩 | 테스트 **25 / 25** (완전 통과 **5 / 5**) |
+| THINKING 켬 | 평균 **2.93 / 5** · 비어 있지 않은 답 **14/14** · 코딩 완전 통과 **4/5** (+prime 부분 3/5) |
 
-v3 하이라이트 (v2 대비):
+v6 하이라이트 (v5 대비):
 
-- 코딩 완전 통과: **0/5 → 4/5** (`is_prime`, `factorial`, `is_palindrome`, `find_max`). `reverse_string` 본문은 맞지만 top-level `print`로 NameError
-- 영어 fact/math 회복 (Paris, 120 km)
-- 한국어 카테고리 붕괴 (6문항 전부 0점)
-- THINKING 모드 코딩은 여전히 산문만 출력 (코드 없음)
+- **THINKING 핸드오프 문제 해결**: 빈 답 4/14 → 0/14 (전부 답변 생성), THINKING 평균 0.50 → 2.93 (약 6배)
+- THINKING 코딩 **0/5 → 4/5** — 프로젝트 6개 버전 만에 첫 실제 코드 출력 (`+prime` 부분 통과 3/5)
+- 일반 채팅 평균도 동반 상승: **3.21 → 3.93**, 코딩 5/5 만점 유지
+- 한국어 fact 최초 만점 · 일본어 수학 양쪽 모드 첫 정답 (한국어 합 8/30 → 10/30)
+- 베이스·SFT 소스 믹스는 v5와 완전히 동일 — 변화는 오직 데이터 전처리(`prep_sft`)와 추론 예산 분리뿐
+- 남은 문제: 한국어 산술은 여전히 붕괴, 긴 생성의 반복/퇴화, 일→영 번역 미형성
 
 원본 채점 JSON:
 
-- [ckpt/benchmark_sft_base_v3.json](ckpt/benchmark_sft_base_v3.json) (최신)
+- [ckpt/benchmark_sft_base_v6.json](ckpt/benchmark_sft_base_v6.json) (최신)
+- [ckpt/benchmark_sft_base_v5.json](ckpt/benchmark_sft_base_v5.json)
+- [ckpt/benchmark_sft_base_v4.json](ckpt/benchmark_sft_base_v4.json)
+- [ckpt/benchmark_sft_base_v3.json](ckpt/benchmark_sft_base_v3.json)
 - [ckpt/benchmark_sft_base_v2.json](ckpt/benchmark_sft_base_v2.json)
 - [ckpt/benchmark_sft_base_v1.json](ckpt/benchmark_sft_base_v1.json)
 - [ckpt/benchmark_pretrain_base_v1.json](ckpt/benchmark_pretrain_base_v1.json)
 
-학습 과정·데이터셋·문항별 Q&A (v1 시점 기록):
+학습 과정·데이터셋·문항별 Q&A (버전별 상세 기록):
 
 - [BENCHMARK-v1.md](BENCHMARK-v1.md) (한국어)  
 - [BENCHMARK-v1.en.md](BENCHMARK-v1.en.md)  

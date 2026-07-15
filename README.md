@@ -142,7 +142,7 @@ LLM 내부를 손으로 짜 보지 않으면, 결국 남의 코드를 빌려 쓰
 | 3B | 사내 도구 연동 후보 |
 | 7B+ | 외부 노출을 고민할 최소 규모 |
 
-현재 벤치에 올린 최신 체크포인트는 **`sft_base_v6`** (base 약 327M) 입니다. → [§6 벤치마크 한눈에](#6-벤치마크-한눈에) · 버전별 상세 기록 [BENCHMARK v1](BENCHMARK-v1.md)
+현재 벤치에 올린 최신 체크포인트는 **`sft_base_v6`** (base 약 327M) 입니다. → [§5 벤치마크 한눈에](#5-벤치마크-한눈에) · 버전별 상세 기록 [BENCHMARK v1](BENCHMARK-v1.md)
 
 ---
 
@@ -188,51 +188,9 @@ AI/
 
 ---
 
-## 5. 실행 방법
+## 5. 벤치마크 한눈에
 
-자세한 명령은 [llm/명령어-정리.md](llm/명령어-정리.md) 에 있습니다.  
-데모 한 바퀴 예시:
-
-```bash
-cd llm
-pip install torch tokenizers numpy
-
-python data.py demo
-python tokenizer.py --input data/corpus.txt data/sft.jsonl
-python data.py pretrain
-python train.py --mode pretrain --preset nano --steps 2000
-python data.py sft
-python train.py --mode sft --init ckpt/pretrain_nano.pt --steps 300
-python infer.py --ckpt ckpt/sft_nano.pt
-```
-
-### 피드백 한 사이클 (요약)
-
-```bash
-python infer.py --ckpt ckpt/sft_nano.pt
-python feedback.py
-
-# A) 교정 SFT
-python data.py sft --input data/sft.jsonl data/feedback.jsonl --weight 1 3
-python train.py --mode sft --init ckpt/sft_nano.pt --steps 100 --tag v1
-
-# B) DPO
-python train.py --mode dpo --init ckpt/sft_nano.pt --steps 100 --tag v1
-
-# C) RM + GRPO / RLVR
-python reward.py --init ckpt/sft_nano.pt --steps 200
-python rlhf.py --mode rm   --init ckpt/sft_nano.pt --rm ckpt/rm_nano.pt --data data/sft.jsonl
-python rlhf.py --mode rlvr --init ckpt/sft_nano.pt --data data/sft.jsonl
-
-python eval_gate.py --old ckpt/sft_nano.pt --new ckpt/dpo_nano_v1.pt
-```
-
-실전에서는 코퍼스 · SFT jsonl 을 공개 데이터로 바꾸고  
-`small` / `base` 프리셋으로 키우면 됩니다.
-
----
-
-## 6. 벤치마크 한눈에
+**학습 GPU**: H100, A100
 
 `base` (~327M) 기준, 동일 14문항 × THINKING on/off.  
 최신 스냅샷: **`sft_base_v6`** (`ckpt/benchmark_sft_base_v6.json`, 2026-07-15).
@@ -266,16 +224,6 @@ v6 하이라이트 (v5 대비):
 - 베이스·SFT 소스 믹스는 v5와 완전히 동일 — 변화는 오직 데이터 전처리(`prep_sft`)와 추론 예산 분리뿐
 - 남은 문제: 한국어 산술은 여전히 붕괴, 긴 생성의 반복/퇴화, 일→영 번역 미형성
 
-원본 채점 JSON:
-
-- [ckpt/benchmark_sft_base_v6.json](ckpt/benchmark_sft_base_v6.json) (최신)
-- [ckpt/benchmark_sft_base_v5.json](ckpt/benchmark_sft_base_v5.json)
-- [ckpt/benchmark_sft_base_v4.json](ckpt/benchmark_sft_base_v4.json)
-- [ckpt/benchmark_sft_base_v3.json](ckpt/benchmark_sft_base_v3.json)
-- [ckpt/benchmark_sft_base_v2.json](ckpt/benchmark_sft_base_v2.json)
-- [ckpt/benchmark_sft_base_v1.json](ckpt/benchmark_sft_base_v1.json)
-- [ckpt/benchmark_pretrain_base_v1.json](ckpt/benchmark_pretrain_base_v1.json)
-
 학습 과정·데이터셋·문항별 Q&A (버전별 상세 기록):
 
 - [BENCHMARK-v1.md](BENCHMARK-v1.md) (한국어)  
@@ -286,7 +234,7 @@ v6 하이라이트 (v5 대비):
 
 ---
 
-## 7. 참고 문헌
+## 6. 참고 문헌
 
 | 논문 | 링크 |
 |:-----|:-----|

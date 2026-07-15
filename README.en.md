@@ -141,7 +141,7 @@ So the rule is:
 | 3B | in-house tool integration candidate |
 | 7B+ | minimum size worth external exposure |
 
-The latest published benchmark checkpoint is **`sft_base_v6`** (base ~327M). → [§6 Benchmark snapshot](#6-benchmark-snapshot) · per-version write-up [BENCHMARK v1](BENCHMARK-v1.en.md)
+The latest published benchmark checkpoint is **`sft_base_v6`** (base ~327M). → [§5 Benchmark snapshot](#5-benchmark-snapshot) · per-version write-up [BENCHMARK v1](BENCHMARK-v1.en.md)
 
 ---
 
@@ -187,50 +187,9 @@ AI/
 
 ---
 
-## 5. How to run
+## 5. Benchmark snapshot
 
-Full commands: [llm/명령어-정리.md](llm/명령어-정리.md).  
-One demo loop:
-
-```bash
-cd llm
-pip install torch tokenizers numpy
-
-python data.py demo
-python tokenizer.py --input data/corpus.txt data/sft.jsonl
-python data.py pretrain
-python train.py --mode pretrain --preset nano --steps 2000
-python data.py sft
-python train.py --mode sft --init ckpt/pretrain_nano.pt --steps 300
-python infer.py --ckpt ckpt/sft_nano.pt
-```
-
-### Feedback cycle (short)
-
-```bash
-python infer.py --ckpt ckpt/sft_nano.pt
-python feedback.py
-
-# A) correction SFT
-python data.py sft --input data/sft.jsonl data/feedback.jsonl --weight 1 3
-python train.py --mode sft --init ckpt/sft_nano.pt --steps 100 --tag v1
-
-# B) DPO
-python train.py --mode dpo --init ckpt/sft_nano.pt --steps 100 --tag v1
-
-# C) RM + GRPO / RLVR
-python reward.py --init ckpt/sft_nano.pt --steps 200
-python rlhf.py --mode rm   --init ckpt/sft_nano.pt --rm ckpt/rm_nano.pt --data data/sft.jsonl
-python rlhf.py --mode rlvr --init ckpt/sft_nano.pt --data data/sft.jsonl
-
-python eval_gate.py --old ckpt/sft_nano.pt --new ckpt/dpo_nano_v1.pt
-```
-
-For real runs, swap in public corpora / SFT jsonl and scale with `small` / `base`.
-
----
-
-## 6. Benchmark snapshot
+**Training GPU**: H100, A100
 
 Same 14 prompts × THINKING on/off, `base` (~327M).  
 Latest snapshot: **`sft_base_v6`** (`ckpt/benchmark_sft_base_v6.json`, 2026-07-15).
@@ -264,16 +223,6 @@ v6 highlights (vs v5):
 - Base and SFT source mix are identical to v5 — the only change is data preprocessing (`prep_sft`) and a split decode budget
 - Remaining issues: Korean arithmetic still collapses, repetition/degeneration in long generations, JA→EN translation never formed
 
-Raw scoring JSON:
-
-- [ckpt/benchmark_sft_base_v6.json](ckpt/benchmark_sft_base_v6.json) (latest)
-- [ckpt/benchmark_sft_base_v5.json](ckpt/benchmark_sft_base_v5.json)
-- [ckpt/benchmark_sft_base_v4.json](ckpt/benchmark_sft_base_v4.json)
-- [ckpt/benchmark_sft_base_v3.json](ckpt/benchmark_sft_base_v3.json)
-- [ckpt/benchmark_sft_base_v2.json](ckpt/benchmark_sft_base_v2.json)
-- [ckpt/benchmark_sft_base_v1.json](ckpt/benchmark_sft_base_v1.json)
-- [ckpt/benchmark_pretrain_base_v1.json](ckpt/benchmark_pretrain_base_v1.json)
-
 Training process, datasets, and per-item Q&A (per-version write-up):
 
 - [BENCHMARK-v1.md](BENCHMARK-v1.md) (Korean)  
@@ -284,7 +233,7 @@ Still early-stage. Later versions keep the same prompt set for comparison.
 
 ---
 
-## 7. References
+## 6. References
 
 | Paper | Link |
 |:------|:-----|

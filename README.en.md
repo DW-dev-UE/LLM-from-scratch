@@ -10,6 +10,37 @@
 > You could ask an AI to "make this more readable," but then the record of how I thought and what process I went through can disappear.
 > Learning with AI is fine, but rewriting sentences myself to organize my knowledge matters more.
 
+> [!IMPORTANT]
+> **Next goal — APEX-1 (1B scale)**  
+> Currently scaling up the project to build a new **LLM at ~1,119.5M measured parameters**. The model is named **APEX-1**.
+
+**Architecture (24 layers × [Attention + FFN])**
+
+| Component | Spec | Design choice |
+|:-----|:-----|:-----|
+| Layers | 24 (24 attention + 24 FFN) | Pre-Norm |
+| d_model | 2048 | — |
+| Attention | 16 Q heads / 4 KV heads, 128 dim/head | GQA + QK-norm + FlashAttention (SDPA) + causal mask |
+| Positional encoding | rotary θ=500,000 | RoPE (Llama-3 setting, room for context extension) |
+| FFN | 2048 → 5440 → 2048 | SwiGLU (gate/up/down, 3 matrices) |
+| Normalization | 2 per layer + 1 final | RMSNorm |
+| Output layer | shared with embedding | weight tying |
+| Context | max 4096 (trained at 2048) | KV-cache inference supported |
+
+**Parameter breakdown** (total 1,119.5M)
+
+| Block | Params | Share |
+|:-----|-----:|-----:|
+| FFN ×24 | 802.0M | 71.7% |
+| Attention ×24 | 251.8M | 22.5% |
+| Embedding (32K×2048, output shared) | 65.5M | 5.9% |
+
+**Training setup**: bf16 + torch.compile · AdamW, lr 3e-4 cosine (stage-2 at 6e-5) · batch 8 × seq 2048 × accum 24 = 393K tokens/step · 51K steps total = 20B tokens · corpus v3-en 80.8GB (English + code, 13 sources) · tokenizer BPE 32K, English-only
+
+**Deliberately not adopted**: MoE · YaRN · FP8 · multi-GPU — all deferred to "after 1B is validated, next scale."
+
+Changes vs. 327M (`base`): width ×2 (1024→2048) · heads ×2 (64→128) · QK-norm added · θ ×50 · vocab 64K→32K, English-only.
+
 ---
 
 Alright, let's begin.

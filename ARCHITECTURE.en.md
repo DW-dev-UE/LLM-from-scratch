@@ -1,6 +1,6 @@
-# LLM From Scratch
+[![한국어](https://img.shields.io/badge/%ED%95%9C%EA%B5%AD%EC%96%B4-8B949E?style=flat-square)](ARCHITECTURE.md) [![English](https://img.shields.io/badge/English-0969DA?style=flat-square)](ARCHITECTURE.en.md) [![日本語](https://img.shields.io/badge/%E6%97%A5%E6%9C%AC%E8%AA%9E-8B949E?style=flat-square)](ARCHITECTURE.ja.md)
 
-[![KO](https://img.shields.io/badge/KO-lightgrey)](ARCHITECTURE.md) [![EN](https://img.shields.io/badge/EN-0969da)](ARCHITECTURE.en.md) [![JA](https://img.shields.io/badge/JA-lightgrey)](ARCHITECTURE.ja.md)
+# LLM From Scratch
 
 [← README](README.en.md) · Stuck on a term? [GLOSSARY](GLOSSARY.en.md)
 
@@ -38,7 +38,6 @@ Pedagogical numeric example (GPT-2-style GELU, etc.). The production design in t
 
 To train an LLM you need a dataset. Datasets are also called a “corpus.” In this walkthrough the corpus is “I like cats,” shown with five demo tokens aligned to the original Korean example: I · cat · OBJ · like · do (OBJ stands in for an object marker; English word order is SVO, but we keep the same five-slot layout so the numbers match).
 
-
 #### 1) Tokenizer
 
 The tool that turns the corpus into a form a computer can work with is the **tokenizer**.
@@ -52,7 +51,6 @@ vocab = {"I": 1, "cat": 2, "OBJ": 3, "like": 4, "do": 5}
 ```
 
 token ids: `[1, 2, 3, 4, 5]`
-
 
 #### 2) Embedding table
 
@@ -70,7 +68,6 @@ The width of each row is the **embedding dimension** (d_model). More dimensions 
 
 How many bytes store each real number is a matter of **precision** (FP32, FP16, and so on).
 
-
 #### 3) Building the training problem
 
 Shift the token sequence by one position to make input / target pairs.
@@ -81,7 +78,6 @@ Target: `[2, 3, 4, 5]` = "cat OBJ like do"
 <kbd>I</kbd> → ? (answer: cat)<br>
 <kbd>I</kbd> <kbd>cat</kbd> → ? (answer: OBJ)
 
-
 #### 4) Normalization
 
 x = embedding values. For the problem [I, cat, OBJ, like], x is the embedding of “like”.
@@ -91,7 +87,6 @@ x = <kbd>0.71</kbd> <kbd>0.18</kbd> <kbd>-0.29</kbd> <kbd>0.55</kbd>
 After normalization, N:
 
 N = <kbd>1.10</kbd> <kbd>-0.28</kbd> <kbd>-1.50</kbd> <kbd>0.68</kbd>
-
 
 #### 5) Attention
 
@@ -121,7 +116,6 @@ Weighted sum of V: `0.10·V(I) + 0.69·V(cat) + 0.05·V(OBJ) + 0.15·V(like)`
 
 Attention output = <kbd>-0.36</kbd> <kbd>0.18</kbd> <kbd>0.75</kbd> <kbd>0.09</kbd> — a new vector with context mixed in.
 
-
 #### 6) Residual connection
 
 Add x and the attention output to get new v. This keeps the original meaning while stacking context on top.
@@ -143,7 +137,6 @@ Normalize new v.
 
 N₂ = <kbd>-0.88</kbd> <kbd>-0.79</kbd> <kbd>0.06</kbd> <kbd>1.61</kbd>
 
-
 #### 2) FFN step 1 — expand with W₁
 
 Expand N₂ by a fixed multiple. GPT-2 expands by 4×, so this example does the same.<br>
@@ -162,7 +155,6 @@ Expand: `U = N·W₁ + b₁` (4×4 matrix · 4×16 matrix = 4×16; b₁ is a 16-
 | cat | <span style="color:#d85a30">-1.96</span> | <span style="color:#d85a30">-0.90</span> | <span style="color:#1d9e75">1.93</span> | <span style="color:#1d9e75">3.69</span> | <span style="color:#d85a30">-1.33</span> | <span style="color:#1d9e75">0.89</span> | <span style="color:#d85a30">-2.79</span> | <span style="color:#1d9e75">0.39</span> | <span style="color:#1d9e75">2.57</span> | <span style="color:#d85a30">-1.80</span> | <span style="color:#d85a30">-0.58</span> | <span style="color:#1d9e75">0.77</span> | <span style="color:#d85a30">-1.60</span> | <span style="color:#1d9e75">1.57</span> | <span style="color:#d85a30">-1.06</span> | <span style="color:#d85a30">-2.67</span> |
 | OBJ | <span style="color:#1d9e75">2.35</span> | <span style="color:#1d9e75">0.64</span> | <span style="color:#d85a30">-2.43</span> | <span style="color:#d85a30">-2.82</span> | <span style="color:#1d9e75">2.28</span> | <span style="color:#d85a30">-1.91</span> | <span style="color:#1d9e75">1.83</span> | <span style="color:#1d9e75">0.50</span> | <span style="color:#d85a30">-2.27</span> | <span style="color:#1d9e75">0.94</span> | <span style="color:#1d9e75">0.31</span> | <span style="color:#d85a30">-0.76</span> | <span style="color:#1d9e75">0.90</span> | <span style="color:#d85a30">-1.31</span> | <span style="color:#1d9e75">1.88</span> | <span style="color:#1d9e75">3.10</span> |
 | like | <span style="color:#d85a30">-0.88</span> | <span style="color:#d85a30">-2.45</span> | <span style="color:#1d9e75">1.63</span> | <span style="color:#1d9e75">3.40</span> | <span style="color:#d85a30">-1.20</span> | <span style="color:#1d9e75">2.67</span> | <span style="color:#d85a30">-3.24</span> | <span style="color:#1d9e75">2.07</span> | <span style="color:#1d9e75">0.79</span> | <span style="color:#d85a30">-0.62</span> | <span style="color:#888780">0.00</span> | <span style="color:#d85a30">-0.21</span> | <span style="color:#1d9e75">0.82</span> | <span style="color:#d85a30">-0.63</span> | <span style="color:#d85a30">-0.57</span> | <span style="color:#d85a30">-1.77</span> |
-
 
 #### 3) FFN step 2 — GELU
 
@@ -193,12 +185,10 @@ Conversely d4 = <span style="color:#1d9e75">3.40</span> → <span style="color:#
 N₂ = <kbd>-0.88</kbd> <kbd>-0.79</kbd> <kbd>0.06</kbd> <kbd>1.61</kbd> → after GELU (Table B row "like"):<br>
 `-0.17 -0.02 1.55 3.39 -0.14 2.66 0.00 2.03 0.62 -0.17 0.00 -0.09 0.65 -0.17 -0.16 -0.07`
 
-
 #### 4) Project down
 
 Matrix multiply by W₂ (16×4). “Summarize 16 signals by a weighted sum back into 4 dims.”<br>
 Result: <kbd>7.51</kbd> <kbd>0.42</kbd> <kbd>-4.03</kbd> <kbd>5.92</kbd>
-
 
 #### 5) FFN output
 

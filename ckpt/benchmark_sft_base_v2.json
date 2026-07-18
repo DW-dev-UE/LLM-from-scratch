@@ -1,0 +1,192 @@
+{
+  "ckpt": "ckpt/sft_base_v2.pt",
+  "checkpoint_backup": "ckpt/SFT_base_v2/sft_base_v2.pt",
+  "generated_at": "2026-07-10T06:14:03Z",
+  "scored_at": "2026-07-10T06:15:27Z",
+  "scoring_method": "coding=objective (executed against unit tests), qa/open=graded by Claude reading each transcript (0-5 scale). Same 14-prompt set as benchmark_sft_base_v1.json for direct comparison.",
+  "summary": {
+    "critical_finding": "THINKING mode closure bug from v1 is largely FIXED: 13/14 thinking=true generations now emit </THINKING> and produce a non-empty answer (vs 0/14 in v1). Quality of those answers is still low (avg 0.71/5) but one item (ja_fact_1, thinking mode) scored a perfect 5 -- the first fully-correct thinking-mode answer seen in this project. Coding remains essentially non-functional in both modes: thinking-mode code prompts produce prose with no code at all (0/5 across all 5 problems), and no-thinking mode mostly produces degenerate/wrong implementations (e.g. is_palindrome always returns True, reverse_string calls .lower() instead of reversing) that pass few tests by coincidence rather than correct logic.",
+    "thinking_mode": {
+      "answer_produced_rate": "13/14 (92.9%)",
+      "avg_score": 0.71,
+      "note": "Massive improvement over v1 (0/14, avg 0.0), but produced answers are frequently low quality (rambling, self-contradictory, or unrelated to the prompt) despite no longer being empty."
+    },
+    "no_thinking_mode": {
+      "korean_avg_score": 0.33,
+      "japanese_avg_score": 2.0,
+      "english_avg_score": 1.0,
+      "coding_tests_passed": "9/17 (52.9%)",
+      "coding_problems_fully_passed": "1/5 (find_max only, via correct use of builtin max())"
+    },
+    "overall_read": "Model is still very early-stage (326.7M params, 5,650/5,700 SFT steps on top of the same 18,000-step base pretrain used for v1). The headline change vs v1 is architectural/behavioral, not raw accuracy: THINKING mode now actually closes and yields answers instead of silently returning nothing, which was v1's single biggest usability blocker. Japanese factual QA is now the strongest signal in both modes (ja_fact_1 scored 5/5 in both thinking and no-thinking), a reversal from v1 where Japanese was the weakest category (0.33 avg). English factual QA regressed on this sample (no-thinking en_fact_1 hallucinated 'Burgundy' instead of Paris, vs v1's correct answer) -- likely sampling variance (temperature=0.7, single sample per prompt) rather than a systematic regression, but worth re-checking with more samples. Korean is now the weakest no-thinking category (0.33 avg, down from v1's 1.33), with new language-leakage bugs observed (a stray English sentence appended to a Korean summary answer). Coding ability has not meaningfully improved: thinking mode never emits parseable code for any of the 5 problems (all 0/5), and no-thinking mode's one full pass (find_max) works only because it delegates to Python's builtin max() rather than demonstrating real algorithmic reasoning. Net read: worth landing (fixes the THINKING-mode dealbreaker) but still far from usable; next SFT/DPO iteration should specifically target coding and arithmetic reasoning, which remain near-zero across both checkpoints."
+  },
+  "results": [
+    {"id": "ko_fact_1", "category": "korean", "type": "qa", "thinking_mode": true,
+     "prompt": "대한민국의 수도는 어디인가요?",
+     "thinking": "대한민국에는 수도와 입법부가 존재합니다. 수도는 대한민국 내에 위치하고 있으며, 법률로 정해져 있습니다. 대한민국에는 수도와 입법부가 존재합니다. 하지만 입법부는 존재하지 않고, 법률로 정해져 있습니다.",
+     "answer": "", "expected_keywords": ["서울"], "keyword_match": false, "score": 0,
+     "note": "답변 공란(무응답). thinking 텍스트에도 정답(서울) 언급이 전혀 없고 수도/입법부에 대한 순환논리만 반복"},
+
+    {"id": "ko_math_1", "category": "korean", "type": "qa", "thinking_mode": true,
+     "prompt": "철수는 사과를 5개 가지고 있었는데, 3개를 먹었습니다. 남은 사과는 몇 개인가요?",
+     "thinking": "사과는 7개의 사과로 이루어져 있습니다. 따라서 사과는 5개입니다.",
+     "answer": "5", "expected_keywords": ["2"], "keyword_match": false, "score": 1,
+     "note": "오답. 뺄셈 연산 없이 최초 개수(5)를 그대로 반환, thinking도 앞뒤가 안 맞음(7개→5개)"},
+
+    {"id": "ko_summary_1", "category": "korean", "type": "open", "thinking_mode": true,
+     "prompt": "다음 문장을 한 문장으로 요약해주세요: '오늘 날씨가 매우 좋아서 공원에 산책을 나갔다. 사람들이 많이 나와 있었고, 아이들은 뛰어놀고 있었다.'",
+     "thinking": "이 문장은 사람들이 많은 사람들이 많이 모이는 공원에 대해 이야기합니다. 이 문장은 사람들이 많은 사람들이 모여서 모여서 걷기 시작했다고 말합니다.",
+     "answer": "gourmet", "score": 0,
+     "note": "'gourmet'라는 문맥과 무관한 영어 단어 하나만 출력, 요약 완전 실패"},
+
+    {"id": "ja_fact_1", "category": "japanese", "type": "qa", "thinking_mode": true,
+     "prompt": "日本の首都はどこですか?",
+     "thinking": "1. Problem Understanding: 問題は日本の首都について質問している。2. Planning: 首都についての情報を抽出します。3. Solution Execution: 首都については東京、大阪、京都の3つの情報が必要です。4. Answer Presentation: 首都に関する情報をまとめます。",
+     "answer": "日本の首都は東京です。", "expected_keywords": ["東京"], "keyword_match": true, "score": 5,
+     "note": "완전한 정답. 이 프로젝트에서 THINKING 모드로 처음 나온 만점 답변 (v1은 THINKING 모드에서 단 하나도 답을 내지 못했음)"},
+
+    {"id": "ja_math_1", "category": "japanese", "type": "qa", "thinking_mode": true,
+     "prompt": "太郎はりんごを7個持っていて、2個食べました。残りは何個ですか?",
+     "thinking": "1. Problem Understanding: 太郎はりんごを7個持っていて、2個食べました。残りは何個ですか?\n2. Planning: まず、7個の太郎を1個ずつ食べ、残りは何個かを計算する。\n3. Solution Execution: 太郎が2個食べているので、7個を1個ずつ食べると、1個あたり7個になります。\n4. Answer Presentation: 太郎は2個食べています。残りは7個です。",
+     "answer": "太郎はりんごを7個持っていて、2個食べました。残りは7個です。",
+     "expected_keywords": ["5"], "keyword_match": false, "score": 0,
+     "note": "오답. 문제를 그대로 반복 후 뺄셈 없이 최초 개수(7)를 잔여량으로 제시하는 자기모순"},
+
+    {"id": "ja_translate_1", "category": "japanese", "type": "open", "thinking_mode": true,
+     "prompt": "「今日は天気が良いので公園に散歩に行った。」を英語に翻訳してください。",
+     "thinking": "1. Problem Understanding: 問題は、天気が良い日を選んで公園に散歩に行くことを英語に翻訳すること。\n2. Planning: まず、天気が良い日を選んで公園に散歩に行くことを英語に翻訳する。\n3. Solution Execution: \n- 朝食として、朝食を食べる。\n- 公園の入り口に立つ。\n- 公園で散歩する。\n4. Answer Presentation: 英語で説明する。",
+     "answer": "「今日は天気が良いので公園に散歩に行く。」を英語に翻訳します。", "score": 0,
+     "note": "번역 지시 불이행. 실제 영어 번역 없이 '번역하겠습니다'라는 메타 문장만 일본어로 반복"},
+
+    {"id": "en_fact_1", "category": "english", "type": "qa", "thinking_mode": true,
+     "prompt": "What is the capital of France?",
+     "thinking": "Okay, so I need to figure out the capital of France, which is Paris. The capital of France is Paris. Hmm, let's start by recalling what a capital is. The capital is Paris, so it's a city on the left side of the river Rhône. The capital is located at the intersection of the Rhône and the Rhône River.\n\nFirst, I should figure out the number of people in the capital. Since it's Paris, there are 10,000. Then there are 10,000 people in the capital, but wait, actually, the capital is Paris, so",
+     "answer": "Courageous Paris", "expected_keywords": ["Paris"], "keyword_match": true, "score": 3,
+     "note": "핵심 정답(Paris)은 포함되나 'Courageous'라는 의미 불명의 수식어가 붙은 불완전한 문장. thinking 자체는 정답을 정확히 알고 있음(지리 환각은 있음: Rhône 강 언급)"},
+
+    {"id": "en_math_1", "category": "english", "type": "qa", "thinking_mode": true,
+     "prompt": "If a train travels at 60 km/h for 2 hours, how far does it go?",
+     "thinking": "Okay, so I need to figure out the distance the train travels during the 2-hour trip. Let me start by recalling what a train's journey is. From what I remember, a train travels at 60 km/h for 2 hours, so the distance it travels would be 2 hours divided by 2 hours, which is 60 km/h. \n\nFirst, I should probably convert the time given into hours to make calculations easier. Since the train's speed is 60 km/h, it's 2 hours * 60 km/h = 60 km/h. \n\nNow, the problem says it travels at 60 km",
+     "answer": "2 hours × 60 km/h = 60 km/h.", "expected_keywords": ["120"], "keyword_match": false, "score": 1,
+     "note": "오답. 단위가 뒤섞인 채(hours × km/h = km/h) 곱셈이 올바르게 수행되지 않아 120 대신 60이 나옴"},
+
+    {"id": "en_summary_1", "category": "english", "type": "open", "thinking_mode": true,
+     "prompt": "Summarize this in one sentence: 'The weather was nice today so I went for a walk in the park, and there were many people and children playing.'",
+     "thinking": "<think>\nOkay, so I need to figure out the weather today. Let's see... The weather yesterday was nice, but the park was already pretty. The children were playing, and the park was pretty. So, the problem is asking for the weather yesterday. \n\nFirst, let me understand the setup. The park was pretty, with a lot of grass and trees. The children were playing, and the park was pretty. So, the children were playing in the park, and the park was pretty. \n\nThe weather yesterday was pretty, and the park was pretty. So, the children were playing in the",
+     "answer": "Winter? Well, the problem says the weather was nice today. Wait, maybe I misread. Let me check again.\n\n\"The weather was nice today so I went for a walk in the park, and there were many people and children playing.\"\n\nHmm, so the children were playing, and the park was pretty. So the park was pretty, and the children were playing in the park. The problem is that the children were playing, and the park was pretty. So, the children were playing, and the park was pretty. So the children were playing in the park, and the park was pretty.",
+     "score": 0,
+     "note": "요약 실패. 한 문장 요약 대신 원문을 재확인하는 혼란스러운 되새김만 반복, 실제 요약문 없음"},
+
+    {"id": "code_prime", "category": "coding", "type": "code", "thinking_mode": true,
+     "prompt": "is_prime(n)",
+     "extracted_code": "```python\n\nWait, the problem says \"Find a prime number n\" in the range 1 to n. ...(prose, no code)",
+     "test_result": {"passed": 0, "total": 5, "error": "SyntaxError (opening ``` fence with no code)"}, "score": 0,
+     "note": "실제 코드 없이 프롬프트를 되새기는 산문만 출력, 파싱 자체가 불가능"},
+
+    {"id": "code_reverse", "category": "coding", "type": "code", "thinking_mode": true,
+     "prompt": "reverse_string(s)",
+     "extracted_code": "reverse the string s. The problem states... (prose, no code)",
+     "test_result": {"passed": 0, "total": 3, "error": "SyntaxError (prose, not valid Python)"}, "score": 0,
+     "note": "코드 없이 문제를 되새기는 산문만 반복"},
+
+    {"id": "code_factorial", "category": "coding", "type": "code", "thinking_mode": true,
+     "prompt": "factorial(n)",
+     "extracted_code": "1.\n\nThe factorial function is:\n\nfactorial(n) = n!\n... (prose, no code)",
+     "test_result": {"passed": 0, "total": 3, "error": "SyntaxError (unterminated string literal, prose leaked)"}, "score": 0,
+     "note": "수식(n!)만 산문으로 되풀이할 뿐 실행 가능한 구현 없음"},
+
+    {"id": "code_palindrome", "category": "coding", "type": "code", "thinking_mode": true,
+     "prompt": "is_palindrome(s)",
+     "extracted_code": "True if the string is a palindrome.\n\nWait, the problem says... (prose, no code)",
+     "test_result": {"passed": 0, "total": 3, "error": "SyntaxError (prose, not valid Python)"}, "score": 0,
+     "note": "정의를 되풀이할 뿐 코드 없음"},
+
+    {"id": "code_maxlist", "category": "coding", "type": "code", "thinking_mode": true,
+     "prompt": "find_max(lst)",
+     "extracted_code": "The maximum element of a list is the maximum element of the list minus one. ...(prose, no code)",
+     "test_result": {"passed": 0, "total": 3, "error": "SyntaxError (prose, not valid Python)"}, "score": 0,
+     "note": "'최댓값 = 최댓값 - 1'이라는 잘못된 정의를 반복할 뿐 코드 없음"},
+
+    {"id": "ko_fact_1", "category": "korean", "type": "qa", "thinking_mode": false,
+     "prompt": "대한민국의 수도는 어디인가요?",
+     "answer": "대한민국에서 수도는 특정한 기능을 수행하는 중심적인 역할을 합니다. 수도는 국가나 지방자치단체가 행정기능을 수행하는 지방행정체입니다. 또한 수도는 국가행정기능의 중요한 역할을 수행하며, 그 역할과 기능은 국가나 지방자치단체에서 관리합니다. 수도의 역할과 역할은 수도의 기능과 해당 지역의 행정기능의 역할과 함께 작용합니다.",
+     "expected_keywords": ["서울"], "keyword_match": false, "score": 0,
+     "note": "'어디인가요' 질문에 지명으로 답하지 않고 수도의 추상적 '기능'만 순환 서술. v1(서울 키워드는 등장, score 2)보다 오히려 후퇴"},
+
+    {"id": "ko_math_1", "category": "korean", "type": "qa", "thinking_mode": false,
+     "prompt": "철수는 사과를 5개 가지고 있었는데, 3개를 먹었습니다. 남은 사과는 몇 개인가요?",
+     "answer": "사과는 철수의 사과를 먹기 위해서는 15개를 먹어야 합니다. 하지만 사과는 3개가 아닌 4개가 들어있습니다. 따라서 철수는 4개를 먹어야 했습니다. 그러나 사과는 3개입니다. 따라서 사과는 철수의 사과를 먹기 위해서는 15개를 먹어야 합니다. 하지만 사과는 3개가 들어있기 때문에 철수는 3개의 사과를 먹어야 합니다.",
+     "expected_keywords": ["2"], "keyword_match": false, "score": 0,
+     "note": "심하게 자기모순적인 텍스트(15개→4개→3개 뒤섞임), 정답(2)은 등장하지 않고 논리적 일관성 완전 상실"},
+
+    {"id": "ko_summary_1", "category": "korean", "type": "open", "thinking_mode": false,
+     "prompt": "다음 문장을 한 문장으로 요약해주세요: '오늘 날씨가 매우 좋아서 공원에 산책을 나갔다. 사람들이 많이 나와 있었고, 아이들은 뛰어놀고 있었다.'",
+     "answer": "이 문장은 여러 가지 이유로 사람들이 매우 좋아한다는 내용을 담고 있습니다. 첫 번째 이유는 \"공원에 산책을 다녀와서 날씨가 매우 좋아서\"라는 내용입니다. 두 번째 이유는 사람들이 많은 날에는 사람들이 많이 모이기 때문에 더 많은 사람들이 모여서 사진을 찍고 사진을 찍을 수 있기 때문입니다. 세 번째 이유는 사람들이 더 많은 사람들이 모이기 때문에 사람들이 많이 모이기 때문에 사람들이 많이 모이기 때문에 더 많은 사람들이 모일 수 있기 때문입니다.It is easy to see how many people are in the park.",
+     "score": 1,
+     "note": "'한 문장' 요약 지시 무시(장황한 반복 나열), 문장 끝에 영어 문장이 섞여 나오는 언어 누출(language leakage) 버그 발견"},
+
+    {"id": "ja_fact_1", "category": "japanese", "type": "qa", "thinking_mode": false,
+     "prompt": "日本の首都はどこですか?",
+     "answer": "日本の首都は東京です。", "expected_keywords": ["東京"], "keyword_match": true, "score": 5,
+     "note": "완전한 정답. v1(인구 얘기로 새서 오답, score 0)에서 크게 개선"},
+
+    {"id": "ja_math_1", "category": "japanese", "type": "qa", "thinking_mode": false,
+     "prompt": "太郎はりんごを7個持っていて、2個食べました。残りは何個ですか?",
+     "answer": "太郎は7個持っています。", "expected_keywords": ["5"], "keyword_match": false, "score": 1,
+     "note": "오답. 뺄셈 없이 최초 개수(7)만 반복"},
+
+    {"id": "ja_translate_1", "category": "japanese", "type": "open", "thinking_mode": false,
+     "prompt": "「今日は天気が良いので公園に散歩に行った。」を英語に翻訳してください。",
+     "answer": "天気が良い日は、公園でピクニックやピクニックを楽しむことができます。公園でピクニックをするには、好きな物を選んで食事をするのが一番良い季節です。公園でピクニックをするのは、公園でピクニックをする目的だけではなく、一緒に過ごす時間を楽しむことができます。",
+     "score": 0,
+     "note": "영어 번역 지시 완전 무시, 원문(산책)과 무관한 내용(피크닉)의 일본어 텍스트를 생성"},
+
+    {"id": "en_fact_1", "category": "english", "type": "qa", "thinking_mode": false,
+     "prompt": "What is the capital of France?",
+     "answer": "The capital of France is Burgundy, which is located in the northern part of France. It is located in the North of France, which is a stretch of the French coast.",
+     "expected_keywords": ["Paris"], "keyword_match": false, "score": 0,
+     "note": "오답. 'Paris' 대신 완전히 다른 지명(Burgundy, 실제로는 지방명이며 위치 서술도 틀림)을 수도로 제시하는 환각. v1(score 4, 정답)보다 후퇴 -- temperature=0.7 단일 샘플링 변동일 가능성 높음"},
+
+    {"id": "en_math_1", "category": "english", "type": "qa", "thinking_mode": false,
+     "prompt": "If a train travels at 60 km/h for 2 hours, how far does it go?",
+     "answer": "To find the distance traveled by the train, we can use the formula:\n\nDistance = Speed × Time\n\nIn this case, the speed is 60 km/h and the time is 2 hours:\n\nDistance = 60 km/h × 2 hours = 240 km\n\nSo, the train travels 240 km at 60 km/h.",
+     "expected_keywords": ["120"], "keyword_match": false, "score": 2,
+     "note": "공식(속도×시간) 자체는 정확히 사용했으나 최종 계산이 틀림(60×2=240이라고 오답, 실제 정답은 120) -- 추론 구조는 v1보다 개선, 산술만 실패"},
+
+    {"id": "en_summary_1", "category": "english", "type": "open", "thinking_mode": false,
+     "prompt": "Summarize this in one sentence: 'The weather was nice today so I went for a walk in the park, and there were many people and children playing.'",
+     "answer": "The weather was nice today so I went for a walk in the park. I saw a man with a big, friendly dog, and he was there to play with me. I was so excited that I ran over to him and asked if he wanted to play. The man said yes, and they played together for hours. It was such a fun day!",
+     "score": 1,
+     "note": "원문에 없는 내용(남자, 개)을 환각으로 창작 -- 요약이 아니라 이야기 지어내기에 가까움. 'one sentence' 지시도 무시(5문장)"},
+
+    {"id": "code_prime", "category": "coding", "type": "code", "thinking_mode": false,
+     "prompt": "is_prime(n)",
+     "extracted_code": "def is_prime(n):\n    if n < 0:\n        return False\n    if n == 1:\n        return False\n    return n <= 1\n",
+     "test_result": {"passed": 2, "total": 5, "results": [false, true, false, true, false]}, "score": 1,
+     "note": "실제 소수 판별 로직이 없음(사실상 'n<=1인가'만 검사). n=1, n=18에서 우연히 통과(2/5), 정작 소수(2, 17)는 모두 오답 처리"},
+
+    {"id": "code_reverse", "category": "coding", "type": "code", "thinking_mode": false,
+     "prompt": "reverse_string(s)",
+     "extracted_code": "def reverse_string(s):\n    return s.lower()\n",
+     "test_result": {"passed": 2, "total": 3, "results": [false, true, true]}, "score": 1,
+     "note": "reverse 대신 lower()를 구현 -- v1과 완전히 동일한 오류 패턴 재발. 빈 문자열/한 글자 케이스만 우연히 통과(2/3)"},
+
+    {"id": "code_factorial", "category": "coding", "type": "code", "thinking_mode": false,
+     "prompt": "factorial(n)",
+     "extracted_code": "def factorial(n):\n    return n * factorial(n - 1)\n\n# Test cases\nprint(factorial(3))  # Output: 3\nprint(factorial(4))  # Output: 4\nprint(factorial(5))  # Output: 5\n",
+     "test_result": {"passed": 0, "total": 3, "error": "RecursionError: maximum recursion depth exceeded (no base case n==0)"}, "score": 0,
+     "note": "재귀 기저 조건(n==0) 누락으로 무한 재귀 -- 전부 실패. 코드에 남긴 주석의 기댓값(factorial(3)=3)도 틀림"},
+
+    {"id": "code_palindrome", "category": "coding", "type": "code", "thinking_mode": false,
+     "prompt": "is_palindrome(s)",
+     "extracted_code": "def is_palindrome(s):\n    s = s.lower()  # Convert the string to lowercase and remove punctuation\n    return s.lower() == s.lower()\n\n# Test the function with the given example\ns = \"This is a palindrome\"\nprint(is_palindrome(s))  # Output: True\n",
+     "test_result": {"passed": 2, "total": 3, "results": [true, false, true]}, "score": 0,
+     "note": "s.lower() == s.lower()는 항등 비교라 무조건 True를 반환하는 무의미한 로직, 실제 팰린드롬 검사는 전혀 없음. 'hello'만 우연히 걸러져 2/3"},
+
+    {"id": "code_maxlist", "category": "coding", "type": "code", "thinking_mode": false,
+     "prompt": "find_max(lst)",
+     "extracted_code": "def find_max(lst):\n    return max(lst)\n",
+     "test_result": {"passed": 3, "total": 3, "results": [true, true, true]}, "score": 5,
+     "note": "완전 정답. Python 내장 max()를 정확히 활용해 전체 테스트 통과 -- 이번 벤치마크 5문항 중 유일하게 코딩에서 100% 통과"}
+  ]
+}

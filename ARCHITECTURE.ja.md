@@ -1,6 +1,6 @@
-# ゼロから作る LLM
+[![한국어](https://img.shields.io/badge/%ED%95%9C%EA%B5%AD%EC%96%B4-8B949E?style=flat-square)](ARCHITECTURE.md) [![English](https://img.shields.io/badge/English-8B949E?style=flat-square)](ARCHITECTURE.en.md) [![日本語](https://img.shields.io/badge/%E6%97%A5%E6%9C%AC%E8%AA%9E-0969DA?style=flat-square)](ARCHITECTURE.ja.md)
 
-[![KO](https://img.shields.io/badge/KO-lightgrey)](ARCHITECTURE.md) [![EN](https://img.shields.io/badge/EN-lightgrey)](ARCHITECTURE.en.md) [![JA](https://img.shields.io/badge/JA-0969da)](ARCHITECTURE.ja.md)
+# ゼロから作る LLM
 
 [← README](README.ja.md) · 用語で詰まったら [GLOSSARY](GLOSSARY.ja.md)
 
@@ -38,7 +38,6 @@
 
 LLM を学習するにはデータセットが必要です。データセットは「コーパス」とも呼ばれます。この例のコーパスは「私は猫が好きです」です。
 
-
 #### 1) トークナイザー
 
 コーパスをコンピュータの言語に変える道具を **トークナイザー** と呼びます。
@@ -52,7 +51,6 @@ vocab = {"私は": 1, "猫": 2, "が": 3, "好き": 4, "です": 5}
 ```
 
 token ids: `[1, 2, 3, 4, 5]`
-
 
 #### 2) 埋め込みテーブル
 
@@ -70,7 +68,6 @@ token ids: `[1, 2, 3, 4, 5]`
 
 実数一つを何バイトで持つかは **精度**（FP32、FP16 など）の問題です。
 
-
 #### 3) 問題を作る
 
 トークン列を一マスずつずらして入力/正解ペアを作ります。
@@ -81,7 +78,6 @@ token ids: `[1, 2, 3, 4, 5]`
 <kbd>私は</kbd> → ?（正解: 猫）<br>
 <kbd>私は</kbd> <kbd>猫</kbd> → ?（正解: が）
 
-
 #### 4) 正規化
 
 x = 埋め込み値。問題 [私は, 猫, が, 好き] とすると、x は「好き」の埋め込みです。
@@ -91,7 +87,6 @@ x = <kbd>0.71</kbd> <kbd>0.18</kbd> <kbd>-0.29</kbd> <kbd>0.55</kbd>
 正規化後の N:
 
 N = <kbd>1.10</kbd> <kbd>-0.28</kbd> <kbd>-1.50</kbd> <kbd>0.68</kbd>
-
 
 #### 5) アテンション
 
@@ -121,7 +116,6 @@ V の加重和: `0.10·V(私は) + 0.69·V(猫) + 0.05·V(が) + 0.15·V(好き)
 
 アテンション出力 = <kbd>-0.36</kbd> <kbd>0.18</kbd> <kbd>0.75</kbd> <kbd>0.09</kbd> — 文脈が混ざった新しいベクトルです。
 
-
 #### 6) 残差接続
 
 x とアテンション出力を足して new v を作ります。元の意味を保ちつつ文脈情報を載せるやり方です。
@@ -143,7 +137,6 @@ new v を正規化します。
 
 N₂ = <kbd>-0.88</kbd> <kbd>-0.79</kbd> <kbd>0.06</kbd> <kbd>1.61</kbd>
 
-
 #### 2) FFN 1段階 — W₁ で拡張
 
 N₂ を特定の倍率で広げます。GPT-2 は 4 倍で拡張するので、この例も同じにします。<br>
@@ -162,7 +155,6 @@ N₂ を特定の倍率で広げます。GPT-2 は 4 倍で拡張するので、
 | 猫 | <span style="color:#d85a30">-1.96</span> | <span style="color:#d85a30">-0.90</span> | <span style="color:#1d9e75">1.93</span> | <span style="color:#1d9e75">3.69</span> | <span style="color:#d85a30">-1.33</span> | <span style="color:#1d9e75">0.89</span> | <span style="color:#d85a30">-2.79</span> | <span style="color:#1d9e75">0.39</span> | <span style="color:#1d9e75">2.57</span> | <span style="color:#d85a30">-1.80</span> | <span style="color:#d85a30">-0.58</span> | <span style="color:#1d9e75">0.77</span> | <span style="color:#d85a30">-1.60</span> | <span style="color:#1d9e75">1.57</span> | <span style="color:#d85a30">-1.06</span> | <span style="color:#d85a30">-2.67</span> |
 | が | <span style="color:#1d9e75">2.35</span> | <span style="color:#1d9e75">0.64</span> | <span style="color:#d85a30">-2.43</span> | <span style="color:#d85a30">-2.82</span> | <span style="color:#1d9e75">2.28</span> | <span style="color:#d85a30">-1.91</span> | <span style="color:#1d9e75">1.83</span> | <span style="color:#1d9e75">0.50</span> | <span style="color:#d85a30">-2.27</span> | <span style="color:#1d9e75">0.94</span> | <span style="color:#1d9e75">0.31</span> | <span style="color:#d85a30">-0.76</span> | <span style="color:#1d9e75">0.90</span> | <span style="color:#d85a30">-1.31</span> | <span style="color:#1d9e75">1.88</span> | <span style="color:#1d9e75">3.10</span> |
 | 好き | <span style="color:#d85a30">-0.88</span> | <span style="color:#d85a30">-2.45</span> | <span style="color:#1d9e75">1.63</span> | <span style="color:#1d9e75">3.40</span> | <span style="color:#d85a30">-1.20</span> | <span style="color:#1d9e75">2.67</span> | <span style="color:#d85a30">-3.24</span> | <span style="color:#1d9e75">2.07</span> | <span style="color:#1d9e75">0.79</span> | <span style="color:#d85a30">-0.62</span> | <span style="color:#888780">0.00</span> | <span style="color:#d85a30">-0.21</span> | <span style="color:#1d9e75">0.82</span> | <span style="color:#d85a30">-0.63</span> | <span style="color:#d85a30">-0.57</span> | <span style="color:#d85a30">-1.77</span> |
-
 
 #### 3) FFN 2段階 — GELU
 
@@ -193,12 +185,10 @@ x が 3.10 なら通過率 99.9% = <span style="color:#1d9e75">3.10</span>（事
 N₂ = <kbd>-0.88</kbd> <kbd>-0.79</kbd> <kbd>0.06</kbd> <kbd>1.61</kbd> → GELU 通過結果（表 B の「好き」行）:<br>
 `-0.17 -0.02 1.55 3.39 -0.14 2.66 0.00 2.03 0.62 -0.17 0.00 -0.09 0.65 -0.17 -0.16 -0.07`
 
-
 #### 4) 縮小
 
 W₂ 行列積（16×4）。「16 個の信号を加重和して再び 4 マスに要約」する段階です。<br>
 結果: <kbd>7.51</kbd> <kbd>0.42</kbd> <kbd>-4.03</kbd> <kbd>5.92</kbd>
-
 
 #### 5) FFN 出力
 

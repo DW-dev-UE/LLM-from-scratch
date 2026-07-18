@@ -1,3 +1,5 @@
+[![한국어](https://img.shields.io/badge/%ED%95%9C%EA%B5%AD%EC%96%B4-8B949E?style=flat-square)](README.md) [![English](https://img.shields.io/badge/English-0969DA?style=flat-square)](README.en.md) [![日本語](https://img.shields.io/badge/%E6%97%A5%E6%9C%AC%E8%AA%9E-8B949E?style=flat-square)](README.ja.md)
+
 # LLM From Scratch
 
 ![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white) ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=white) ![CUDA](https://img.shields.io/badge/CUDA-76B900?logo=nvidia&logoColor=white)
@@ -96,8 +98,6 @@ The common thread across all three: none of it was the model being dumb — the 
 | [ARCHITECTURE](ARCHITECTURE.en.md) | Transformer walkthrough · model design · tokenizer · train · infer |
 | [POST-TRAINING](POST-TRAINING.en.md) | Post-deploy human feedback loop |
 | [BENCHMARK v1](BENCHMARK-v1.en.md) | Base model benchmark (training process · Q&A) |
-
-[![KO](https://img.shields.io/badge/KO-lightgrey)](README.md) [![EN](https://img.shields.io/badge/EN-0969da)](README.en.md) [![JA](https://img.shields.io/badge/JA-lightgrey)](README.ja.md)
 
 ---
 

@@ -1,0 +1,544 @@
+{
+ "ckpt": "ckpt/sft_base_v5.pt",
+ "checkpoint_backup": "ckpt/SFT_base_v5/sft_base_v5.pt",
+ "base_checkpoint": "ckpt/pretrain_base_v2.pt (corpus v2 continued pretrain, 25K steps lr 1e-4)",
+ "generated_at": "2026-07-14T16:27:57Z",
+ "scored_at": "2026-07-14T16:29:47Z",
+ "scoring_method": "coding=objective (executed against unit tests at generation time), qa/open=graded by Claude reading each transcript (0-5 scale). Same 14-prompt set as v3/v4 but GREEDY decoding (temperature=0.0) - deterministic, replaces the noisy temp-0.7 single-sample protocol used through v4.",
+ "params": {
+  "temperature": 0.0,
+  "top_p": 0.9,
+  "max_new": 256,
+  "seed": 0
+ },
+ "summary": {
+  "critical_finding": "BEST RESULT TO DATE, and the first benchmark under the greedy (temperature=0) protocol - deterministic, no sampling luck. Headline: no-thinking coding 5/5 fully passed (first ever perfect; v4 3/5, v3 4/5), avg no-thinking score jumped 2.07 -> 3.21, Korean total 1/30 -> 8/30 with the first-ever successful Korean summary and first Korean math answer containing the correct number. This validates the corpus-v2 continued pretraining despite its ko-wiki val regression (eval_base_compare.py: v1 2.504 vs v2 2.605) - the SFT-adjacent gains (SFT init loss 2.82->2.35) dominated downstream. Remaining bottleneck is now sharply defined: thinking->answer handoff. 4/14 thinking runs ended with EMPTY answers even though 3 of them had correct/usable content inside thinking (ko_fact perfect one-liner, ja_fact correct, en_summary good summary). Thinking-mode coding still 0/5 prose-only. ja/ko arithmetic still broken in answers (7-2 computed as 6). Protocol note: v5 numbers are greedy, v3/v4 were temp 0.7 single-sample - cross-version deltas carry that caveat, but greedy removes within-version noise going forward.",
+  "avg_score_thinking": 0.5,
+  "avg_score_no_thinking": 3.21,
+  "coding_fully_passed_thinking": "0/5",
+  "coding_fully_passed_no_thinking": "5/5",
+  "korean_total": "8/30 (v4: 1/30, v3: 0/30, v2: 2/30)",
+  "thinking_nonempty_answers": "10/14 (v4: 11/14, v3: 12/14)",
+  "vs_v4": {
+   "avg_thinking": "0.50 (v4 0.50)",
+   "avg_no_thinking": "3.21 (v4 2.07)",
+   "coding_no_thinking": "5/5 (v4 3/5)",
+   "korean": "8/30 (v4 1/30)"
+  }
+ },
+ "results": [
+  {
+   "id": "ko_fact_1",
+   "category": "korean",
+   "type": "qa",
+   "thinking_mode": true,
+   "prompt": "대한민국의 수도는 어디인가요?",
+   "thinking": "대한민국의 수도는 서울특별시입니다.",
+   "answer": "",
+   "expected_keywords": [
+    "서울"
+   ],
+   "keyword_match": false,
+   "score": 0,
+   "note": "thinking이 '대한민국의 수도는 서울특별시입니다.' 단문 완벽 정답 — 그러나 답변 공란. 인출 완성, 전달만 남음"
+  },
+  {
+   "id": "ko_math_1",
+   "category": "korean",
+   "type": "qa",
+   "thinking_mode": true,
+   "prompt": "철수는 사과를 5개 가지고 있었는데, 3개를 먹었습니다. 남은 사과는 몇 개인가요?",
+   "thinking": "철수는 3개를 먹었습니다.\n\n3개를 먹었으므로 남은 사과는 3 - 3 = 2개입니다.",
+   "answer": "따라서 철수는 2개의 사과를 먹었습니다.",
+   "expected_keywords": [
+    "2"
+   ],
+   "keyword_match": true,
+   "score": 3,
+   "note": "산식 표기는 이상하나('3-3=2') 최종 답변에 정답 2 등장 — 동사만 오류('먹었습니다'). 한국어 수학 첫 부분 정답"
+  },
+  {
+   "id": "ko_summary_1",
+   "category": "korean",
+   "type": "open",
+   "thinking_mode": true,
+   "prompt": "다음 문장을 한 문장으로 요약해주세요: '오늘 날씨가 매우 좋아서 공원에 산책을 나갔다. 사람들이 많이 나와 있었고, 아이들은 뛰어놀고 있었다.'",
+   "thinking": "오늘 날씨가 매우 좋아서 공원에 산책을 나갔다. 사람들이 많이 나와 있었고, 아이들은 뛰어놀고 있었다.",
+   "answer": "",
+   "expected_keywords": null,
+   "keyword_match": null,
+   "score": 0,
+   "note": "thinking이 원문 복사, 답변 공란"
+  },
+  {
+   "id": "ja_fact_1",
+   "category": "japanese",
+   "type": "qa",
+   "thinking_mode": true,
+   "prompt": "日本の首都はどこですか?",
+   "thinking": "日本の首都は東京です。東京は日本の首都であり、日本の首都である。",
+   "answer": "",
+   "expected_keywords": [
+    "東京"
+   ],
+   "keyword_match": false,
+   "score": 0,
+   "note": "thinking에 東京 정답 있으나 답변 공란"
+  },
+  {
+   "id": "ja_math_1",
+   "category": "japanese",
+   "type": "qa",
+   "thinking_mode": true,
+   "prompt": "太郎はりんごを7個持っていて、2個食べました。残りは何個ですか?",
+   "thinking": "この問題を解くためには、太郎はりんごを7個食べた後に残っていたりんごの数を計算し、その後、残っていたりんごの数から残っていた数を求める必要があります。\n\nまず、太郎はりんごを7個食べた後に残っていたりんごの数を計算します。\n\n\\[\n7 - 2 = 6\n\\]\n\n次に、残っていたりんごの数から食べたりんごの数を引きます。\n\n\\[\n6 - 7 = 1\n\\]\n\nしたがって、太郎はりんごは1個残ります。\n\n回答: 1",
+   "answer": "答えは1です。",
+   "expected_keywords": [
+    "5"
+   ],
+   "keyword_match": false,
+   "score": 0,
+   "note": "7-2=6, 6-7=1 산식 붕괴, 답 1 오답"
+  },
+  {
+   "id": "ja_translate_1",
+   "category": "japanese",
+   "type": "open",
+   "thinking_mode": true,
+   "prompt": "「今日は天気が良いので公園に散歩に行った。」を英語に翻訳してください。",
+   "thinking": "この問題は、天気が良い日、公園に散歩に行くという状況を英語に翻訳します。\n\n\"This is a great day for the children.\"\n\nこれは、天気が良い日、公園に散歩に行くという状況を英語に翻訳します。\n\n\"This is a great day for the children.\"\n\nこれは、公園に散歩に行くという状況を英語に翻訳します。\n\n\"This is a great day for the children.\"\n\nこれは、公園に散歩に行くという状況を英語に翻訳します。\n\n\"This is a great day for the children.\"\n\nこれは、公園に",
+   "answer": "公園に散歩に行くという状況を英語に翻訳します。",
+   "expected_keywords": null,
+   "keyword_match": null,
+   "score": 0,
+   "note": "'This is a great day for the children.' 반복 — 오역"
+  },
+  {
+   "id": "en_fact_1",
+   "category": "english",
+   "type": "qa",
+   "thinking_mode": true,
+   "prompt": "What is the capital of France?",
+   "thinking": "Okay, so I need to figure out the capital of France. The question says that the capital is France. Hmm, let me start by recalling what I know about France. The French people are a people with a long history of political, economic, and cultural influence. They have a long history of political and economic power, and their capital is the city of Paris.\n\nFirst, I should probably start by recalling what I know about France. The country is a bustling metropolis with a rich history, with a rich culture, and a rich economy. The capital of France is Paris. The city",
+   "answer": "is the capital of France. So the capital is Paris.\n\nNow, the question is about the capital of France. The answer should be the capital of France. Let me think about how the capital of France is calculated. The French people are a people with a long history of political, economic, and cultural influence. The capital is the capital of France. So the capital of France is Paris.\n\nWait, but the question is asking for the capital of France. So the answer is the capital of France. But the answer is the capital of France. So I need to figure out the capital of France.\n\nLet",
+   "expected_keywords": [
+    "Paris"
+   ],
+   "keyword_match": true,
+   "score": 4,
+   "note": "답변에 'So the capital is Paris.' 정답 명시 — 장황한 반복으로 감점"
+  },
+  {
+   "id": "en_math_1",
+   "category": "english",
+   "type": "qa",
+   "thinking_mode": true,
+   "prompt": "If a train travels at 60 km/h for 2 hours, how far does it go?",
+   "thinking": "The time it takes for the train to travel from one place to another is 60/2 = 30 hours.\nThe total distance traveled is 2+1 = 3 hours.",
+   "answer": "The answer is 3.",
+   "expected_keywords": [
+    "120"
+   ],
+   "keyword_match": false,
+   "score": 0,
+   "note": "60/2=30 등 붕괴, 답 3 오답"
+  },
+  {
+   "id": "en_summary_1",
+   "category": "english",
+   "type": "open",
+   "thinking_mode": true,
+   "prompt": "Summarize this in one sentence: 'The weather was nice today so I went for a walk in the park, and there were many people and children playing.'",
+   "thinking": "The park was nice, with many people and children playing.",
+   "answer": "",
+   "expected_keywords": null,
+   "keyword_match": null,
+   "score": 0,
+   "note": "thinking에 준수한 요약, 답변 공란"
+  },
+  {
+   "id": "code_prime",
+   "category": "coding",
+   "type": "code",
+   "thinking_mode": true,
+   "prompt": "is_prime(n)",
+   "thinking": "Okay, so I need to find a prime number that is not prime. Hmm, primes are numbers greater than 1 that have no divisors other than 1 and themselves. Right, because primes are numbers greater than 1 that have no divisors other than 1 and themselves. So the prime should be less than or equal to 1. \n\nFirst, maybe I should think about how to approach this. Let me start by checking small primes and see if they can be prime. \n\nStarting with n=1. Then the prime is 1. So the only prime that can be expressed as 1 is",
+   "answer": "1.\n\nn=2: prime is 2. So the only prime that can be expressed as 2 is 2.\n\nn=3: prime is 3. So the only prime that can be expressed as 3 is 3.\n\nn=4: prime is 4. So the only prime that can be expressed as 4 is 4.\n\nn=5: prime is 5. So the only prime that can be expressed as 5 is 5.\n\nn=6: prime is 6. So the only prime that can be expressed as 6 is 6.\n\nn=7: prime is 7. So",
+   "expected_keywords": null,
+   "keyword_match": null,
+   "extracted_code": "1.\n\nn=2: prime is 2. So the only prime that can be expressed as 2 is 2.\n\nn=3: prime is 3. So the only prime that can be expressed as 3 is 3.\n\nn=4: prime is 4. So the only prime that can be expressed as 4 is 4.\n\nn=5: prime is 5. So the only prime that can be expressed as 5 is 5.\n\nn=6: prime is 6. So the only prime that can be expressed as 6 is 6.\n\nn=7: prime is 7. So",
+   "test_result": {
+    "passed": 0,
+    "total": 5,
+    "error": "SyntaxError: invalid syntax (<string>, line 3)",
+    "results": [
+     false,
+     false,
+     false,
+     false,
+     false
+    ]
+   },
+   "score": 0,
+   "note": "산문만, 코드 없음"
+  },
+  {
+   "id": "code_reverse",
+   "category": "coding",
+   "type": "code",
+   "thinking_mode": true,
+   "prompt": "reverse_string(s)",
+   "thinking": "Okay, so I need to write a Python function that reverses a string. Hmm, reversing a string is like reversing the order of the characters. Let me think about how to approach this. \n\nFirst, I remember that reversing a string can be done using a loop. For example, if the string is \"a\" and the reversed string is \"ab\", then the reversed string would be \"abab\". But wait, the problem says reversing the order of the characters. So maybe I can use a loop that reverses the order of the characters?\n\nWait, but the problem",
+   "answer": "The reversed string is \"a\" and the reversed string is \"abab\". So the reversed string is \"abab\". That means reversing the order of the characters would be the same as reversing the order of the characters in the string. So the reversed string is \"abab\". That makes sense.\n\nSo the steps I need to take are:\n\n1. Convert the input string to a string.\n2. Convert the reversed string to a string.\n3. Reverse the reversed string.\n4. Repeat steps 1-2 for all the reversed characters.",
+   "expected_keywords": null,
+   "keyword_match": null,
+   "extracted_code": "The reversed string is \"a\" and the reversed string is \"abab\". So the reversed string is \"abab\". That means reversing the order of the characters would be the same as reversing the order of the characters in the string. So the reversed string is \"abab\". That makes sense.\n\nSo the steps I need to take are:\n\n1. Convert the input string to a string.\n2. Convert the reversed string to a string.\n3. Reverse the reversed string.\n4. Repeat steps 1-2 for all the reversed characters.",
+   "test_result": {
+    "passed": 0,
+    "total": 5,
+    "error": "SyntaxError: invalid syntax (<string>, line 1)",
+    "results": [
+     false,
+     false,
+     false,
+     false,
+     false
+    ]
+   },
+   "score": 0,
+   "note": "산문만, 코드 없음"
+  },
+  {
+   "id": "code_factorial",
+   "category": "coding",
+   "type": "code",
+   "thinking_mode": true,
+   "prompt": "factorial(n)",
+   "thinking": "Okay, so I need to write a function factorial(n) that returns the factorial of a non-negative integer n. Hmm, let's think. First, I should recall what factorial means. A factorial is a mathematical operation that takes an integer and returns the product of all the numbers in the factorial of that integer. So, factorial is the product of all the numbers in the factorial of n.\n\nWait, but the problem says \"factorial\" but the user says \"factorial\" which is the same as \"n\". So maybe I need to consider that the number n",
+   "answer": "The problem says \"factorial\" but the user says \"factorial\" which is the same as \"n\". So maybe I need to consider that n is the number of digits in the factorial of n? Or maybe I need to consider that n is the number of digits in the factorial of n? Wait, but the problem says \"factorial\" but the user says \"factorial\" which is the same as \"n\". Hmm, maybe I need to clarify that.\n\nWait, let me read the problem again: \"Factorial(n) that returns the factorial of a non-negative integer",
+   "expected_keywords": null,
+   "keyword_match": null,
+   "extracted_code": "The problem says \"factorial\" but the user says \"factorial\" which is the same as \"n\". So maybe I need to consider that n is the number of digits in the factorial of n? Or maybe I need to consider that n is the number of digits in the factorial of n? Wait, but the problem says \"factorial\" but the user says \"factorial\" which is the same as \"n\". Hmm, maybe I need to clarify that.\n\nWait, let me read the problem again: \"Factorial(n) that returns the factorial of a non-negative integer",
+   "test_result": {
+    "passed": 0,
+    "total": 5,
+    "error": "SyntaxError: unterminated string literal (detected at line 3) (<string>, line 3)",
+    "results": [
+     false,
+     false,
+     false,
+     false,
+     false
+    ]
+   },
+   "score": 0,
+   "note": "산문만, 코드 없음"
+  },
+  {
+   "id": "code_palindrome",
+   "category": "coding",
+   "type": "code",
+   "thinking_mode": true,
+   "prompt": "is_palindrome(s)",
+   "thinking": "Okay, so I need to figure out how to get the string s from a string s. Hmm, let's start by understanding what a palindrome is. A palindrome is a number that reads the same forwards and backwards. So, for example, if the string is \"AB\", then the string would be \"ABA\". \n\nWait, but the problem says the string is a palindrome. So, the string must be a palindrome. That means the string must be a palindrome of the same length as the number of its characters. So, the string must be a pal",
+   "answer": "The string is a palindrome, so the string must be a palindrome of the same length as the number of its characters. \n\nSo, the problem is to find the length of the string s such that the number of its characters is equal to the number of its characters in the number of its characters in the string. \n\nHmm, let me think. Let's denote the number of characters in the string as N. So, the number of characters in the string is N. The string must be a palindrome of the same length as N. \n\nThe problem states that the string must be",
+   "expected_keywords": null,
+   "keyword_match": null,
+   "extracted_code": "The string is a palindrome, so the string must be a palindrome of the same length as the number of its characters. \n\nSo, the problem is to find the length of the string s such that the number of its characters is equal to the number of its characters in the number of its characters in the string. \n\nHmm, let me think. Let's denote the number of characters in the string as N. So, the number of characters in the string is N. The string must be a palindrome of the same length as N. \n\nThe problem states that the string must be",
+   "test_result": {
+    "passed": 0,
+    "total": 5,
+    "error": "SyntaxError: unterminated string literal (detected at line 5) (<string>, line 5)",
+    "results": [
+     false,
+     false,
+     false,
+     false,
+     false
+    ]
+   },
+   "score": 0,
+   "note": "산문만, 코드 없음"
+  },
+  {
+   "id": "code_maxlist",
+   "category": "coding",
+   "type": "code",
+   "thinking_mode": true,
+   "prompt": "find_max(lst)",
+   "thinking": "Okay, so I need to find the largest number in the list lst. Hmm, let's see. The problem says that the maximum number in the list is the largest number in the list. Right, so I need to find the largest number in the list and then find the largest number in that list. \n\nFirst, let me make sure I understand the problem correctly. The maximum number in the list is the largest number in the list. So, I need to find the largest number in the list and then find the largest number in that list. \n\nWait, but how do I find the largest number in",
+   "answer": "The largest number in the list is the largest number in the list. So, the largest number in the list is the largest number in the list. So, the task is to find the largest number in the list and then find the largest number in that list. \n\nHmm, okay. So first, I need to find the largest number in the list. Let me think. The largest number in the list is the largest number in the list. So, the largest number in the list is the largest number in the list. \n\nSo, the problem is asking for the largest number in the list. So, the largest",
+   "expected_keywords": null,
+   "keyword_match": null,
+   "extracted_code": "The largest number in the list is the largest number in the list. So, the largest number in the list is the largest number in the list. So, the task is to find the largest number in the list and then find the largest number in that list. \n\nHmm, okay. So first, I need to find the largest number in the list. Let me think. The largest number in the list is the largest number in the list. So, the largest number in the list is the largest number in the list. \n\nSo, the problem is asking for the largest number in the list. So, the largest",
+   "test_result": {
+    "passed": 0,
+    "total": 5,
+    "error": "SyntaxError: invalid syntax (<string>, line 1)",
+    "results": [
+     false,
+     false,
+     false,
+     false,
+     false
+    ]
+   },
+   "score": 0,
+   "note": "동어반복 산문만, 코드 없음"
+  },
+  {
+   "id": "ko_fact_1",
+   "category": "korean",
+   "type": "qa",
+   "thinking_mode": false,
+   "prompt": "대한민국의 수도는 어디인가요?",
+   "thinking": "",
+   "answer": "대한민국에서 가장 큰 도시는 서울입니다. 서울은 서울을 중심으로 하는 지역이며, 서울은 서울을 중심으로 하는 지역입니다. 서울은 서울을 중심으로 하는 지역이며, 서울은 서울을 중심으로 하는 지역입니다. 서울은 서울을 중심으로 하는 지역이며, 서울은 서울을 중심으로 하는 지역입니다. 서울은 서울을 중심으로 하는 지역이며, 서울은 서울을 중심으로 하는 지역입니다. 서울은 서울을 중심으로 하는 지역이며, 서울은 서울을 중심으로 하는 지역입니다.",
+   "expected_keywords": [
+    "서울"
+   ],
+   "keyword_match": true,
+   "score": 2,
+   "note": "'가장 큰 도시는 서울' — 엔티티 정답이나 '수도' 프레임 아님 + 반복 루프. v4(0)보다 개선"
+  },
+  {
+   "id": "ko_math_1",
+   "category": "korean",
+   "type": "qa",
+   "thinking_mode": false,
+   "prompt": "철수는 사과를 5개 가지고 있었는데, 3개를 먹었습니다. 남은 사과는 몇 개인가요?",
+   "thinking": "",
+   "answer": "사과 5개를 먹은 후 남은 사과는 3개입니다.\n\n사과 5개를 먹은 후 남은 사과는 3개입니다.따라서 철수는 3개의 사과를 먹었습니다.",
+   "expected_keywords": [
+    "2"
+   ],
+   "keyword_match": false,
+   "score": 0,
+   "note": "'남은 사과는 3개' 오답"
+  },
+  {
+   "id": "ko_summary_1",
+   "category": "korean",
+   "type": "open",
+   "thinking_mode": false,
+   "prompt": "다음 문장을 한 문장으로 요약해주세요: '오늘 날씨가 매우 좋아서 공원에 산책을 나갔다. 사람들이 많이 나와 있었고, 아이들은 뛰어놀고 있었다.'",
+   "thinking": "",
+   "answer": "오늘 날씨가 매우 좋아서 공원에 산책을 나갔다.",
+   "expected_keywords": null,
+   "keyword_match": null,
+   "score": 3,
+   "note": "첫 문장으로 압축한 준수한 한 문장 요약 — 한국어 요약 첫 성공 (v3 무한루프→v4 복사→v5 요약)"
+  },
+  {
+   "id": "ja_fact_1",
+   "category": "japanese",
+   "type": "qa",
+   "thinking_mode": false,
+   "prompt": "日本の首都はどこですか?",
+   "thinking": "",
+   "answer": "日本の首都は東京です。東京は日本の首都であり、日本の首都は東京です。",
+   "expected_keywords": [
+    "東京"
+   ],
+   "keyword_match": true,
+   "score": 4,
+   "note": "東京 정답, 순환 반복으로 감점"
+  },
+  {
+   "id": "ja_math_1",
+   "category": "japanese",
+   "type": "qa",
+   "thinking_mode": false,
+   "prompt": "太郎はりんごを7個持っていて、2個食べました。残りは何個ですか?",
+   "thinking": "",
+   "answer": "太郎は、2個食べました。",
+   "expected_keywords": [
+    "5"
+   ],
+   "keyword_match": false,
+   "score": 0,
+   "note": "'2個食べました' 재진술만, 정답 5 없음"
+  },
+  {
+   "id": "ja_translate_1",
+   "category": "japanese",
+   "type": "open",
+   "thinking_mode": false,
+   "prompt": "「今日は天気が良いので公園に散歩に行った。」を英語に翻訳してください。",
+   "thinking": "",
+   "answer": "天気が良い日は、公園で散歩をするのが好きです。公園は、自然の美しさと、人々が集まる場所です。公園で散歩をするのは、自然の美しさを楽しむための一つの手段です。\n\n公園で散歩をするのは、自然の美しさを楽しむための一つの手段です。公園には、様々な種類の公園があり、それぞれに特徴があります。例えば、公園には、公園内を散策したり、花や植物を見たり、自然を感じられる場所があります。\n\n公園で散歩をするのは、自然の美しさを楽しむための一つの手段です。公園には、様々な種類の植物、動物、鳥、昆虫など、様々な種類の植物が集まっています。これらの植物は、自然の美しさと、人々が集まる場所を提供します。\n\n公園で散歩をするのは、自然の美しさを楽しむための一つの手段です。公園には、様々な種類の植物、動物、鳥、昆虫など、様々な種類の植物が集まっています。これらの植物は、自然の美しさと、人々が集まる場所を提供します。\n\n公園で散歩をするのは、自然の美しさを楽しむための一つの手段です。公園には、様々な種類の植物、動物、鳥、昆虫など、様々な種類の植物が集まっています。これらの植物は、自然の美しさと",
+   "expected_keywords": null,
+   "keyword_match": null,
+   "score": 0,
+   "note": "공원 에세이로 탈선, 영어 없음"
+  },
+  {
+   "id": "en_fact_1",
+   "category": "english",
+   "type": "qa",
+   "thinking_mode": false,
+   "prompt": "What is the capital of France?",
+   "thinking": "",
+   "answer": "The capital of France is Paris.",
+   "expected_keywords": [
+    "Paris"
+   ],
+   "keyword_match": true,
+   "score": 5,
+   "note": "'The capital of France is Paris.' 완벽"
+  },
+  {
+   "id": "en_math_1",
+   "category": "english",
+   "type": "qa",
+   "thinking_mode": false,
+   "prompt": "If a train travels at 60 km/h for 2 hours, how far does it go?",
+   "thinking": "",
+   "answer": "The train travels 60 km/h * 2 hours = 120 km.\n\nHere's the reasoning:\n\n1. We know that the train travels at 60 km/h for 2 hours.\n2. To find the distance traveled, we can use the formula: Distance = Speed × Time\n3. In this case, the speed is 120 km/h, and the time is 2 hours.\n4. Therefore, the distance traveled is 120 km × 2 hours = 240 km.",
+   "expected_keywords": [
+    "120"
+   ],
+   "keyword_match": true,
+   "score": 3,
+   "note": "선두 답변 '60*2=120km' 정답 — 이후 reasoning에서 240km로 자기모순"
+  },
+  {
+   "id": "en_summary_1",
+   "category": "english",
+   "type": "open",
+   "thinking_mode": false,
+   "prompt": "Summarize this in one sentence: 'The weather was nice today so I went for a walk in the park, and there were many people and children playing.'",
+   "thinking": "",
+   "answer": "The park was a great place for children to play and have fun.",
+   "expected_keywords": null,
+   "keyword_match": null,
+   "score": 3,
+   "note": "한 문장 요약, 날씨/산책 정보 탈락"
+  },
+  {
+   "id": "code_prime",
+   "category": "coding",
+   "type": "code",
+   "thinking_mode": false,
+   "prompt": "is_prime(n)",
+   "thinking": "",
+   "answer": "def is_prime(n):\n    if n <= 1:\n        return False\n    for i in range(2, int(n**0.5) + 1):\n        if n % i == 0:\n            return False\n    return True",
+   "expected_keywords": null,
+   "keyword_match": null,
+   "extracted_code": "def is_prime(n):\n    if n <= 1:\n        return False\n    for i in range(2, int(n**0.5) + 1):\n        if n % i == 0:\n            return False\n    return True",
+   "test_result": {
+    "passed": 5,
+    "total": 5,
+    "results": [
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   },
+   "score": 5,
+   "note": "sqrt 시도분해 정답 5/5"
+  },
+  {
+   "id": "code_reverse",
+   "category": "coding",
+   "type": "code",
+   "thinking_mode": false,
+   "prompt": "reverse_string(s)",
+   "thinking": "",
+   "answer": "def reverse_string(s):\n    return s[::-1]",
+   "expected_keywords": null,
+   "keyword_match": null,
+   "extracted_code": "def reverse_string(s):\n    return s[::-1]",
+   "test_result": {
+    "passed": 5,
+    "total": 5,
+    "results": [
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   },
+   "score": 5,
+   "note": "s[::-1] 정답 5/5 (v4에 이어 유지)"
+  },
+  {
+   "id": "code_factorial",
+   "category": "coding",
+   "type": "code",
+   "thinking_mode": false,
+   "prompt": "factorial(n)",
+   "thinking": "",
+   "answer": "def factorial(n):\n    if n == 0:\n        return 1\n    else:\n        return n * factorial(n-1)",
+   "expected_keywords": null,
+   "keyword_match": null,
+   "extracted_code": "def factorial(n):\n    if n == 0:\n        return 1\n    else:\n        return n * factorial(n-1)",
+   "test_result": {
+    "passed": 5,
+    "total": 5,
+    "results": [
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   },
+   "score": 5,
+   "note": "base case 재귀 정답 5/5"
+  },
+  {
+   "id": "code_palindrome",
+   "category": "coding",
+   "type": "code",
+   "thinking_mode": false,
+   "prompt": "is_palindrome(s)",
+   "thinking": "",
+   "answer": "def is_palindrome(s):\n    s = s.lower()\n    s = s.lower()\n    return s == s[::-1]",
+   "expected_keywords": null,
+   "keyword_match": null,
+   "extracted_code": "def is_palindrome(s):\n    s = s.lower()\n    s = s.lower()\n    return s == s[::-1]",
+   "test_result": {
+    "passed": 5,
+    "total": 5,
+    "results": [
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   },
+   "score": 5,
+   "note": "lower()+뒤집기 정답 5/5 (중복 줄 1개는 무해)"
+  },
+  {
+   "id": "code_maxlist",
+   "category": "coding",
+   "type": "code",
+   "thinking_mode": false,
+   "prompt": "find_max(lst)",
+   "thinking": "",
+   "answer": "def find_max(lst):\n    max_num = max(lst)\n    return max_num",
+   "expected_keywords": null,
+   "keyword_match": null,
+   "extracted_code": "def find_max(lst):\n    max_num = max(lst)\n    return max_num",
+   "test_result": {
+    "passed": 5,
+    "total": 5,
+    "results": [
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   },
+   "score": 5,
+   "note": "내장 max() 정답 5/5 — v4의 셰도잉 버그 소멸"
+  }
+ ]
+}

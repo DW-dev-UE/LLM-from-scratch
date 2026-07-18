@@ -1,6 +1,6 @@
-# POST-TRAINING
+[![한국어](https://img.shields.io/badge/%ED%95%9C%EA%B5%AD%EC%96%B4-8B949E?style=flat-square)](POST-TRAINING.md) [![English](https://img.shields.io/badge/English-8B949E?style=flat-square)](POST-TRAINING.en.md) [![日本語](https://img.shields.io/badge/%E6%97%A5%E6%9C%AC%E8%AA%9E-0969DA?style=flat-square)](POST-TRAINING.ja.md)
 
-[![KO](https://img.shields.io/badge/KO-lightgrey)](POST-TRAINING.md) [![EN](https://img.shields.io/badge/EN-lightgrey)](POST-TRAINING.en.md) [![JA](https://img.shields.io/badge/JA-0969da)](POST-TRAINING.ja.md)
+# POST-TRAINING
 
 [← README](README.ja.md) · 用語で詰まったら [GLOSSARY](GLOSSARY.ja.md)
 

@@ -1,3 +1,5 @@
+[![한국어](https://img.shields.io/badge/%ED%95%9C%EA%B5%AD%EC%96%B4-0969DA?style=flat-square)](README.md) [![English](https://img.shields.io/badge/English-8B949E?style=flat-square)](README.en.md) [![日本語](https://img.shields.io/badge/%E6%97%A5%E6%9C%AC%E8%AA%9E-8B949E?style=flat-square)](README.ja.md)
+
 # 밑바닥부터 만드는 LLM
 
 ![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white) ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=white) ![CUDA](https://img.shields.io/badge/CUDA-76B900?logo=nvidia&logoColor=white)
@@ -97,8 +99,6 @@ val이 코퍼스 파일 순서의 마지막 1%였는데, ko위키 꼬리 단일 
 | [ARCHITECTURE](ARCHITECTURE.md) | 트랜스포머 워크스루 · 모델 설계 · 토크나이저 · 학습 · 추론 |
 | [POST-TRAINING](POST-TRAINING.md) | 배포 후 인간 피드백 루프 |
 | [BENCHMARK v1](BENCHMARK-v1.md) | Base 모델 벤치마크 (학습 과정 · Q&A 포함) |
-
-[![KO](https://img.shields.io/badge/KO-0969da)](README.md) [![EN](https://img.shields.io/badge/EN-lightgrey)](README.en.md) [![JA](https://img.shields.io/badge/JA-lightgrey)](README.ja.md)
 
 ---
 

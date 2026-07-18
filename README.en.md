@@ -11,11 +11,14 @@
 > Learning with AI is fine, but rewriting sentences myself to organize my knowledge matters more.
 
 > [!IMPORTANT]
-> **Next goal — APEX-1 (1B scale)**  
-> ~1,119.5M measured parameters. Model name **APEX-1**.  
-> 24 layers · d_model 2048 · GQA (16Q/4KV) + RoPE (θ=500K) + SwiGLU + RMSNorm · weight tying · context 4096 (trained at 2048)  
-> Training: bf16 · lr 3e-4 cosine · 51K steps (20B tokens) · corpus v3-en 80.8GB (English + code) · vocab 32K, English-only  
-> Deferred: MoE · YaRN · FP8 · multi-GPU (next scale after 1B is validated)
+> **Next goal — APEX-1 (1B scale)**
+>
+> ~**1,119.5M** measured parameters. Model name **APEX-1**.
+>
+> - **Architecture**: 24 layers · d_model 2048 · GQA (16Q/4KV) + RoPE (θ=500K) + SwiGLU + RMSNorm · weight tying
+> - **Context**: max 4096 (trained at 2048)
+> - **Training**: bf16 · lr 3e-4 cosine · 51K steps (20B tokens) · corpus v3-en 80.8GB (English + code) · vocab 32K, English-only
+> - **Deferred**: MoE · YaRN · FP8 · multi-GPU (next scale after 1B is validated)
 
 ---
 

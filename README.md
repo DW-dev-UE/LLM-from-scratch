@@ -11,11 +11,14 @@
 > 물론 AI를 통해 배우는것은 좋지만 문장을 몇 번씩 다듬으면서 나의 지식을 정리하는게 더 중요합니다.
 
 > [!IMPORTANT]
-> **다음 목표 — APEX-1 (1B급)**  
-> 실측 1,119.5M 파라미터, 모델명 **APEX-1**.  
-> 24층 · d_model 2048 · GQA(16Q/4KV) + RoPE(θ=500K) + SwiGLU + RMSNorm · weight tying · 컨텍스트 4096(학습 2048)  
-> 학습: bf16 · lr 3e-4 코사인 · 51K step(20B 토큰) · 코퍼스 v3-en 80.8GB(영어+코드) · vocab 32K 영어 전용  
-> 미채택: MoE · YaRN · FP8 · 멀티GPU (1B 검증 후 다음 스케일)
+> **다음 목표 — APEX-1 (1B급)**
+>
+> 실측 **1,119.5M** 파라미터. 모델명 **APEX-1**.
+>
+> - **구조**: 24층 · d_model 2048 · GQA(16Q/4KV) + RoPE(θ=500K) + SwiGLU + RMSNorm · weight tying
+> - **컨텍스트**: max 4096 (학습 2048)
+> - **학습**: bf16 · lr 3e-4 코사인 · 51K step (20B 토큰) · 코퍼스 v3-en 80.8GB (영어+코드) · vocab 32K 영어 전용
+> - **미채택**: MoE · YaRN · FP8 · 멀티GPU (1B 검증 후 다음 스케일)
 
 ---
 

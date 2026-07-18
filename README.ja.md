@@ -1,6 +1,6 @@
 # ゼロから作る LLM
 
-[![KO](https://img.shields.io/badge/KO-lightgrey)](README.md) [![EN](https://img.shields.io/badge/EN-lightgrey)](README.en.md) [![JA](https://img.shields.io/badge/JA-0969da)](README.ja.md) ![Last commit](https://img.shields.io/github/last-commit/DW-dev-UE/LLM-from-scratch)
+![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white) ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=white) ![CUDA](https://img.shields.io/badge/CUDA-76B900?logo=nvidia&logoColor=white)
 
 > [!NOTE]
 > **このリポジトリは継続更新中です。**  
@@ -12,34 +12,10 @@
 
 > [!IMPORTANT]
 > **次の目標 — APEX-1（1B 級）**  
-> いまはプロジェクトの規模を広げ、**実測 1,119.5M パラメータ級の LLM** を新しく開発しています。モデル名は **APEX-1** です。
-
-**構造（24層 × [Attention + FFN]）**
-
-| 構成 | 仕様 | 採用アーキテクチャ |
-|:-----|:-----|:-----|
-| 層数 | 24層（attention 24 + FFN 24） | Pre-Norm 構造 |
-| d_model | 2048 | — |
-| Attention | 16 Q ヘッド / 4 KV ヘッド、ヘッドあたり 128 次元 | GQA + QK-norm + FlashAttention（SDPA）+ causal mask |
-| 位置エンコーディング | 回転角 θ=500,000 | RoPE（Llama-3 設定、コンテキスト拡張の余地あり） |
-| FFN | 2048 → 5440 → 2048 | SwiGLU（gate/up/down の3行列） |
-| 正規化 | 層ごとに2個 + 最終1個 | RMSNorm |
-| 出力層 | 埋め込みと共有 | weight tying |
-| コンテキスト | max 4096（学習は 2048） | KV キャッシュ推論に対応 |
-
-**パラメータ配分**（合計 1,119.5M）
-
-| ブロック | パラメータ | 比率 |
-|:-----|-----:|-----:|
-| FFN ×24 | 802.0M | 71.7% |
-| Attention ×24 | 251.8M | 22.5% |
-| 埋め込み（32K×2048、出力共有） | 65.5M | 5.9% |
-
-**学習設定**: bf16 + torch.compile · AdamW、lr 3e-4 コサイン（stage-2 は 6e-5）· バッチ 8 × seq 2048 × accum 24 = ステップあたり 393K トークン · 合計 51K ステップ = 20B トークン · コーパス v3-en 80.8GB（英語+コード、13ソース）· トークナイザー BPE 32K・英語専用
-
-**あえて採用しないもの**: MoE · YaRN · FP8 · マルチGPU — すべて「1B 検証後の次スケール」に回します。
-
-327M（base）比の変更点: 幅 2倍（1024→2048）· ヘッド 2倍（64→128）· QK-norm 新規 · θ 50倍 · vocab 64K→32K で英語専用。
+> 実測 1,119.5M パラメータ、モデル名 **APEX-1**。  
+> 24層 · d_model 2048 · GQA（16Q/4KV）+ RoPE（θ=500K）+ SwiGLU + RMSNorm · weight tying · コンテキスト 4096（学習は 2048）  
+> 学習: bf16 · lr 3e-4 コサイン · 51K step（20B トークン）· コーパス v3-en 80.8GB（英語+コード）· vocab 32K・英語専用  
+> 見送り: MoE · YaRN · FP8 · マルチGPU（1B 検証後の次スケール）
 
 ---
 

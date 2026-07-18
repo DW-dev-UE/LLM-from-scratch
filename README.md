@@ -1,6 +1,6 @@
 # 밑바닥부터 만드는 LLM
 
-[![KO](https://img.shields.io/badge/KO-0969da)](README.md) [![EN](https://img.shields.io/badge/EN-lightgrey)](README.en.md) [![JA](https://img.shields.io/badge/JA-lightgrey)](README.ja.md) ![Last commit](https://img.shields.io/github/last-commit/DW-dev-UE/LLM-from-scratch)
+![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white) ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=white) ![CUDA](https://img.shields.io/badge/CUDA-76B900?logo=nvidia&logoColor=white)
 
 > [!NOTE]
 > **이 저장소는 계속 다듬는 중입니다.**  
@@ -12,34 +12,10 @@
 
 > [!IMPORTANT]
 > **다음 목표 — APEX-1 (1B급)**  
-> 지금은 프로젝트 범위를 넓혀 **실측 1,119.5M 파라미터급 LLM**을 새로 개발하고 있습니다. 모델명은 **APEX-1**입니다.
-
-**구조 (24층 × [Attention + FFN])**
-
-| 구성 | 사양 | 채택 아키텍처 |
-|:-----|:-----|:-----|
-| 층 수 | 24층 (attention 24 + FFN 24) | Pre-Norm 구조 |
-| d_model | 2048 | — |
-| Attention | 16 Q헤드 / 4 KV헤드, 헤드당 128차원 | GQA + QK-norm + FlashAttention(SDPA) + causal mask |
-| 위치 인코딩 | 회전각 θ=500,000 | RoPE (Llama-3 설정, 컨텍스트 확장 여지) |
-| FFN | 2048 → 5440 → 2048 | SwiGLU (gate/up/down 3행렬) |
-| 정규화 | 층당 2개 + 최종 1개 | RMSNorm |
-| 출력층 | 임베딩과 공유 | weight tying |
-| 컨텍스트 | max 4096 (학습은 2048) | KV캐시 추론 지원 |
-
-**파라미터 배분** (총 1,119.5M)
-
-| 블록 | 파라미터 | 비중 |
-|:-----|-----:|-----:|
-| FFN ×24 | 802.0M | 71.7% |
-| Attention ×24 | 251.8M | 22.5% |
-| 임베딩 (32K×2048, 출력 공유) | 65.5M | 5.9% |
-
-**학습 설정**: bf16 + torch.compile · AdamW, lr 3e-4 코사인 (stage-2는 6e-5) · 배치 8 × seq 2048 × accum 24 = 스텝당 393K 토큰 · 총 51K 스텝 = 20B 토큰 · 코퍼스 v3-en 80.8GB (영어+코드, 13소스) · 토크나이저 BPE 32K 전용
-
-**미채택 (의도적)**: MoE · YaRN · FP8 · 멀티GPU — 전부 "1B 검증 후 다음 스케일" 항목.
-
-327M(base) 대비 변화: 폭 2배(1024→2048) · 헤드 2배(64→128) · QK-norm 신규 · θ 50배 · vocab 64K→32K 영어 전용.
+> 실측 1,119.5M 파라미터, 모델명 **APEX-1**.  
+> 24층 · d_model 2048 · GQA(16Q/4KV) + RoPE(θ=500K) + SwiGLU + RMSNorm · weight tying · 컨텍스트 4096(학습 2048)  
+> 학습: bf16 · lr 3e-4 코사인 · 51K step(20B 토큰) · 코퍼스 v3-en 80.8GB(영어+코드) · vocab 32K 영어 전용  
+> 미채택: MoE · YaRN · FP8 · 멀티GPU (1B 검증 후 다음 스케일)
 
 ---
 

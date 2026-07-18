@@ -1,12 +1,15 @@
-[한국어](GLOSSARY.md) · [English](GLOSSARY.en.md) · [日本語](GLOSSARY.ja.md)
+# GLOSSARY
+
+[![KO](https://img.shields.io/badge/KO-lightgrey)](GLOSSARY.md) [![EN](https://img.shields.io/badge/EN-lightgrey)](GLOSSARY.en.md) [![JA](https://img.shields.io/badge/JA-0969da)](GLOSSARY.ja.md)
 
 [← README](README.ja.md)
 
 ---
 
-この文書は辞書です。
-[ARCHITECTURE](ARCHITECTURE.ja.md) や [POST-TRAINING](POST-TRAINING.ja.md) を読んでいて詰まったら、ここに戻ってきてください。
-最初から全部覚える必要はありません。知らない単語だけ探せば十分です。
+> [!TIP]
+> この文書は辞書です。  
+> [ARCHITECTURE](ARCHITECTURE.ja.md) や [POST-TRAINING](POST-TRAINING.ja.md) を読んでいて詰まったら、ここに戻ってきてください。  
+> 最初から全部覚える必要はありません。知らない単語だけ探せば十分です。
 
 ---
 

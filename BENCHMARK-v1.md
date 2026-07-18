@@ -1,4 +1,4 @@
-[한국어](BENCHMARK-v1.md) · [English](BENCHMARK-v1.en.md) · [日本語](BENCHMARK-v1.ja.md)
+[![KO](https://img.shields.io/badge/KO-0969da)](BENCHMARK-v1.md) [![EN](https://img.shields.io/badge/EN-lightgrey)](BENCHMARK-v1.en.md) [![JA](https://img.shields.io/badge/JA-lightgrey)](BENCHMARK-v1.ja.md)
 
 [← README](README.md)
 
@@ -16,7 +16,8 @@
 | 🧪 **세트** | 동일 **14문항 × THINKING on/off** (버전 비교용) |
 | 📁 **원본** | [`ckpt/benchmark_sft_base_v6.json`](ckpt/benchmark_sft_base_v6.json) |
 
-> ⚠️ 아직 **실사용 단계가 아닙니다.**  
+> [!WARNING]
+> 아직 **실사용 단계가 아닙니다.**  
 > 파이프라인이 도는지, 체크포인트·프로토콜이 바뀌면 뭐가 달라지는지를 보는 스냅샷입니다.
 
 ### 📑 목차
@@ -35,7 +36,8 @@
 
 버전을 한 줄로 비교합니다. 굵은 칸이 **지금 보는 최신**입니다.
 
-> ⚠️ **비교 주의**  
+> [!WARNING]
+> **비교 주의**  
 > · **프로토콜**: v1–v4는 temp `0.7` 단일 샘플 · **v5·v6는 greedy (temp `0.0`)**  
 > · **베이스 분기**: v1–v4는 `pretrain_base_v1` · **v5·v6는 `pretrain_base_v2` 위 SFT**  
 > · **v5→v6**: 베이스·SFT 소스 믹스 모두 동일, **prep_sft 전처리 + 추론 예산 분리만** 변경 — 이 프로젝트에서 가장 깨끗한 단일 변수 비교  
@@ -142,9 +144,11 @@ LM Head ◄───────────────────────
 
 공통 설정: **AdamW** (β 0.9 / 0.95, wd 0.1) · grad clip 1.0 · warmup + cosine · CUDA · SFT lr `3e-5` · v6은 A100 40GB · batch 8 × accum 16
 
+> [!IMPORTANT]
 > 🔑 **v5의 핵심 변수**는 SFT 믹스가 아니라 **베이스(pretrain_v2)** 입니다.  
 > v4와 v5는 같은 `sft.pt` (`975c…`) · 같은 9,200 step · 다른 init 가중치입니다.
 
+> [!IMPORTANT]
 > 🔑 **v6의 핵심 변수**는 베이스도 SFT 소스 믹스도 아니라 **데이터 전처리와 추론 코드**입니다.  
 > `data.py`의 `prep_sft`가 긴 THINKING 구간을 다루는 방식을 바꿨고 (꼬리 보존 위주로 trim/demote),  
 > `infer.py`는 thinking과 answer가 하나의 `max_new` 예산을 공유하던 버그를 고쳐 **둘을 분리된 예산**으로 생성합니다.  
@@ -189,6 +193,7 @@ LM Head ◄───────────────────────
 
 </details>
 
+> [!TIP]
 > 💡 Loss가 내려간다 = *대화 형식에 적응 중* 이라는 신호입니다.  
 > 벤치 점수가 바로 오른다는 뜻은 **아닙니다.**  
 > 다만 v5의 **낮은 SFT 초기 loss**는 corpus-v2 continued pretrain이 SFT 쪽에 유리하게 붙었다는 힌트입니다.
@@ -246,7 +251,8 @@ LM Head ◄───────────────────────
 코퍼스를 확장·재토큰화한 corpus v2 (fineweb_edu 확대, finemath 추가 등).  
 일부 소스(vault/commitpack)는 파이프라인 단계에서 실패 기록 있음.
 
-> 참고: ko-wiki val loss는 v1 대비 소폭 악화(보고: 2.504 → 2.605)였지만,  
+> [!NOTE]
+> ko-wiki val loss는 v1 대비 소폭 악화(보고: 2.504 → 2.605)였지만,  
 > SFT 초기 loss·다운스트림 벤치는 **v2 베이스가 더 유리**했습니다.
 
 ### 🗣️ SFT 믹스 진화
@@ -345,20 +351,24 @@ SFT 예제 (v1)
 | **v6 생성** | temp **`0.0` greedy** · top_p `0.9` · max_new `256` · seed `0` · **thinking/answer 분리 예산** |
 | 일시 | v1 `07-09/10` · v2 `07-10` · v3 `07-13` · v4 `07-13` · v5 `07-14` · **v6 `07-15`** (2026) |
 
+> [!NOTE]
 > 📌 코딩 테스트 분모: v1/v2 합 **17** · v3+ 합 **25** (문제당 5케이스).  
 > 버전 비교는 **완전 통과 N/5** 를 보는 편이 안전합니다.
 
+> [!WARNING]
 > 🎲 **샘플링 노이즈 (v4 교훈)**  
 > temp 0.7 · 단일 샘플에서 v3↔v4 item flip이 컸습니다  
 > (예: en_fact 5→0, code_prime 5→0, code_maxlist 5→0, code_reverse 0→5).  
 > **v5부터 greedy** 로 바꿔 버전 내 노이즈를 제거했습니다.  
 > 다만 v5 수치를 v3/v4와 나란히 둘 때는 **프로토콜 차이 주석이 필수**입니다.
 
+> [!WARNING]
 > 🐛 **예산 충돌 버그 (v6 교훈)**  
 > v6의 첫 벤치런은 `max_think`와 `max_new`가 같은 예산(256)을 공유해  
 > thinking이 길어지면 answer 예산이 0으로 남는 버그가 있었습니다.  
 > `generate()`에서 두 예산을 분리한 뒤 재측정한 결과가 아래 v6 수치입니다.
 
+> [!NOTE]
 > 🇰🇷 한국어 합 점수: 사고+일반 각 3문항 × 0–5 = **최대 30점**.
 
 ---
@@ -374,7 +384,8 @@ SFT 예제 (v1)
 | 🎲 생성 | greedy · temp 0.0 |
 | 📁 JSON | [`benchmark_sft_base_v6.json`](ckpt/benchmark_sft_base_v6.json) |
 
-> ⚠️ 첫 v6 벤치런은 `max_think`와 `max_new`가 예산을 공유해 답이 비는 버그가 있었습니다.  
+> [!WARNING]
+> 첫 v6 벤치런은 `max_think`와 `max_new`가 예산을 공유해 답이 비는 버그가 있었습니다.  
 > `generate()`에서 예산을 분리한 뒤 재측정한 것이 아래 결과입니다 (§4 참고).
 
 ### 5.1 점수 카드
@@ -459,6 +470,7 @@ v5까지 이 자리는 “핸드오프 실패” 사례 나열이었습니다. v
 | en_math | **0** | “60/2=30”, “30/2=15” | “The answer is 15.” | 산식 붕괴, 오답 |
 | en_summary | **3** | 짧고 무난한 요약 | “The answer is that the park was nice and the children were playing.” | 요약 성립, 프레임 어색 |
 
+> [!IMPORTANT]
 > 🔑 **가장 중요한 변화**: v5는 ko_fact·ja_fact·en_summary에서 thinking 안에 정답이 있어도 답 칸이 비었습니다.  
 > v6는 같은 유형 문항에서 **답 칸에 내용이 채워집니다** — 정확도는 아직 들쑥날쑥해도 “전달 안 됨” 자체는 해소됐습니다.
 
@@ -527,6 +539,7 @@ thinking→answer 핸드오프가 풀리면서, 남은 문제는 **형식이 아
 | 🇯🇵→🇬🇧 번역 | 원문 반복 또는 무관한 영어 문장 나열 | 번역 능력 자체 미형성 |
 | 코딩 일반화 | 사고 모드 `is_prime`이 나머지 연산 17개 하드코딩 (분해 로직 아님) | 부분 이해 — 완전한 알고리즘 학습 아직 |
 
+> [!NOTE]
 > 📌 v1의 “닫기 실패” → v5의 “닫지만 전달 안 됨” → v6는 **“전달되지만 내용이 가끔 틀림”** 단계로 병목이 이동했습니다.  
 > 형식 학습은 사실상 마무리 단계로 보입니다.
 
@@ -719,6 +732,7 @@ thinking→answer 핸드오프가 풀리면서, 남은 문제는 **형식이 아
 | 🇺🇸 일반 | **2.67/5** |
 | 💻 일반 | 테스트 **4/17** · 완전 **1/5** |
 
+> [!WARNING]
 > 🧠 닫는 태그 전에 생성이 끝남 → 추론 코드가 답을 비움.  
 > 이 체크포인트는 **일반 채팅 모드**로 쓰는 편이 맞습니다.
 
@@ -773,6 +787,7 @@ def is_prime(n):
 SFT 전에는 **지시 형식 자체가 학습되지 않은 상태**입니다.  
 v1 SFT 이후 “형식을 시도한다”는 변화가 벤치에 처음 잡힙니다.
 
+> [!NOTE]
 > 📭 **pretrain_base_v2 단독 채팅 벤치는 아직 없음.**  
 > v2의 효과는 현재 **sft_base_v5 · sft_base_v6** 다운스트림으로만 관측됩니다.
 

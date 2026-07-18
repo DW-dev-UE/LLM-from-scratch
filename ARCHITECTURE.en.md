@@ -1,6 +1,6 @@
 # LLM From Scratch
 
-[한국어](ARCHITECTURE.md) · [English](ARCHITECTURE.en.md) · [日本語](ARCHITECTURE.ja.md)
+[![KO](https://img.shields.io/badge/KO-lightgrey)](ARCHITECTURE.md) [![EN](https://img.shields.io/badge/EN-0969da)](ARCHITECTURE.en.md) [![JA](https://img.shields.io/badge/JA-lightgrey)](ARCHITECTURE.ja.md)
 
 [← README](README.en.md) · Stuck on a term? [GLOSSARY](GLOSSARY.en.md)
 
@@ -98,6 +98,7 @@ N = <kbd>1.10</kbd> <kbd>-0.28</kbd> <kbd>-1.50</kbd> <kbd>0.68</kbd>
 This is the step that mixes context — the core of the Transformer architecture from here on.<br>
 A plain bigram model cannot see context. The same “like” looks the same whether the previous context was “cat OBJ” or something else.
 
+> [!TIP]
 > 📌 **Three random matrices project N into three views**
 
 Problem 4 — tokens `[1, 2, 3, 4]` = "I cat OBJ like", targets `[2, 3, 4, 5]` = "cat OBJ like do".<br>
@@ -150,6 +151,7 @@ Attention output is only a weighted sum of V values — mixing and averaging —
 
 Expand: `U = N·W₁ + b₁` (4×4 matrix · 4×16 matrix = 4×16; b₁ is a 16-dim bias, initialized to 0 so omitted)
 
+> [!NOTE]
 > **Legend**: <span style="color:#1d9e75">■</span> will pass (positive) · <span style="color:#d85a30">■</span> will be blocked (negative) · <span style="color:#888780">■</span> near zero
 
 **Table A — before GELU (U)**

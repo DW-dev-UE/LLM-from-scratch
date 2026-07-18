@@ -1,5 +1,7 @@
 # LLM From Scratch
 
+[![KO](https://img.shields.io/badge/KO-lightgrey)](README.md) [![EN](https://img.shields.io/badge/EN-0969da)](README.en.md) [![JA](https://img.shields.io/badge/JA-lightgrey)](README.ja.md) ![Last commit](https://img.shields.io/github/last-commit/DW-dev-UE/LLM-from-scratch)
+
 > [!NOTE]
 > **This repo is actively updated.**  
 > Training results, benchmarks, and docs change over time. Prefer the latest commit. Issues and PRs welcome.
@@ -85,7 +87,7 @@ The common thread across all three: none of it was the model being dumb — the 
 | [POST-TRAINING](POST-TRAINING.en.md) | Post-deploy human feedback loop |
 | [BENCHMARK v1](BENCHMARK-v1.en.md) | Base model benchmark (training process · Q&A) |
 
-[한국어](README.md) · [English](README.en.md) · [日本語](README.ja.md)
+[![KO](https://img.shields.io/badge/KO-lightgrey)](README.md) [![EN](https://img.shields.io/badge/EN-0969da)](README.en.md) [![JA](https://img.shields.io/badge/JA-lightgrey)](README.ja.md)
 
 ---
 
@@ -97,11 +99,9 @@ The **numeric walkthrough** from tokens → embeddings → attention → FFN →
 
 The first plan was simple.
 
-| Step | Idea |
-|:----:|:-----|
-| **1** | Build an LLM first with natural-language data only |
-| **2** | Stack coding-specialized data on top |
-| **3** | Refine with human reinforcement learning |
+1. Build an LLM first with natural-language data only
+2. Stack coding-specialized data on top
+3. Refine with human reinforcement learning
 
 Even for a coding AI, questions come in natural language, so I thought **language understanding had to be finished first**.
 
@@ -167,6 +167,7 @@ Bigger can help, but this project grows in stages like **300M → 1B → 3B**.
 
 [Chinchilla](https://arxiv.org/abs/2203.15556) in short:
 
+> [!TIP]
 > Under a fixed compute budget, grow **model size and token count together**.
 
 Large models of that era often had too little data for their size,  
@@ -203,6 +204,7 @@ Code, docs, and build logs keep changing.
 | **Model (weights)** | how to think, coding patterns, context, answer tone, **how** to use tools |
 | **RAG / Tools** | live facts, internal docs, repos, test runs, build results |
 
+> [!IMPORTANT]
 > Model = **how to think and use tools**  
 > RAG / Tool = **what is true right now**
 

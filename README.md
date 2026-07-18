@@ -1,5 +1,7 @@
 # 밑바닥부터 만드는 LLM
 
+[![KO](https://img.shields.io/badge/KO-0969da)](README.md) [![EN](https://img.shields.io/badge/EN-lightgrey)](README.en.md) [![JA](https://img.shields.io/badge/JA-lightgrey)](README.ja.md) ![Last commit](https://img.shields.io/github/last-commit/DW-dev-UE/LLM-from-scratch)
+
 > [!NOTE]
 > **이 저장소는 계속 다듬는 중입니다.**  
 > 학습 결과, 벤치마크, 문서가 버전마다 바뀔 수 있습니다. 최신 커밋을 기준으로 봐 주세요. Issue / PR 환영합니다.
@@ -86,7 +88,7 @@ val이 코퍼스 파일 순서의 마지막 1%였는데, ko위키 꼬리 단일 
 | [POST-TRAINING](POST-TRAINING.md) | 배포 후 인간 피드백 루프 |
 | [BENCHMARK v1](BENCHMARK-v1.md) | Base 모델 벤치마크 (학습 과정 · Q&A 포함) |
 
-[한국어](README.md) · [English](README.en.md) · [日本語](README.ja.md)
+[![KO](https://img.shields.io/badge/KO-0969da)](README.md) [![EN](https://img.shields.io/badge/EN-lightgrey)](README.en.md) [![JA](https://img.shields.io/badge/JA-lightgrey)](README.ja.md)
 
 ---
 
@@ -98,11 +100,9 @@ val이 코퍼스 파일 순서의 마지막 1%였는데, ko위키 꼬리 단일 
 
 처음 계획은 단순했습니다.
 
-| 단계 | 내용 |
-|:----:|:-----|
-| **1** | 자연어 데이터만으로 LLM을 먼저 만든다 |
-| **2** | 그 위에 코딩 특화 데이터를 얹는다 |
-| **3** | 사람이 강화학습으로 다듬는다 |
+1. 자연어 데이터만으로 LLM을 먼저 만든다
+2. 그 위에 코딩 특화 데이터를 얹는다
+3. 사람이 강화학습으로 다듬는다
 
 코딩 AI라도 질문은 자연어로 오니까,  
 **“말을 알아듣는 능력”을 먼저 완성해야 한다**고 봤기 때문입니다.
@@ -167,6 +167,7 @@ val이 코퍼스 파일 순서의 마지막 1%였는데, ko위키 꼬리 단일 
 
 [Chinchilla](https://arxiv.org/abs/2203.15556) 요지:
 
+> [!TIP]
 > 같은 compute 예산이면 **모델 크기와 토큰 수를 같이** 키워야 한다.
 
 당시 대형 모델은 크기에 비해 데이터가 부족한 경우가 많았고,  
@@ -203,6 +204,7 @@ val이 코퍼스 파일 순서의 마지막 1%였는데, ko위키 꼬리 단일 
 | **모델 (가중치)** | 사고 방식, 코딩 패턴, 문맥 이해, 답변 톤, 도구 사용 **방법** |
 | **RAG / Tools** | 최신 사실, 사내 문서, repo, 테스트 실행, 빌드 결과 |
 
+> [!IMPORTANT]
 > 모델 = **어떻게 생각하고 도구를 쓸지**  
 > RAG / Tool = **지금 무엇이 사실인지**
 

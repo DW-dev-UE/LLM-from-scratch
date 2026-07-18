@@ -1,6 +1,6 @@
 # ゼロから作る LLM
 
-[한국어](ARCHITECTURE.md) · [English](ARCHITECTURE.en.md) · [日本語](ARCHITECTURE.ja.md)
+[![KO](https://img.shields.io/badge/KO-lightgrey)](ARCHITECTURE.md) [![EN](https://img.shields.io/badge/EN-lightgrey)](ARCHITECTURE.en.md) [![JA](https://img.shields.io/badge/JA-0969da)](ARCHITECTURE.ja.md)
 
 [← README](README.ja.md) · 用語で詰まったら [GLOSSARY](GLOSSARY.ja.md)
 
@@ -98,6 +98,7 @@ N = <kbd>1.10</kbd> <kbd>-0.28</kbd> <kbd>-1.50</kbd> <kbd>0.68</kbd>
 文脈を混ぜる段階 — ここからがトランスフォーマーアーキテクチャの核心です。<br>
 従来の bigram アーキテクチャは文脈を見られません。同じ「好き」でも前が「猫」なのか別の語なのかを区別できません。
 
+> [!TIP]
 > 📌 **ランダム行列 3 つが N を三つの見方へ変換**
 
 問題 4 — トークン `[1, 2, 3, 4]` = "私は 猫 が 好き"、正解 `[2, 3, 4, 5]` = "猫 が 好き です"。<br>
@@ -150,6 +151,7 @@ N₂ を特定の倍率で広げます。GPT-2 は 4 倍で拡張するので、
 
 拡張: `U = N·W₁ + b₁`（4×4 行列 · 4×16 行列 = 4×16、b₁ はバイアス 16 マス、初期値 0 なので省略）
 
+> [!NOTE]
 > **凡例**: <span style="color:#1d9e75">■</span> 通過予定（正） · <span style="color:#d85a30">■</span> 遮断予定（負） · <span style="color:#888780">■</span> 0 に近い
 
 **表 A — GELU 適用前（U）**

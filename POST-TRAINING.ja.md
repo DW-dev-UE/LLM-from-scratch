@@ -1,4 +1,6 @@
-[한국어](POST-TRAINING.md) · [English](POST-TRAINING.en.md) · [日本語](POST-TRAINING.ja.md)
+# POST-TRAINING
+
+[![KO](https://img.shields.io/badge/KO-lightgrey)](POST-TRAINING.md) [![EN](https://img.shields.io/badge/EN-lightgrey)](POST-TRAINING.en.md) [![JA](https://img.shields.io/badge/JA-0969da)](POST-TRAINING.ja.md)
 
 [← README](README.ja.md) · 用語で詰まったら [GLOSSARY](GLOSSARY.ja.md)
 
@@ -84,8 +86,11 @@ feedback.jsonl → {user, thinking: corrected_thinking, assistant: corrected_ans
 ```
 
 - 既存パイプラインそのまま。新しいコードは要りません。
-- 既存 SFT : 訂正 = **1 : 3** で混ぜます (訂正側に重み)。  
-  そうしないと既存能力を忘れる catastrophic forgetting が起きます。
+- 既存 SFT : 訂正 = **1 : 3** で混ぜます (訂正側に重み)。
+
+> [!WARNING]
+> そうしないと既存能力を忘れる catastrophic forgetting が起きます。
+
 - スコア ③ のうち 4~5 点だけを選んで SFT に昇格 (rejection sampling)。
 
 ### トラック B — DPO (この設計のメイン)

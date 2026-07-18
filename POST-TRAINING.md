@@ -1,4 +1,6 @@
-[한국어](POST-TRAINING.md) · [English](POST-TRAINING.en.md) · [日本語](POST-TRAINING.ja.md)
+# POST-TRAINING
+
+[![KO](https://img.shields.io/badge/KO-0969da)](POST-TRAINING.md) [![EN](https://img.shields.io/badge/EN-lightgrey)](POST-TRAINING.en.md) [![JA](https://img.shields.io/badge/JA-lightgrey)](POST-TRAINING.ja.md)
 
 [← README](README.md) · 용어가 막히면 [GLOSSARY](GLOSSARY.md)
 
@@ -84,8 +86,11 @@ feedback.jsonl → {user, thinking: corrected_thinking, assistant: corrected_ans
 ```
 
 - 기존 파이프라인 그대로. 새 코드가 필요 없습니다.
-- 기존 SFT : 교정 = **1 : 3** 으로 섞습니다 (교정 쪽 가중).  
-  안 그러면 기존 능력을 잊어버리는 catastrophic forgetting 이 납니다.
+- 기존 SFT : 교정 = **1 : 3** 으로 섞습니다 (교정 쪽 가중).
+
+> [!WARNING]
+> 안 그러면 기존 능력을 잊어버리는 catastrophic forgetting 이 납니다.
+
 - 점수 ③ 중 4~5점만 골라 SFT 로 승격 (rejection sampling).
 
 ### 트랙 B — DPO (이 설계의 메인)

@@ -1,4 +1,6 @@
-[한국어](POST-TRAINING.md) · [English](POST-TRAINING.en.md) · [日本語](POST-TRAINING.ja.md)
+# POST-TRAINING
+
+[![KO](https://img.shields.io/badge/KO-lightgrey)](POST-TRAINING.md) [![EN](https://img.shields.io/badge/EN-0969da)](POST-TRAINING.en.md) [![JA](https://img.shields.io/badge/JA-lightgrey)](POST-TRAINING.ja.md)
 
 [← README](README.en.md) · Stuck on a term? [GLOSSARY](GLOSSARY.en.md)
 
@@ -84,8 +86,11 @@ feedback.jsonl → {user, thinking: corrected_thinking, assistant: corrected_ans
 ```
 
 - Same pipeline as before. No new code required.
-- Mix original SFT : correction = **1 : 3** (weight toward corrections).  
-  Otherwise catastrophic forgetting eats prior ability.
+- Mix original SFT : correction = **1 : 3** (weight toward corrections).
+
+> [!WARNING]
+> Otherwise catastrophic forgetting eats prior ability.
+
 - From ③ ratings, promote only 4–5 star answers into SFT (rejection sampling).
 
 ### Track B — DPO (main track in this design)

@@ -1,4 +1,4 @@
-[한국어](BENCHMARK-v1.md) · [English](BENCHMARK-v1.en.md) · [日本語](BENCHMARK-v1.ja.md)
+[![KO](https://img.shields.io/badge/KO-lightgrey)](BENCHMARK-v1.md) [![EN](https://img.shields.io/badge/EN-0969da)](BENCHMARK-v1.en.md) [![JA](https://img.shields.io/badge/JA-lightgrey)](BENCHMARK-v1.ja.md)
 
 [← README](README.en.md)
 
@@ -16,7 +16,8 @@
 | 🧪 **Set** | Same **14 prompts × THINKING on/off** (for version comparison) |
 | 📁 **Raw** | [`ckpt/benchmark_sft_base_v6.json`](ckpt/benchmark_sft_base_v6.json) |
 
-> ⚠️ **Not production-ready.**  
+> [!WARNING]
+> **Not production-ready.**  
 > These snapshots show whether the pipeline runs and what changes when checkpoints or protocols change.
 
 ### 📑 Contents
@@ -35,7 +36,8 @@
 
 Bold column = **current latest**.
 
-> ⚠️ **How to read the table**  
+> [!WARNING]
+> **How to read the table**  
 > · **Protocol**: v1–v4 use temp `0.7` single-sample · **v5·v6 are greedy (temp `0.0`)**  
 > · **Base fork**: v1–v4 sit on `pretrain_base_v1` · **v5·v6 are SFT on `pretrain_base_v2`**  
 > · **v5→v6**: same base, same SFT source mix — **only prep_sft preprocessing + a decode budget split** changed. The cleanest single-variable comparison in the project so far.  
@@ -142,9 +144,11 @@ next-token probs
 
 Shared: **AdamW** (β 0.9 / 0.95, wd 0.1) · grad clip 1.0 · warmup + cosine · CUDA · SFT lr `3e-5` · v6 on A100 40GB · batch 8 × accum 16
 
+> [!IMPORTANT]
 > 🔑 **v5’s main variable is the base (pretrain_v2), not a new SFT mix.**  
 > v4 and v5 share the same `sft.pt` (`975c…`) and 9,200 steps — only init weights differ.
 
+> [!IMPORTANT]
 > 🔑 **v6’s main variable is neither the base nor the SFT source mix — it's data prep and inference code.**  
 > `data.py`'s `prep_sft` changed how it handles long THINKING spans (trim/demote toward tail-preservation), and  
 > `infer.py` fixed a bug where thinking and answer shared one `max_new` budget — they now get **separate budgets**.  
@@ -189,6 +193,7 @@ Shared: **AdamW** (β 0.9 / 0.95, wd 0.1) · grad clip 1.0 · warmup + cosine ·
 
 </details>
 
+> [!TIP]
 > 💡 Falling loss = *adapting to chat format*.  
 > It does **not** mean benchmark scores instantly rise.  
 > v5’s **lower SFT init loss** is a hint that corpus-v2 continued pretrain helps the SFT stage.
@@ -246,7 +251,8 @@ Downloaded from public HuggingFace etc., prepared with `data.py`.
 Expanded/retokenized corpus v2 (larger fineweb_edu, finemath added, etc.).  
 Some sources (vault/commitpack) failed during the download pipeline.
 
-> Note: ko-wiki val loss slightly worsened vs v1 (reported 2.504 → 2.605),  
+> [!NOTE]
+> ko-wiki val loss slightly worsened vs v1 (reported 2.504 → 2.605),  
 > but SFT init loss and downstream bench favored the **v2 base**.
 
 ### 🗣️ SFT mix evolution
@@ -345,20 +351,24 @@ SFT examples (v1)
 | **v6 gen** | temp **`0.0` greedy** · top_p `0.9` · max_new `256` · seed `0` · **separate thinking/answer budgets** |
 | Dates | v1 `07-09/10` · v2 `07-10` · v3 `07-13` · v4 `07-13` · v5 `07-14` · **v6 `07-15`** (2026) |
 
+> [!NOTE]
 > 📌 Coding test totals: v1/v2 sum **17** · v3+ sum **25** (5 cases / problem).  
 > Prefer **full-pass N/5** for cross-version coding.
 
+> [!WARNING]
 > 🎲 **Sampling noise (v4 lesson)**  
 > Under temp 0.7 single-sample, v3↔v4 item flips were large  
 > (e.g. en_fact 5→0, code_prime 5→0, code_maxlist 5→0, code_reverse 0→5).  
 > **v5 switches to greedy** to kill within-version noise.  
 > Cross-version deltas still need the **protocol caveat**.
 
+> [!WARNING]
 > 🐛 **Budget-collision bug (v6 lesson)**  
 > The first v6 bench run had `max_think` and `max_new` sharing one budget (256),  
 > so a long thinking span could leave zero budget for the answer.  
 > `generate()` now splits the two budgets; the v6 numbers below are the re-run after the fix.
 
+> [!NOTE]
 > 🇰🇷 Korean total: 3 items × 2 modes × 0–5 = **max 30**.
 
 ---
@@ -374,7 +384,8 @@ SFT examples (v1)
 | 🎲 Decode | greedy · temp 0.0 |
 | 📁 JSON | [`benchmark_sft_base_v6.json`](ckpt/benchmark_sft_base_v6.json) |
 
-> ⚠️ The first v6 bench run had a bug where `max_think` and `max_new` shared one budget, leaving answers empty.  
+> [!WARNING]
+> The first v6 bench run had a bug where `max_think` and `max_new` shared one budget, leaving answers empty.  
 > `generate()` now splits the budgets; the results below are the re-run after the fix (see §4).
 
 ### 5.1 Scorecards
@@ -459,6 +470,7 @@ Through v5 this slot was a list of handoff failures. In v6 the **answer field is
 | en_math | **0** | “60/2=30”, “30/2=15” | “The answer is 15.” | arithmetic collapse, wrong answer |
 | en_summary | **3** | short, reasonable summary | “The answer is that the park was nice and the children were playing.” | valid summary, awkward framing |
 
+> [!IMPORTANT]
 > 🔑 **The key change**: in v5, ko_fact / ja_fact / en_summary had correct content inside thinking but an empty answer field.  
 > In v6 the same item types now **fill in the answer field** — accuracy still varies, but the “doesn't transfer” failure mode itself is resolved.
 
@@ -527,6 +539,7 @@ With the thinking→answer handoff resolved, what's left is now clearly about **
 | 🇯🇵→🇬🇧 Translation | repeats the source or strings together unrelated English sentences | translation ability itself never formed |
 | Coding generalization | THINKING-mode `is_prime` hardcodes 17 modulo checks instead of trial division | partial understanding — the general algorithm isn't learned yet |
 
+> [!NOTE]
 > 📌 v1's "never closes" → v5's "closes but doesn't hand off" → v6 has moved the bottleneck to **"hands off, but the content is sometimes wrong."**  
 > Format learning looks essentially finished at this point.
 
@@ -719,6 +732,7 @@ Coding-aug goal achieved. Korean category collapsed.
 | 🇺🇸 no-think | **2.67/5** |
 | 💻 no-think | tests **4/17** · full **1/5** |
 
+> [!WARNING]
 > 🧠 Generation ends before the closing tag → runtime empties the answer.  
 > Prefer **no-thinking** mode for this checkpoint.
 
@@ -773,6 +787,7 @@ def is_prime(n):
 Before SFT, **chat format itself is untrained**.  
 After v1 SFT, “tries the format” first shows up on the bench.
 
+> [!NOTE]
 > 📭 **No standalone chat bench for pretrain_base_v2 yet.**  
 > v2’s effect is observed only downstream via **sft_base_v5 · sft_base_v6**.
 

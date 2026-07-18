@@ -1,12 +1,15 @@
-[한국어](GLOSSARY.md) · [English](GLOSSARY.en.md) · [日本語](GLOSSARY.ja.md)
+# GLOSSARY
+
+[![KO](https://img.shields.io/badge/KO-0969da)](GLOSSARY.md) [![EN](https://img.shields.io/badge/EN-lightgrey)](GLOSSARY.en.md) [![JA](https://img.shields.io/badge/JA-lightgrey)](GLOSSARY.ja.md)
 
 [← README](README.md)
 
 ---
 
-이 문서는 사전입니다.
-[ARCHITECTURE](ARCHITECTURE.md)나 [POST-TRAINING](POST-TRAINING.md)을 읽다가 막히면 여기로 오면 됩니다.
-처음부터 다 외울 필요는 없습니다. 모르는 단어만 찾아보면 됩니다.
+> [!TIP]
+> 이 문서는 사전입니다.  
+> [ARCHITECTURE](ARCHITECTURE.md)나 [POST-TRAINING](POST-TRAINING.md)을 읽다가 막히면 여기로 오면 됩니다.  
+> 처음부터 다 외울 필요는 없습니다. 모르는 단어만 찾아보면 됩니다.
 
 ---
 

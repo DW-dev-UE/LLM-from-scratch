@@ -1,12 +1,15 @@
-[한국어](GLOSSARY.md) · [English](GLOSSARY.en.md) · [日本語](GLOSSARY.ja.md)
+# GLOSSARY
+
+[![KO](https://img.shields.io/badge/KO-lightgrey)](GLOSSARY.md) [![EN](https://img.shields.io/badge/EN-0969da)](GLOSSARY.en.md) [![JA](https://img.shields.io/badge/JA-lightgrey)](GLOSSARY.ja.md)
 
 [← README](README.en.md)
 
 ---
 
-This doc is a dictionary.
-If you get stuck while reading [ARCHITECTURE](ARCHITECTURE.en.md) or [POST-TRAINING](POST-TRAINING.en.md), come here.
-You don't need to memorize everything up front. Just look up the words you don't know.
+> [!TIP]
+> This doc is a dictionary.  
+> If you get stuck while reading [ARCHITECTURE](ARCHITECTURE.en.md) or [POST-TRAINING](POST-TRAINING.en.md), come here.  
+> You don't need to memorize everything up front. Just look up the words you don't know.
 
 ---
 

@@ -99,6 +99,7 @@ val이 코퍼스 파일 순서의 마지막 1%였는데, ko위키 꼬리 단일 
 | [ARCHITECTURE](ARCHITECTURE.md) | 트랜스포머 워크스루 · 모델 설계 · 토크나이저 · 학습 · 추론 |
 | [POST-TRAINING](POST-TRAINING.md) | 배포 후 인간 피드백 루프 |
 | [BENCHMARK v1](BENCHMARK-v1.md) | Base 모델 벤치마크 (학습 과정 · Q&A 포함) |
+| [ThinkingLab](ThinkingLab/ThinkingLab.md) | 가설 · 브레인스토밍 로그 (아직 검증되지 않은 생각들) |
 
 ---
 
@@ -308,6 +309,6 @@ v6 하이라이트 (v5 대비):
 
 **이어서 읽기**
 
-[용어](GLOSSARY.md) · [아키텍처](ARCHITECTURE.md) · [후속학습](POST-TRAINING.md) · [벤치마크](BENCHMARK-v1.md)
+[용어](GLOSSARY.md) · [아키텍처](ARCHITECTURE.md) · [후속학습](POST-TRAINING.md) · [벤치마크](BENCHMARK-v1.md) · [생각 실험실](ThinkingLab/ThinkingLab.md)
 
 </div>

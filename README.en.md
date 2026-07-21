@@ -98,6 +98,7 @@ The common thread across all three: none of it was the model being dumb — the 
 | [ARCHITECTURE](ARCHITECTURE.en.md) | Transformer walkthrough · model design · tokenizer · train · infer |
 | [POST-TRAINING](POST-TRAINING.en.md) | Post-deploy human feedback loop |
 | [BENCHMARK v1](BENCHMARK-v1.en.md) | Base model benchmark (training process · Q&A) |
+| [ThinkingLab](ThinkingLab/ThinkingLab.en.md) | Hypothesis / brainstorming log (not-yet-validated ideas) |
 
 ---
 
@@ -308,6 +309,6 @@ Still early-stage. Later versions keep the same prompt set for comparison.
 
 **Next**
 
-[Glossary](GLOSSARY.en.md) · [Architecture](ARCHITECTURE.en.md) · [Post-training](POST-TRAINING.en.md) · [Benchmark](BENCHMARK-v1.en.md)
+[Glossary](GLOSSARY.en.md) · [Architecture](ARCHITECTURE.en.md) · [Post-training](POST-TRAINING.en.md) · [Benchmark](BENCHMARK-v1.en.md) · [ThinkingLab](ThinkingLab/ThinkingLab.en.md)
 
 </div>

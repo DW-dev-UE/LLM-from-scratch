@@ -38,6 +38,7 @@
 >
 > - ⏸️ **Deferred**: MoE · YaRN · FP8 · multi-GPU (next scale after 1B is validated)
 
+---
 > [!NOTE]
 > 🚀 **Next goal — APEX-2 (7B scale)**: architecture design in progress
 

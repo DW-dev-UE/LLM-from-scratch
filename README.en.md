@@ -13,13 +13,16 @@
 > Learning with AI is fine, but rewriting sentences myself to organize my knowledge matters more.
 
 > [!IMPORTANT]
-> **Next goal — APEX-1 (1B scale)**
+> **APEX-1 (1B scale) — Pretrain + SFT done**
 >
 > ~**1,119.5M** measured parameters. Model name **APEX-1**.
 >
 > - **Architecture**: 24 layers · d_model 2048 · GQA (16Q/4KV) + RoPE (θ=500K) + SwiGLU + RMSNorm · weight tying
 > - **Context**: max 4096 (trained at 2048)
-> - **Training**: bf16 · lr 3e-4 cosine · 51K steps (20B tokens) · corpus v3-en 80.8GB (English + code) · vocab 32K, English-only
+> - **Pretrain**: bf16 · lr 3e-4 cosine · 51K steps (20B tokens) · corpus v3-en 80.8GB (English + code) · vocab 32K, English-only
+> - **SFT**: `sft_xl_v1` · 8.4K steps · lr 3e-5 · SFT on top of `pretrain_xl_v1`
+> - **Bench (English-only, 15 prompts, greedy, [raw](ckpt/benchmark_sft_xl_v1_raw.json))**: no-thinking coding fully-passed **5/5** (tests 25/25) · QA 5/8 — thinking mode actually drops to coding 3/5 (tests 15/25) · QA 4/8
+> - **Next**: verbosity/repetition is the bottleneck (over-length 8/10, repetition 0.032), capability itself looks sufficient → **decided to move to RLVR** ([rationale](ckpt/AUTO_DECISION_xl_v1.txt))
 > - **Deferred**: MoE · YaRN · FP8 · multi-GPU (next scale after 1B is validated)
 
 ---
@@ -97,7 +100,8 @@ The common thread across all three: none of it was the model being dumb — the 
 | [GLOSSARY](GLOSSARY.en.md) | Terms like Transformer, RoPE, DPO |
 | [ARCHITECTURE](ARCHITECTURE.en.md) | Transformer walkthrough · model design · tokenizer · train · infer |
 | [POST-TRAINING](POST-TRAINING.en.md) | Post-deploy human feedback loop |
-| [BENCHMARK v1](BENCHMARK-v1.en.md) | Base model benchmark (training process · Q&A) |
+| [BENCHMARK v2](BENCHMARK-v2.en.md) | APEX-1 (1B) benchmark · RLVR decision rationale |
+| [BENCHMARK v1](BENCHMARK-v1.en.md) | Base model (327M) benchmark (training process · Q&A) |
 | [ThinkingLab](ThinkingLab/ThinkingLab.en.md) | Hypothesis / brainstorming log (not-yet-validated ideas) |
 
 ---
@@ -201,7 +205,7 @@ So the rule is:
 | 3B | in-house tool integration candidate |
 | 7B+ | minimum size worth external exposure |
 
-The latest published benchmark checkpoint is **`sft_base_v6`** (base ~327M). → [§5 Benchmark snapshot](#5-benchmark-snapshot) · per-version write-up [BENCHMARK v1](BENCHMARK-v1.en.md)
+Two lines run in parallel: the 1B `xl` line's (APEX-1) latest is **`sft_xl_v1`** (pretrain+SFT done · awaiting RLVR), the 327M `base` line's latest is **`sft_base_v6`**. → [§5 Benchmark snapshot](#5-benchmark-snapshot) · per-version write-up [BENCHMARK v2](BENCHMARK-v2.en.md)
 
 ---
 
@@ -231,7 +235,8 @@ AI/
 ├── GLOSSARY.md               terms
 ├── ARCHITECTURE.md           model · train · infer
 ├── POST-TRAINING.md          feedback post-training
-├── BENCHMARK-v1.md           bench report
+├── BENCHMARK-v2.md           APEX-1 (1B) bench report
+├── BENCHMARK-v1.md           327M bench report
 └── llm/                      implementation
     ├── model.py              RMSNorm + RoPE + SwiGLU + GQA
     ├── tokenizer.py
@@ -251,6 +256,34 @@ AI/
 ## 5. Benchmark snapshot
 
 **Training GPU**: H100, A100
+
+Two lines run in parallel: **1B `xl`** (APEX-1, English-only) and **327M `base`** (KO/JA/EN multilingual). The prompt sets differ too.
+
+### 5.1 1B `xl` line (APEX-1) ⭐ primary
+
+English-only 15 prompts × THINKING on/off (the 5 coding prompts are the same items as the 327M set).  
+Latest — and only — snapshot: **`sft_xl_v1`** (`ckpt/benchmark_sft_xl_v1_raw.json`, 2026-07-22). Pretrain 51K steps (20B tokens) + SFT 8.4K steps done.
+
+**sft_xl_v1**
+
+| | 💬 normal chat | 🧠 THINKING on |
+|:--|:--:|:--:|
+| QA correct (keyword) | 5/8 | 4/8 |
+| Coding fully passed | **5/5** (tests 25/25) | 3/5 (tests 15/25) |
+| Empty answers | 0 | 0 |
+| Over-length | 8/10 | 5/10 |
+| Mean repetition rate | 0.032 | 0.042 |
+
+The 327M line's biggest failure — THINKING handoff (a blank answer field) — **never happened at all on this line.** The new bottleneck instead is verbosity and repetition, and turning THINKING on actually drops both coding and QA (thinking eats the answer budget first).
+
+Capability (coding 5/5) looks sufficient, so the next step is not more SFT but **RLVR**.
+
+Full write-up: [BENCHMARK-v2.en.md](BENCHMARK-v2.en.md)
+
+<details>
+<summary><b>5.2 327M `base` line (expand to view)</b></summary>
+
+<br/>
 
 Same 14 prompts × THINKING on/off, `base` (~327M).  
 Latest snapshot: **`sft_base_v6`** (`ckpt/benchmark_sft_base_v6.json`, 2026-07-15).
@@ -292,6 +325,8 @@ Training process, datasets, and per-item Q&A (per-version write-up):
 
 Still early-stage. Later versions keep the same prompt set for comparison.
 
+</details>
+
 ---
 
 ## 6. References
@@ -309,6 +344,6 @@ Still early-stage. Later versions keep the same prompt set for comparison.
 
 **Next**
 
-[Glossary](GLOSSARY.en.md) · [Architecture](ARCHITECTURE.en.md) · [Post-training](POST-TRAINING.en.md) · [Benchmark](BENCHMARK-v1.en.md) · [ThinkingLab](ThinkingLab/ThinkingLab.en.md)
+[Glossary](GLOSSARY.en.md) · [Architecture](ARCHITECTURE.en.md) · [Post-training](POST-TRAINING.en.md) · [Benchmark v1](BENCHMARK-v1.en.md) · [Benchmark v2](BENCHMARK-v2.en.md) · [ThinkingLab](ThinkingLab/ThinkingLab.en.md)
 
 </div>

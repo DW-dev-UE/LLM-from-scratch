@@ -13,13 +13,16 @@
 > 물론 AI를 통해 배우는것은 좋지만 문장을 몇 번씩 다듬으면서 나의 지식을 정리하는게 더 중요합니다.
 
 > [!IMPORTANT]
-> **다음 목표 — APEX-1 (1B급)**
+> **APEX-1 (1B급) — Pretrain + SFT 완료**
 >
 > 실측 **1,119.5M** 파라미터. 모델명 **APEX-1**.
 >
 > - **구조**: 24층 · d_model 2048 · GQA(16Q/4KV) + RoPE(θ=500K) + SwiGLU + RMSNorm · weight tying
 > - **컨텍스트**: max 4096 (학습 2048)
-> - **학습**: bf16 · lr 3e-4 코사인 · 51K step (20B 토큰) · 코퍼스 v3-en 80.8GB (영어+코드) · vocab 32K 영어 전용
+> - **Pretrain**: bf16 · lr 3e-4 코사인 · 51K step (20B 토큰) · 코퍼스 v3-en 80.8GB (영어+코드) · vocab 32K 영어 전용
+> - **SFT**: `sft_xl_v1` · 8.4K step · lr 3e-5 · `pretrain_xl_v1` 위 SFT
+> - **벤치 (영어 전용 15문항 · greedy)**: no-thinking 코딩 완전 통과 **5/5**(테스트 25/25) · QA 5/8 — thinking 모드는 코딩 3/5(테스트 15/25) · QA 4/8로 오히려 하락 → [BENCHMARK v2](BENCHMARK-v2.md)
+> - **다음 단계**: 장황함·반복이 병목(over-length 8/10, repetition 0.032)이라 능력 자체는 충분 판단 → **RLVR 진행 결정** ([근거](ckpt/AUTO_DECISION_xl_v1.txt))
 > - **미채택**: MoE · YaRN · FP8 · 멀티GPU (1B 검증 후 다음 스케일)
 
 ---
@@ -98,7 +101,8 @@ val이 코퍼스 파일 순서의 마지막 1%였는데, ko위키 꼬리 단일 
 | [GLOSSARY](GLOSSARY.md) | Transformer, RoPE, DPO 같은 용어 |
 | [ARCHITECTURE](ARCHITECTURE.md) | 트랜스포머 워크스루 · 모델 설계 · 토크나이저 · 학습 · 추론 |
 | [POST-TRAINING](POST-TRAINING.md) | 배포 후 인간 피드백 루프 |
-| [BENCHMARK v1](BENCHMARK-v1.md) | Base 모델 벤치마크 (학습 과정 · Q&A 포함) |
+| [BENCHMARK v2](BENCHMARK-v2.md) | APEX-1(1B) 벤치마크 · RLVR 결정 근거 |
+| [BENCHMARK v1](BENCHMARK-v1.md) | Base 모델(327M) 벤치마크 (학습 과정 · Q&A 포함) |
 | [ThinkingLab](ThinkingLab/ThinkingLab.md) | 가설 · 브레인스토밍 로그 (아직 검증되지 않은 생각들) |
 
 ---
@@ -201,7 +205,7 @@ val이 코퍼스 파일 순서의 마지막 1%였는데, ko위키 꼬리 단일 
 | 3B | 사내 도구 연동 후보 |
 | 7B+ | 외부 노출을 고민할 최소 규모 |
 
-현재 벤치에 올린 최신 체크포인트는 **`sft_base_v6`** (base 약 327M) 입니다. → [§5 벤치마크 한눈에](#5-벤치마크-한눈에) · 버전별 상세 기록 [BENCHMARK v1](BENCHMARK-v1.md)
+두 라인을 병행 중입니다: 1B `xl` 라인(APEX-1) 최신은 **`sft_xl_v1`** (pretrain+SFT 완료 · RLVR 대기), 327M `base` 라인 최신은 **`sft_base_v6`** 입니다. → [§5 벤치마크 한눈에](#5-벤치마크-한눈에) · 버전별 상세 기록 [BENCHMARK v2](BENCHMARK-v2.md)
 
 ---
 
@@ -231,7 +235,8 @@ AI/
 ├── GLOSSARY.md               용어
 ├── ARCHITECTURE.md           모델 · 학습 · 추론
 ├── POST-TRAINING.md          피드백 후속학습
-├── BENCHMARK-v1.md           벤치 리포트
+├── BENCHMARK-v2.md           APEX-1(1B) 벤치 리포트
+├── BENCHMARK-v1.md           327M 벤치 리포트
 └── llm/                      구현
     ├── model.py              RMSNorm + RoPE + SwiGLU + GQA
     ├── tokenizer.py
@@ -251,6 +256,34 @@ AI/
 ## 5. 벤치마크 한눈에
 
 **학습 GPU**: H100, A100
+
+두 라인이 병행됩니다: **1B `xl`**(APEX-1, 영어 전용) 와 **327M `base`** (한/일/영 다국어). 세트도 서로 다릅니다.
+
+### 5.1 1B `xl` 라인 (APEX-1) ⭐ 주력
+
+영어 전용 15문항 × THINKING on/off (코딩 5문항은 327M 세트와 동일 문항).  
+최신이자 유일한 스냅샷: **`sft_xl_v1`** (`ckpt/benchmark_sft_xl_v1_raw.json`, 2026-07-22). Pretrain 51K step(20B 토큰) + SFT 8.4K step 완료.
+
+**sft_xl_v1**
+
+| | 💬 일반 채팅 | 🧠 THINKING 켬 |
+|:--|:--:|:--:|
+| QA 정답(키워드) | 5/8 | 4/8 |
+| 코딩 완전 통과 | **5/5** (테스트 25/25) | 3/5 (테스트 15/25) |
+| 빈 답변 | 0건 | 0건 |
+| 길이 초과 | 8/10 | 5/10 |
+| 평균 반복률 | 0.032 | 0.042 |
+
+327M 라인의 최대 실패였던 THINKING 핸드오프(답 칸 공란)는 이 라인에서 **처음부터 발생하지 않았습니다.** 대신 새 병목은 장황함·반복이고, THINKING을 켜면 코딩·QA 모두 오히려 떨어집니다(사고가 답변 예산을 먼저 소모).
+
+능력(코딩 5/5 만점)은 충분하다고 판단해 다음 단계는 추가 SFT가 아니라 **RLVR**로 결정했습니다.
+
+상세 기록: [BENCHMARK-v2.md](BENCHMARK-v2.md)
+
+<details>
+<summary><b>5.2 327M `base` 라인 (펼쳐서 보기)</b></summary>
+
+<br/>
 
 `base` (~327M) 기준, 동일 14문항 × THINKING on/off.  
 최신 스냅샷: **`sft_base_v6`** (`ckpt/benchmark_sft_base_v6.json`, 2026-07-15).
@@ -292,6 +325,8 @@ v6 하이라이트 (v5 대비):
 
 아직 early-stage 입니다. 버전을 올릴 때마다 같은 문항으로 비교할 예정입니다.
 
+</details>
+
 ---
 
 ## 6. 참고 문헌
@@ -309,6 +344,6 @@ v6 하이라이트 (v5 대비):
 
 **이어서 읽기**
 
-[용어](GLOSSARY.md) · [아키텍처](ARCHITECTURE.md) · [후속학습](POST-TRAINING.md) · [벤치마크](BENCHMARK-v1.md) · [생각 실험실](ThinkingLab/ThinkingLab.md)
+[용어](GLOSSARY.md) · [아키텍처](ARCHITECTURE.md) · [후속학습](POST-TRAINING.md) · [벤치마크 v1](BENCHMARK-v1.md) · [벤치마크 v2](BENCHMARK-v2.md) · [생각 실험실](ThinkingLab/ThinkingLab.md)
 
 </div>

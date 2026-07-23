@@ -1,0 +1,28 @@
+decision=RLVR
+reason=정렬(장황·반복): repetition 0.032, over_length 8/10 — 능력은 충분(coding 5/5)
+
+SFT_summary=
+{
+  "thinking": {
+    "qa_keyword_accuracy": "4/8",
+    "coding_fully_passed": "3/5",
+    "coding_tests_passed": "15/25",
+    "empty_answers": 0,
+    "instruction_followed": "1/2",
+    "over_length_answers": "5/10",
+    "mean_repetition_rate": 0.042,
+    "max_repetition_rate": 0.129,
+    "mean_answer_chars": 527
+  },
+  "no_thinking": {
+    "qa_keyword_accuracy": "5/8",
+    "coding_fully_passed": "5/5",
+    "coding_tests_passed": "25/25",
+    "empty_answers": 0,
+    "instruction_followed": "1/2",
+    "over_length_answers": "8/10",
+    "mean_repetition_rate": 0.032,
+    "max_repetition_rate": 0.109,
+    "mean_answer_chars": 375
+  }
+}

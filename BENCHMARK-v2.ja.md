@@ -14,6 +14,7 @@
 |:--|:--|
 | 🆕 **最新** | `dpo_Apex-1_v1` · 2026-07-23 |
 | 📦 **モデル** | APEX-1 · Decoder-only · 実測 **1,119.5M** |
+| 🤗 **公開** | [huggingface.co/YOON1v/Apex-1-DPO](https://huggingface.co/YOON1v/Apex-1-DPO) — `transformers` でそのままロード可能(Qwen3ForCausalLM にマッピング) |
 | 🧪 **セット** | 英語専用 **15問 × THINKING on/off**(327M ラインとは別セット、コーディング5問だけ同一問題を維持)+ 標準ベンチ11種 |
 | 📁 **原文** | [`ckpt/benchmark_sft_Apex-1_v1_raw.json`](ckpt/benchmark_sft_Apex-1_v1_raw.json) · [`ckpt/lm_eval_Apex-1_COMPARISON.md`](ckpt/lm_eval_Apex-1_COMPARISON.md) |
 | ✅ **完了** | RLVR 廃止 → **DPO 完了**(§6)· 標準ベンチ11種測定済み(§5.4) |

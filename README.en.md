@@ -17,6 +17,7 @@
 >
 > ~**1,119.5M** measured parameters. ( 24 layers · d_model 2048 · GQA (16Q/4KV) + RoPE + SwiGLU + RMSNorm )
 >
+> - 🤗 **Released**: [huggingface.co/YOON1v/Apex-1-DPO](https://huggingface.co/YOON1v/Apex-1-DPO) — loads directly with `transformers` (mapped onto the Qwen3ForCausalLM architecture)
 > - 📏 **Context**: max 4096 (trained at 2048)
 > - 🔥 **Pretrain**: 51K steps · 20B tokens · v3-en 80.8GB · English-only
 >

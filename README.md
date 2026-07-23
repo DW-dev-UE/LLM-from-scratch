@@ -17,6 +17,7 @@
 >
 > 실측 **1,119.5M** 파라미터. ( 24층 · d_model 2048 · GQA(16Q/4KV) + RoPE + SwiGLU + RMSNorm )
 >
+> - 🤗 **공개**: [huggingface.co/YOON1v/Apex-1-DPO](https://huggingface.co/YOON1v/Apex-1-DPO) — `transformers`로 바로 로드 가능 (Qwen3ForCausalLM 아키텍처 매핑)
 > - **컨텍스트**: max 4096 (학습 2048)
 > - **Pretrain**: 51K step · 20B 토큰 · v3-en 80.8GB · 영어 전용
 >

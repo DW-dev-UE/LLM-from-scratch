@@ -14,6 +14,7 @@
 |:--|:--|
 | 🆕 **Latest** | `dpo_Apex-1_v1` · 2026-07-23 |
 | 📦 **Model** | APEX-1 · Decoder-only · measured **1,119.5M** |
+| 🤗 **Released** | [huggingface.co/YOON1v/Apex-1-DPO](https://huggingface.co/YOON1v/Apex-1-DPO) — loads directly with `transformers` (mapped onto Qwen3ForCausalLM) |
 | 🧪 **Set** | English-only **15 prompts × THINKING on/off** (separate set from the 327M line; only the 5 coding prompts are shared) + 11 standard benchmarks |
 | 📁 **Raw** | [`ckpt/benchmark_sft_Apex-1_v1_raw.json`](ckpt/benchmark_sft_Apex-1_v1_raw.json) · [`ckpt/lm_eval_Apex-1_COMPARISON.md`](ckpt/lm_eval_Apex-1_COMPARISON.md) |
 | ✅ **Done** | RLVR abandoned → **DPO complete** (§6) · 11 standard benchmarks measured (§5.4) |

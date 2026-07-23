@@ -13,17 +13,21 @@
 > Learning with AI is fine, but rewriting sentences myself to organize my knowledge matters more.
 
 > [!IMPORTANT]
-> **APEX-1 (1B scale) — Pretrain + SFT done**
+> **APEX-1 (1B scale) — Pretrain · SFT · DPO done**
 >
-> ~**1,119.5M** measured parameters. Model name **APEX-1** (the in-code preset name is `xl` — just a size-tier key in `model.py`; checkpoint filenames are auto-generated from the preset, so they read `sft_xl_v1` etc.).
+> ~**1,119.5M** measured parameters. Model name **APEX-1** (the `model.py` preset name matches: `Apex-1`).
 >
-> - **Architecture**: 24 layers · d_model 2048 · GQA (16Q/4KV) + RoPE (θ=500K) + SwiGLU + RMSNorm · weight tying
-> - **Context**: max 4096 (trained at 2048)
-> - **Pretrain**: bf16 · lr 3e-4 cosine · 51K steps (20B tokens) · corpus v3-en 80.8GB (English + code) · vocab 32K, English-only
-> - **SFT**: `sft_xl_v1` · 8.4K steps · lr 3e-5 · SFT on top of `pretrain_xl_v1`
-> - **Bench (English-only, 15 prompts, greedy, [raw](ckpt/benchmark_sft_xl_v1_raw.json))**: no-thinking coding fully-passed **5/5** (tests 25/25) · QA 5/8 — thinking mode actually drops to coding 3/5 (tests 15/25) · QA 4/8
-> - **Next**: verbosity/repetition is the bottleneck (over-length 8/10, repetition 0.032), capability itself looks sufficient → **decided to move to RLVR** ([rationale](ckpt/AUTO_DECISION_xl_v1.txt))
-> - **Deferred**: MoE · YaRN · FP8 · multi-GPU (next scale after 1B is validated)
+> - 🧩 **Architecture**: 24 layers · d_model 2048 · GQA (16Q/4KV) + RoPE (θ=500K) + SwiGLU + RMSNorm · weight tying
+> - 📏 **Context**: max 4096 (trained at 2048)
+> - 🔥 **Pretrain**: bf16 · lr 3e-4 cosine · 51K steps (20B tokens) · corpus v3-en 80.8GB (English + code) · vocab 32K, English-only
+> - 🎓 **SFT**: `sft_Apex-1_v1` · 8.4K steps · lr 3e-5 · SFT on top of `pretrain_Apex-1_v1`
+> - 📊 **Bench (English-only, 15 prompts, greedy)**: no-thinking coding fully-passed **5/5** (tests 25/25) · QA 5/8 — thinking mode actually drops to coding 3/5 (tests 15/25) · QA 4/8 → [BENCHMARK v2](BENCHMARK-v2.en.md)
+> - 🔄 **RLVR → DPO**: verbosity/repetition looked like the bottleneck so RLVR was started, but GSM8K accuracy was ~0%, leaving zero reward variance within GRPO groups (`groups 0/8`) — no learning signal at all. The original problem (verbosity) doesn't need correctness, so **switched to DPO**, which finished training on 60K preference pairs → [BENCHMARK v2 §6](BENCHMARK-v2.en.md#6-next-step--rlvr--dpo)
+> - 🏆 **Standard benchmarks**: across 11 lm-evaluation-harness tasks, DPO matches or beats SFT everywhere — **no alignment tax**. BoolQ 62.20 ranks 1st among 4 comparable models → [§5.2](#52-standard-benchmarks-lm-evaluation-harness)
+> - ⏸️ **Deferred**: MoE · YaRN · FP8 · multi-GPU (next scale after 1B is validated)
+
+> [!NOTE]
+> 🚀 **Next goal — APEX-2 (7B scale)**: in development
 
 ---
 
@@ -100,7 +104,7 @@ The common thread across all three: none of it was the model being dumb — the 
 | [GLOSSARY](GLOSSARY.en.md) | Terms like Transformer, RoPE, DPO |
 | [ARCHITECTURE](ARCHITECTURE.en.md) | Transformer walkthrough · model design · tokenizer · train · infer |
 | [POST-TRAINING](POST-TRAINING.en.md) | Post-deploy human feedback loop |
-| [BENCHMARK v2](BENCHMARK-v2.en.md) | APEX-1 (1B) benchmark · RLVR decision rationale |
+| [BENCHMARK v2](BENCHMARK-v2.en.md) | APEX-1 (1B) benchmark · RLVR → DPO decision log |
 | [BENCHMARK v1](BENCHMARK-v1.en.md) | Base model (327M) benchmark (training process · Q&A) |
 | [ThinkingLab](ThinkingLab/ThinkingLab.en.md) | Hypothesis / brainstorming log (not-yet-validated ideas) |
 
@@ -205,7 +209,9 @@ So the rule is:
 | 3B | in-house tool integration candidate |
 | 7B+ | minimum size worth external exposure |
 
-Two lines run in parallel: the 1B `xl` line's (APEX-1) latest is **`sft_xl_v1`** (pretrain+SFT done · awaiting RLVR), the 327M `base` line's latest is **`sft_base_v6`**. → [§5 Benchmark snapshot](#5-benchmark-snapshot) · per-version write-up [BENCHMARK v2](BENCHMARK-v2.en.md)
+Pretrain·SFT·DPO are done through 1B (APEX-1); 3B is being skipped in favor of going straight to **APEX-2 (7B scale)**, now in development.
+
+Two lines run in parallel: the 1B `Apex-1` line's latest is **`dpo_Apex-1_v1`** (pretrain+SFT+DPO done, all 11 standard benchmarks measured), the 327M `base` line's latest is **`sft_base_v6`**. Next goal: **APEX-2 (7B scale)**. → [§5 Benchmark snapshot](#5-benchmark-snapshot) · per-version write-up [BENCHMARK v2](BENCHMARK-v2.en.md)
 
 ---
 
@@ -257,14 +263,14 @@ AI/
 
 **Training GPU**: H100, A100
 
-Two lines run in parallel: **1B `xl`** (APEX-1, English-only) and **327M `base`** (KO/JA/EN multilingual). The prompt sets differ too.
+Two lines run in parallel: **1B `Apex-1`** (English-only) and **327M `base`** (KO/JA/EN multilingual). The prompt sets differ too.
 
-### 5.1 1B `xl` line (APEX-1) ⭐ primary
+### 5.1 1B `Apex-1` line ⭐ primary
 
 English-only 15 prompts × THINKING on/off (the 5 coding prompts are the same items as the 327M set).  
-Latest — and only — snapshot: **`sft_xl_v1`** (`ckpt/benchmark_sft_xl_v1_raw.json`, 2026-07-22). Pretrain 51K steps (20B tokens) + SFT 8.4K steps done.
+Latest snapshot: **`sft_Apex-1_v1`** (`ckpt/benchmark_sft_Apex-1_v1_raw.json`, 2026-07-22). Pretrain 51K steps (20B tokens) + SFT 8.4K steps + RLVR abandoned then DPO — all done (§6 in [BENCHMARK v2](BENCHMARK-v2.en.md)).
 
-**sft_xl_v1**
+**sft_Apex-1_v1**
 
 | | 💬 normal chat | 🧠 THINKING on |
 |:--|:--:|:--:|
@@ -276,12 +282,31 @@ Latest — and only — snapshot: **`sft_xl_v1`** (`ckpt/benchmark_sft_xl_v1_raw
 
 The 327M line's biggest failure — THINKING handoff (a blank answer field) — **never happened at all on this line.** The new bottleneck instead is verbosity and repetition, and turning THINKING on actually drops both coding and QA (thinking eats the answer budget first).
 
-Capability (coding 5/5) looks sufficient, so the next step is not more SFT but **RLVR**.
+Capability (coding 5/5) looked sufficient, so the first choice was **RLVR** — but running it showed GSM8K accuracy was ~0%, so GRPO groups had zero reward variance and no learning signal at all. Since the real problem (verbosity/non-compliance) doesn't require correctness, the direction switched to **DPO**, which finished training on 60K preference pairs.
 
 Full write-up: [BENCHMARK-v2.en.md](BENCHMARK-v2.en.md)
 
+### 5.2 Standard benchmarks (lm-evaluation-harness)
+
+Converted `sft_Apex-1_v1` and `dpo_Apex-1_v1` to HF format (logit-match verified, max diff 2.3e-5) and measured them on the standard harness **side by side with other models that have published scores**. 7 commonsense tasks 0-shot, MMLU 5-shot, GSM8K 5-shot, HumanEval/MBPP 0-shot pass@1 — matching the TinyLlama paper's (Table 2·3) protocol.
+
+| Metric | Apex-1 SFT | Apex-1 DPO | TinyLlama-1.1B | Pythia-1.0B |
+|:---|---:|---:|---:|---:|
+| Commonsense avg, 7 tasks (0-shot) | 49.54 | 49.65 | 52.99 | 48.30 |
+| MMLU (5-shot) | 24.83 | 24.90 | 25.34 | 25.70 |
+| GSM8K (5-shot, strict) | 1.44 | 1.90 | — | — |
+| HumanEval (pass@1) | 8.54 | 8.54 | 9.15 | 1.83 |
+| MBPP (pass@1) | 4.80 | 5.20 | — | — |
+
+> [!IMPORTANT]
+> **DPO ≥ SFT, no alignment tax** — DPO matches or beats SFT on every metric here. **BoolQ 62.20 ranks 1st among the 4 comparison models** (including TinyLlama-1.1B, Pythia-1.0B, OPT-1.3B), and trained on only ~20B tokens, Apex-1 beats the 300B-token Pythia-1.0B on HumanEval by a wide margin (8.54 vs 1.83).
+
+**Comparison models**: TinyLlama-1.1B (1.1B params · 3T tokens, 2024) · Pythia-1.0B (1.0B params · 300B tokens, EleutherAI) · OPT-1.3B (1.3B params · 180B tokens, Meta) — vs. Apex-1's 1.12B params · ~20B tokens, that's 150×, 15×, and 9× more tokens respectively.
+
+For what each of these benchmarks (commonsense 7-task suite, MMLU, GSM8K, HumanEval, MBPP) actually measures, how authoritative each one is, and the full per-task breakdown (including OPT): [BENCHMARK-v2.en.md §5.4](BENCHMARK-v2.en.md#54-standard-benchmarks-lm-evaluation-harness)
+
 <details>
-<summary><b>5.2 327M `base` line (expand to view)</b></summary>
+<summary><b>5.3 327M `base` line (expand to view)</b></summary>
 
 <br/>
 

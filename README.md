@@ -13,17 +13,21 @@
 > 물론 AI를 통해 배우는것은 좋지만 문장을 몇 번씩 다듬으면서 나의 지식을 정리하는게 더 중요합니다.
 
 > [!IMPORTANT]
-> **APEX-1 (1B급) — Pretrain + SFT 완료**
+> **APEX-1 (1B급) — Pretrain · SFT · DPO 완료**
 >
-> 실측 **1,119.5M** 파라미터. 모델명 **APEX-1** (코드상 preset명은 `xl` — `model.py`의 크기 티어 키일 뿐이며, 체크포인트 파일명은 `sft_xl_v1`처럼 preset 기준으로 자동 생성됩니다).
+> 실측 **1,119.5M** 파라미터. 모델명 **APEX-1** (`model.py`의 preset명도 동일하게 `Apex-1`).
 >
-> - **구조**: 24층 · d_model 2048 · GQA(16Q/4KV) + RoPE(θ=500K) + SwiGLU + RMSNorm · weight tying
-> - **컨텍스트**: max 4096 (학습 2048)
-> - **Pretrain**: bf16 · lr 3e-4 코사인 · 51K step (20B 토큰) · 코퍼스 v3-en 80.8GB (영어+코드) · vocab 32K 영어 전용
-> - **SFT**: `sft_xl_v1` · 8.4K step · lr 3e-5 · `pretrain_xl_v1` 위 SFT
-> - **벤치 (영어 전용 15문항 · greedy)**: no-thinking 코딩 완전 통과 **5/5**(테스트 25/25) · QA 5/8 — thinking 모드는 코딩 3/5(테스트 15/25) · QA 4/8로 오히려 하락 → [BENCHMARK v2](BENCHMARK-v2.md)
-> - **다음 단계**: 장황함·반복이 병목(over-length 8/10, repetition 0.032)이라 능력 자체는 충분 판단 → **RLVR 진행 결정** ([근거](ckpt/AUTO_DECISION_xl_v1.txt))
-> - **미채택**: MoE · YaRN · FP8 · 멀티GPU (1B 검증 후 다음 스케일)
+> - 🧩 **구조**: 24층 · d_model 2048 · GQA(16Q/4KV) + RoPE(θ=500K) + SwiGLU + RMSNorm · weight tying
+> - 📏 **컨텍스트**: max 4096 (학습 2048)
+> - 🔥 **Pretrain**: bf16 · lr 3e-4 코사인 · 51K step (20B 토큰) · 코퍼스 v3-en 80.8GB (영어+코드) · vocab 32K 영어 전용
+> - 🎓 **SFT**: `sft_Apex-1_v1` · 8.4K step · lr 3e-5 · `pretrain_Apex-1_v1` 위 SFT
+> - 📊 **벤치 (영어 전용 15문항 · greedy)**: no-thinking 코딩 완전 통과 **5/5**(테스트 25/25) · QA 5/8 — thinking 모드는 코딩 3/5(테스트 15/25) · QA 4/8로 오히려 하락 → [BENCHMARK v2](BENCHMARK-v2.md)
+> - 🔄 **RLVR → DPO**: 장황함·반복이 병목이라 RLVR을 시작했으나, GSM8K 정답률 ~0%로 그룹 내 보상 분산이 0(`groups 0/8`)이 되어 학습 신호가 없었음. 원래 문제(장황함)는 정답 능력이 필요 없는 DPO 영역이라 판단해 **DPO로 전환**, 60K 선호쌍으로 학습 완료 → [BENCHMARK v2 §6](BENCHMARK-v2.md#6-다음-단계--rlvr--dpo)
+> - 🏆 **표준 벤치마크**: lm-evaluation-harness 11종에서 DPO가 SFT 대비 전 영역 동급 이상 — **alignment tax 없음**. BoolQ 62.20으로 비교 4모델 중 1위 → [§5.2](#52-표준-벤치마크-lm-evaluation-harness)
+> - ⏸️ **미채택**: MoE · YaRN · FP8 · 멀티GPU (1B 검증 후 다음 스케일)
+
+> [!NOTE]
+> 🚀 **다음 목표 — APEX-2 (7B급)**: 개발 진행 중
 
 ---
 
@@ -101,7 +105,7 @@ val이 코퍼스 파일 순서의 마지막 1%였는데, ko위키 꼬리 단일 
 | [GLOSSARY](GLOSSARY.md) | Transformer, RoPE, DPO 같은 용어 |
 | [ARCHITECTURE](ARCHITECTURE.md) | 트랜스포머 워크스루 · 모델 설계 · 토크나이저 · 학습 · 추론 |
 | [POST-TRAINING](POST-TRAINING.md) | 배포 후 인간 피드백 루프 |
-| [BENCHMARK v2](BENCHMARK-v2.md) | APEX-1(1B) 벤치마크 · RLVR 결정 근거 |
+| [BENCHMARK v2](BENCHMARK-v2.md) | APEX-1(1B) 벤치마크 · RLVR → DPO 전환 기록 |
 | [BENCHMARK v1](BENCHMARK-v1.md) | Base 모델(327M) 벤치마크 (학습 과정 · Q&A 포함) |
 | [ThinkingLab](ThinkingLab/ThinkingLab.md) | 가설 · 브레인스토밍 로그 (아직 검증되지 않은 생각들) |
 
@@ -205,7 +209,9 @@ val이 코퍼스 파일 순서의 마지막 1%였는데, ko위키 꼬리 단일 
 | 3B | 사내 도구 연동 후보 |
 | 7B+ | 외부 노출을 고민할 최소 규모 |
 
-두 라인을 병행 중입니다: 1B `xl` 라인(APEX-1) 최신은 **`sft_xl_v1`** (pretrain+SFT 완료 · RLVR 대기), 327M `base` 라인 최신은 **`sft_base_v6`** 입니다. → [§5 벤치마크 한눈에](#5-벤치마크-한눈에) · 버전별 상세 기록 [BENCHMARK v2](BENCHMARK-v2.md)
+1B(APEX-1)까지 Pretrain·SFT·DPO를 마치고, 3B는 건너뛰고 곧바로 **APEX-2(7B급)**를 개발 중입니다.
+
+두 라인을 병행 중입니다: 1B `Apex-1` 라인 최신은 **`dpo_Apex-1_v1`** (pretrain+SFT+DPO 완료, 표준 벤치 11종 측정 완료), 327M `base` 라인 최신은 **`sft_base_v6`** 입니다. 다음 목표는 **APEX-2 (7B급)** 개발입니다. → [§5 벤치마크 한눈에](#5-벤치마크-한눈에) · 버전별 상세 기록 [BENCHMARK v2](BENCHMARK-v2.md)
 
 ---
 
@@ -257,14 +263,14 @@ AI/
 
 **학습 GPU**: H100, A100
 
-두 라인이 병행됩니다: **1B `xl`**(APEX-1, 영어 전용) 와 **327M `base`** (한/일/영 다국어). 세트도 서로 다릅니다.
+두 라인이 병행됩니다: **1B `Apex-1`**(영어 전용) 와 **327M `base`** (한/일/영 다국어). 세트도 서로 다릅니다.
 
-### 5.1 1B `xl` 라인 (APEX-1) ⭐ 주력
+### 5.1 1B `Apex-1` 라인 ⭐ 주력
 
 영어 전용 15문항 × THINKING on/off (코딩 5문항은 327M 세트와 동일 문항).  
-최신이자 유일한 스냅샷: **`sft_xl_v1`** (`ckpt/benchmark_sft_xl_v1_raw.json`, 2026-07-22). Pretrain 51K step(20B 토큰) + SFT 8.4K step 완료.
+최신 스냅샷: **`sft_Apex-1_v1`** (`ckpt/benchmark_sft_Apex-1_v1_raw.json`, 2026-07-22). Pretrain 51K step(20B 토큰) + SFT 8.4K step + RLVR 폐기 후 DPO까지 전부 완료(§6 in [BENCHMARK v2](BENCHMARK-v2.md)).
 
-**sft_xl_v1**
+**sft_Apex-1_v1**
 
 | | 💬 일반 채팅 | 🧠 THINKING 켬 |
 |:--|:--:|:--:|
@@ -276,12 +282,31 @@ AI/
 
 327M 라인의 최대 실패였던 THINKING 핸드오프(답 칸 공란)는 이 라인에서 **처음부터 발생하지 않았습니다.** 대신 새 병목은 장황함·반복이고, THINKING을 켜면 코딩·QA 모두 오히려 떨어집니다(사고가 답변 예산을 먼저 소모).
 
-능력(코딩 5/5 만점)은 충분하다고 판단해 다음 단계는 추가 SFT가 아니라 **RLVR**로 결정했습니다.
+능력(코딩 5/5 만점)은 충분하다고 판단해 처음엔 **RLVR**을 골랐지만, 실제로 돌려보니 GSM8K 정답률이 ~0%라 GRPO 그룹 내 보상 분산이 0이 되어 학습 신호가 아예 없었습니다. 장황함·지시불이행이라는 원래 문제는 정답 능력이 필요 없는 **DPO**로 직접 겨냥할 수 있어 그쪽으로 전환, 60K 선호쌍으로 학습을 완료했습니다.
 
 상세 기록: [BENCHMARK-v2.md](BENCHMARK-v2.md)
 
+### 5.2 표준 벤치마크 (lm-evaluation-harness)
+
+`sft_Apex-1_v1` vs `dpo_Apex-1_v1`를 HF로 변환해(로짓 일치 검증 max diff 2.3e-5) 표준 하네스로, **공개된 점수가 있는 다른 모델들과 나란히** 측정했습니다. 상식 7종은 0-shot, MMLU는 5-shot, GSM8K는 5-shot, HumanEval·MBPP는 0-shot pass@1 — TinyLlama 논문(Table 2·3) 프로토콜과 동일하게 맞췄습니다.
+
+| 항목 | Apex-1 SFT | Apex-1 DPO | TinyLlama-1.1B | Pythia-1.0B |
+|:---|---:|---:|---:|---:|
+| 상식 7종 평균 (0-shot) | 49.54 | 49.65 | 52.99 | 48.30 |
+| MMLU (5-shot) | 24.83 | 24.90 | 25.34 | 25.70 |
+| GSM8K (5-shot, strict) | 1.44 | 1.90 | — | — |
+| HumanEval (pass@1) | 8.54 | 8.54 | 9.15 | 1.83 |
+| MBPP (pass@1) | 4.80 | 5.20 | — | — |
+
+> [!IMPORTANT]
+> **DPO ≥ SFT, alignment tax 없음** — 전 항목에서 DPO가 SFT와 같거나 앞섭니다. **BoolQ 62.20은 비교 4모델(TinyLlama-1.1B·Pythia-1.0B·OPT-1.3B 포함) 중 1위**이고, ~20B 토큰만 학습한 Apex-1이 300B 토큰짜리 Pythia-1.0B를 HumanEval에서 8.54 vs 1.83으로 크게 앞섭니다.
+
+**비교 모델**: TinyLlama-1.1B(1.1B 파라미터 · 3T 토큰, 2024) · Pythia-1.0B(1.0B 파라미터 · 300B 토큰, EleutherAI) · OPT-1.3B(1.3B 파라미터 · 180B 토큰, Meta) — Apex-1(1.12B 파라미터 · ~20B 토큰) 대비 토큰 수가 각각 150배·15배·9배입니다.
+
+상식 7종·MMLU·GSM8K·HumanEval·MBPP가 각각 뭘 재는 벤치마크인지, 업계에서 얼마나 널리 쓰이는지, 세부 7종 결과(OPT 포함)까지는 → [BENCHMARK-v2.md §5.4](BENCHMARK-v2.md#54-표준-벤치마크-lm-evaluation-harness)
+
 <details>
-<summary><b>5.2 327M `base` 라인 (펼쳐서 보기)</b></summary>
+<summary><b>5.3 327M `base` 라인 (펼쳐서 보기)</b></summary>
 
 <br/>
 

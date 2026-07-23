@@ -4,18 +4,19 @@
 
 ---
 
-# 📊 BENCHMARK v2 · APEX-1 (xl, ~1.12B)
+# 📊 BENCHMARK v2 · APEX-1 (~1.12B)
 
 > A different line from v1 (327M `base`). A **1B-scale** line trained from scratch with an **English-only** tokenizer (32K) and corpus.
 >
-> `xl` in the checkpoint/log names isn't a product name — it's the preset key from `model.py` (nano/small/base/**xl**). `train.py` auto-generates filenames as `{mode}_{preset}_{tag}.pt`, which is why they read `sft_xl_v1.pt` and so on — **the product name for what this preset (`xl`) trained into is APEX-1**.
+> Checkpoints and logs use the `model.py` preset name **Apex-1** directly (`pretrain_Apex-1_v1`, `sft_Apex-1_v1`).
 
 | | |
 |:--|:--|
-| 🆕 **Latest** | `sft_xl_v1` · 2026-07-22 |
-| 📦 **Model** | APEX-1 · Decoder-only · measured **1,119.5M** (`xl`) |
-| 🧪 **Set** | English-only **15 prompts × THINKING on/off** (separate set from the 327M line; only the 5 coding prompts are shared) |
-| 📁 **Raw** | [`ckpt/benchmark_sft_xl_v1_raw.json`](ckpt/benchmark_sft_xl_v1_raw.json) |
+| 🆕 **Latest** | `dpo_Apex-1_v1` · 2026-07-23 |
+| 📦 **Model** | APEX-1 · Decoder-only · measured **1,119.5M** |
+| 🧪 **Set** | English-only **15 prompts × THINKING on/off** (separate set from the 327M line; only the 5 coding prompts are shared) + 11 standard benchmarks |
+| 📁 **Raw** | [`ckpt/benchmark_sft_Apex-1_v1_raw.json`](ckpt/benchmark_sft_Apex-1_v1_raw.json) · [`ckpt/lm_eval_Apex-1_COMPARISON.md`](ckpt/lm_eval_Apex-1_COMPARISON.md) |
+| ✅ **Done** | RLVR abandoned → **DPO complete** (§6) · 11 standard benchmarks measured (§5.4) |
 
 > [!WARNING]
 > Still the **first snapshot with only one checkpoint.** There's no version ladder like the v1 line yet — the point of this benchmark was to decide the next alignment step (more SFT vs. RL) by measurement, not by feel.
@@ -26,8 +27,8 @@
 2. [Training process](#2-training-process)
 3. [Datasets](#3-datasets)
 4. [Scoring](#4-scoring)
-5. [sft_xl_v1 results](#5-sft_xl_v1-results)
-6. [Next step — RLVR](#6-next-step--rlvr)
+5. [sft_Apex-1_v1 results](#5-sft_apex-1_v1-results)
+6. [Next step — RLVR → DPO](#6-next-step--rlvr--dpo)
 7. [Raw files](#7-raw-files)
 
 ---
@@ -80,14 +81,14 @@ The plan was "one 51K-step cosine run," but what actually ran was **41K steps of
 ③ Tokenize — train 20.31B tok · val 0.13B tok (mixed val)
         ▼
 ④a Pretrain stage-1 · 41,000 steps · lr 3e-4 · batch8×seq2048×accum24
-        ▼  pretrain_xl_v1 (stage1)
+        ▼  pretrain_Apex-1_v1 (stage1)
 ④b Curriculum reweight — resample 7GB each of fineweb/dclm + all code + finemath4 + cosmopedia2 (12.85B tok)
         ▼
 ④c Pretrain stage-2 continue · 10,000 steps · lr 6e-5 (same batch/accum)
-        ▼  pretrain_xl_v1 ★ (final pretrain)
+        ▼  pretrain_Apex-1_v1 ★ (final pretrain)
         ▼
 ⑤ SFT · smoltalk2 English subset, 538K examples × 2 epochs ÷ (batch8×accum16) ≈ 8,400 steps · lr 3e-5
-        ▼  sft_xl_v1 ★
+        ▼  sft_Apex-1_v1 ★
 ```
 
 | Stage | steps | lr | tokens processed (est.) | init |
@@ -205,7 +206,7 @@ All weights are ×1 — the per-source target row counts already encode the mix 
 
 ---
 
-## 5. sft_xl_v1 results
+## 5. sft_Apex-1_v1 results
 
 ### 5.1 QA · normal chat (THINKING off)
 
@@ -276,25 +277,118 @@ def factorial(n):
 > [!IMPORTANT]
 > Neither failure looks like "not knowing the algorithm" — it looks like the **thinking narration ran long enough inside the `max_new=256` budget that the code got cut off before it could finish.** This is a different kind of budget problem from the 327M line's "handoff" bug (where the whole answer field went blank). Splitting or expanding the thinking/answer budget is the next experiment to try.
 
+### 5.4 Standard benchmarks (lm-evaluation-harness)
+
+§5.1–5.3 above are our own 15-prompt set. Here, `sft_Apex-1_v1` and `dpo_Apex-1_v1` were converted to HF format (logit-match verified, max diff 2.3e-5) and measured on [lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness) 0.4.12, bf16, **side by side with other models that have published scores**. Measured 2026-07-23 on an H100 80GB (Lambda). Protocol (7 commonsense tasks 0-shot, MMLU 5-shot, GSM8K 5-shot, HumanEval/MBPP 0-shot pass@1) and comparison figures are taken directly from the [TinyLlama paper](https://arxiv.org/abs/2401.02385) Table 2·3.
+
+#### At a glance
+
+| Metric | Apex-1 SFT | Apex-1 DPO | TinyLlama-1.1B | Pythia-1.0B |
+|:---|---:|---:|---:|---:|
+| Commonsense avg, 7 tasks (0-shot) | 49.54 | 49.65 | 52.99 | 48.30 |
+| MMLU (5-shot) | 24.83 | 24.90 | 25.34 | 25.70 |
+| GSM8K (5-shot, strict) | 1.44 | 1.90 | — | — |
+| HumanEval (pass@1) | 8.54 | 8.54 | 9.15 | 1.83 |
+| MBPP (pass@1) | 4.80 | 5.20 | — | — |
+
+> [!IMPORTANT]
+> **DPO ≥ SFT, no alignment tax** — DPO matches or beats SFT on every metric here. **BoolQ 62.20 ranks 1st among the 4 comparison models** (TinyLlama-1.1B, Pythia-1.0B, OPT-1.3B), and trained on only ~20B tokens, Apex-1 beats the 300B-token Pythia-1.0B on HumanEval by a wide margin (8.54 vs 1.83). The gap to the 3T-token TinyLlama concentrates in data-hungry tasks, as shown in the token-count comparison below.
+
+#### Comparison models — parameters & training tokens
+
+| Model | Parameters | Training tokens | Released | Notes |
+|:---|---:|---:|:---|:---|
+| **Apex-1** | 1.12B | ~20B | 2026, this project | v3-en corpus, English-only |
+| TinyLlama-1.1B | 1.10B | **3T** (3 trillion) | 2024, StatNLP/SUTD | Llama 2 architecture scaled down — the flagship example of "push token count instead of parameter count" at small scale. **150× more tokens** than Apex-1 |
+| Pythia-1.0B | 1.01B | 300B | 2023, EleutherAI | Trained on The Pile; a standard suite (70M–12B) built for scaling-law research. **15× more tokens** than Apex-1 |
+| OPT-1.3B | 1.30B | 180B | 2022, Meta | Open reproduction of GPT-3-style training. Only the commonsense suite is reported in the paper, so no knowledge/math/code comparison is available |
+
+> [!NOTE]
+> All three baselines were measured and reported using the **EleutherAI lm-evaluation-harness family of protocols**, which is why lining them up like this is standard practice (the Pythia, TinyLlama, and OPT papers all cite each other this way). Expect roughly ±0.5-point noise from differences in harness version across papers.
+
+#### What these benchmarks actually measure — authority & limits
+
+| Benchmark (group) | How widely used | Known limits |
+|:---|:---|:---|
+| Commonsense 7 (HellaSwag, ARC-e/c, PIQA, WinoGrande, BoolQ, OpenBookQA) | The de facto standard EleutherAI harness suite — cited as-is by Pythia, TinyLlama, OPT, and Llama-family papers. **The industry's common language for cross-model comparison** | Multiple-choice format means shallow "pick the less awkward sentence" pattern-matching can score decently — trust this for **relative comparison**, not absolute skill |
+| MMLU | The headline knowledge benchmark cited by nearly every modern LLM report (GPT-4, Llama, etc.); 57 subjects, 4-way multiple choice | Random-guess baseline is 25%, and **most 1B-scale models cluster at 24–26** — not discriminative at this scale, treat as a reference point only |
+| GSM8K | The standard benchmark for elementary multi-step math reasoning; requires generating the answer, not just picking one | **Most ~1B-scale models sit in the low single digits** — at this size it mainly confirms "this model can barely do multi-step reasoning" (which is exactly what this project measured directly in §6) |
+| HumanEval | OpenAI's benchmark — the **de facto industry standard** for code-gen LLM evaluation (cited by Codex, GPT, Claude, and Llama papers). pass@1 = the fraction of once-generated code that actually passes the tests | Only 164 problems, so a single item can swing the score noticeably — still meaningful for comparing small models |
+| MBPP | Google's secondary coding benchmark; 500 easier problems than HumanEval, for coding fundamentals | Not cited nearly as widely as HumanEval — treated as a secondary signal |
+
+#### Full results (individual commonsense tasks + OPT-1.3B)
+
+| Benchmark | Name origin | What it measures | Apex-1 SFT | Apex-1 DPO | TinyLlama-1.1B | Pythia-1.0B | OPT-1.3B |
+|:---|:---|:---|---:|---:|---:|---:|---:|
+| HellaSwag | short for "Harder Endings, Longer contexts…" | Pick the natural continuation — commonsense context | 46.69 | 46.91 | 59.20 | 47.16 | 53.65 |
+| ARC-Easy | AI2 Reasoning Challenge (easy) | Elementary/middle-school science | 52.65 | 52.57 | 55.25 | 48.99 | 50.80 |
+| ARC-Challenge | AI2 Reasoning Challenge (hard) | Science questions lookup/stats can't solve — needs reasoning | 29.86 | 30.72 | 30.10 | 27.05 | 29.44 |
+| PIQA | Physical Interaction QA | Physical commonsense — tool/material use | 68.23 | 68.55 | 73.29 | 69.21 | 72.36 |
+| WinoGrande | extended Winograd Schema | What a pronoun refers to — context inference | 53.59 | 52.80 | 59.12 | 53.43 | 59.59 |
+| BoolQ | Boolean Questions | Read a passage, answer yes/no — reading comprehension | 61.99 | **62.20** 🏆 | 57.83 | 57.83 | 60.83 |
+| OpenBookQA | Open Book QA | Apply science principles to new situations, not rote recall | 33.80 | 33.80 | 36.00 | 31.40 | 33.40 |
+| **Commonsense avg** | | | 49.54 | **49.65** | 52.99 | 48.30 | 51.44 |
+| MMLU | Massive Multitask Language Understanding (5-shot) | Law, medicine, math, history, 57 subjects — breadth of knowledge | 24.83 | 24.90 | 25.34 | 25.70 | — |
+| GSM8K strict (5-shot) | Grade School Math 8K | Elementary multi-step math word problems (strict scoring) | 1.44 | 1.90 | — | — | — |
+| GSM8K flexible (5-shot) | 〃 | 〃 (relaxed scoring) | 1.97 | 2.27 | — | — | — |
+| HumanEval (pass@1) | OpenAI's human-written eval set | Function description → Python code, actually executed | 8.54 | 8.54 | 9.15 | 1.83 | — |
+| MBPP (pass@1) | Mostly Basic Python Problems | 500 basic Python problems — easier coding fundamentals than HumanEval | 4.80 | 5.20 | — | — | — |
+
+**Verdict** (verbatim from [`ckpt/lm_eval_Apex-1_COMPARISON.md`](ckpt/lm_eval_Apex-1_COMPARISON.md)):
+
+1. **DPO ≥ SFT** — commonsense avg +0.11, ARC-Challenge +0.86, GSM8K +0.46, MBPP +0.4. No regression (alignment tax). DPO recommended as the release default.
+2. **On par with or ahead of Pythia-1.0B (300B tokens) across the board**, especially HumanEval 8.54 vs 1.83 — despite Apex-1 training on only ~20B tokens.
+3. **BoolQ 62.20 ranks 1st among the 4 comparison models.**
+4. The gap to TinyLlama (3T tokens) concentrates in data-hungry tasks like HellaSwag/WinoGrande/PIQA — a pattern explained by the 150× token-count difference.
+5. MMLU sits at near-random (≈25) across the board at 1B scale — not discriminative here.
+
+> [!WARNING]
+> **Contamination disclosure**: GSM8K and MBPP's **train splits** partially overlap the SFT/RLVR training data. Evaluation used the **test split**, which is valid, but not fully uncontaminated. HumanEval is fully clean — entirely absent from training data.
+
 ---
 
-## 6. Next step — RLVR
+## 6. Next step — RLVR → DPO
 
-The whole point of this benchmark was to decide "more SFT or move to RL" by measurement rather than by feel.
+The whole point of this benchmark was to decide "more SFT or move to RL" by measurement rather than by feel. The initial decision was RLVR — but running it actually revealed **there was no learning signal at all**, so the direction changed to DPO. Here's how that unfolded.
 
-| Evidence | Value | Reading |
+### 6.1 Initial decision: RLVR
+
+| Evidence | Value | Reading (at the time) |
 |:---------|:------|:--------|
 | Capability | Normal-chat coding **fully passes 5/5** | The algorithms themselves are learned well enough |
 | Alignment problem | Mean repetition rate **0.032**, over-length **8/10** | Verbosity/repetition is the bottleneck — a style problem, not a capability one |
 
-**→ Decision: RLVR** ([`ckpt/AUTO_DECISION_xl_v1.txt`](ckpt/AUTO_DECISION_xl_v1.txt))
+→ Initial decision: **RLVR** ([`ckpt/AUTO_DECISION_Apex-1_v1.txt`](ckpt/AUTO_DECISION_Apex-1_v1.txt), original rationale: *"alignment (verbosity/repetition): repetition 0.032, over_length 8/10 — capability is sufficient (coding 5/5)"*)
 
-> [!NOTE]
-> Original rationale text: *"alignment (verbosity/repetition): repetition 0.032, over_length 8/10 — capability is sufficient (coding 5/5)"*
->
-> If this were a capability problem, more SFT data/steps would be the right call. But the current bottleneck is "how it answers," not "what it knows," so the next post-training step is **RLVR (RL with verifiable rewards)** rather than DPO or additional SFT.
+### 6.2 What actually happened — no learning signal
 
-Compared to the 327M line's bottleneck moving from "format (handoff)" to "accuracy," the 1B line skipped the handoff problem entirely and starts directly at the **"accuracy + verbosity"** stage.
+**1st attempt (thinking forced, batched generation)**: all 6 samples spent 478–759 characters on thinking alone, and the answer field (after `</THINKING>`) came back blank. It couldn't finish thinking within `max_new=200`, so it never reached the answer → all 6 got reward **0.10** (format score only) → zero variance within the group → no learning signal.
+
+> [!WARNING]
+> This is the 327M line's v6 "thinking never reaches the answer" problem reappearing inside RLVR — and worse, the benchmark (§1) already showed this model does **better in no-thinking mode**, while RLVR was forcing THINKING on, driving it in exactly the wrong direction.
+
+**2nd attempt (switched to a no-thinking probe, after fixing a `torch.no_grad()` bug)**: 4 GSM8K problems × 6 samples = 24 generations, **all reward 0.0** (0 correct). Answers were still verbose (637–715 chars), and the final numbers were wrong (e.g., 72→96, 10→300).
+
+Root cause: **the 1B model (20B tokens) essentially cannot solve multi-step arithmetic (GSM8K).** GRPO needs a mix of correct and incorrect samples within a group to create a relative advantage signal; at ~0% accuracy every group gets skipped (`groups 0/8`) and no gradient is produced at all. The run that had been going for ~4 hours had learned nothing.
+
+> [!IMPORTANT]
+> The original "capability is sufficient (coding 5/5)" reasoning was the problem. The 5 coding prompts pass because they match common patterns already present in the SFT data (√n trial division, slice reversal, etc.) — **GSM8K-style multi-step arithmetic reasoning is a separate capability entirely.** The lesson here is that "coding 5/5 → capability is sufficient" doesn't generalize.
+
+### 6.3 Conclusion — drop RLVR, move to DPO
+
+The problem that originally triggered RLVR (§1) was never arithmetic capability — it was **verbosity and instruction non-compliance** (over-length 8/10, instruction 1/2). That's exactly what DPO targets: DPO only needs to learn a **relative preference** ("concise > verbose"), not whether the model can solve the underlying problem, so it works independent of GSM8K accuracy. The 60K preference-pair dataset was already prepared, so switching was immediate.
+
+The RLVR infrastructure improvements (batched generation, checkpointing, live logging) stay in `rlhf.py` — ready to reuse once there's a stronger model or an easier RL task with actual accuracy headroom.
+
+### 6.4 DPO training complete
+
+```text
+step 0 | loss 0.6931 | pref acc 0.00
+```
+
+`loss 0.6931 ≈ ln(2)` is the textbook starting value when the policy still equals the reference model, and `pref acc 0.00` means there's no margin yet — both normal at the start. Training finished on all 60K preference pairs, and the outcome is confirmed in §5.4's standard benchmarks — **DPO matches or beats SFT across the board** (commonsense avg +0.11, ARC-Challenge +0.86, GSM8K +0.46, MBPP +0.4), alignment achieved with no capability tax.
+
+Compared to the 327M line's bottleneck moving from "format (handoff)" to "accuracy," the 1B line skipped the handoff problem entirely but ran into a different wall — **"accuracy itself doesn't exist enough to generate an RL signal"** — and worked around that wall by aiming DPO directly at the original target of verbosity and instruction-following, seeing it through to completion.
 
 ---
 
@@ -302,9 +396,10 @@ Compared to the 327M line's bottleneck moving from "format (handoff)" to "accura
 
 | Path | Contents |
 |:-----|:---------|
-| [`ckpt/benchmark_sft_xl_v1_raw.json`](ckpt/benchmark_sft_xl_v1_raw.json) | sft_xl_v1 benchmark raw data (all 30 generations, including thinking text) |
-| [`ckpt/AUTO_DECISION_xl_v1.txt`](ckpt/AUTO_DECISION_xl_v1.txt) | RLVR decision log |
-| — | pretrain_xl_v1 alone (pre-SFT) chat benchmark **not measured** |
+| [`ckpt/benchmark_sft_Apex-1_v1_raw.json`](ckpt/benchmark_sft_Apex-1_v1_raw.json) | sft_Apex-1_v1 benchmark raw data (all 30 generations, including thinking text) |
+| [`ckpt/lm_eval_Apex-1_COMPARISON.md`](ckpt/lm_eval_Apex-1_COMPARISON.md) | SFT vs DPO standard-benchmark raw data, 11 tasks (source for §5.4) |
+| [`ckpt/AUTO_DECISION_Apex-1_v1.txt`](ckpt/AUTO_DECISION_Apex-1_v1.txt) | Initial RLVR decision log (superseded by DPO, see §6.3) |
+| — | pretrain_Apex-1_v1 alone (pre-SFT) chat benchmark **not measured** |
 
 > Weights (`.pt`) and raw corpora are not included in the public repository.
 

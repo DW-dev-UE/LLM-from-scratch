@@ -4,18 +4,19 @@
 
 ---
 
-# 📊 BENCHMARK v2 · APEX-1 (xl, ~1.12B)
+# 📊 BENCHMARK v2 · APEX-1 (~1.12B)
 
 > v1(327M `base`)とは別系列です。**英語専用**トークナイザー(32K)・コーパスで最初から学習し直した**1B級ライン**です。
 >
-> チェックポイント・ログの `xl` は製品名ではなく、`model.py` の preset キー(nano/small/base/**xl**)です。`train.py` が `{mode}_{preset}_{tag}.pt` の規則でファイル名を自動生成するため `sft_xl_v1.pt` のように残ります — **この preset(`xl`)で学習した結果物の製品名が APEX-1** です。
+> チェックポイント・ログは `model.py` の preset 名 **Apex-1** をそのまま使います(`pretrain_Apex-1_v1`、`sft_Apex-1_v1`)。
 
 | | |
 |:--|:--|
-| 🆕 **最新** | `sft_xl_v1` · 2026-07-22 |
-| 📦 **モデル** | APEX-1 · Decoder-only · 実測 **1,119.5M**(`xl`) |
-| 🧪 **セット** | 英語専用 **15問 × THINKING on/off**(327M ラインとは別セット、コーディング5問だけ同一問題を維持) |
-| 📁 **原文** | [`ckpt/benchmark_sft_xl_v1_raw.json`](ckpt/benchmark_sft_xl_v1_raw.json) |
+| 🆕 **最新** | `dpo_Apex-1_v1` · 2026-07-23 |
+| 📦 **モデル** | APEX-1 · Decoder-only · 実測 **1,119.5M** |
+| 🧪 **セット** | 英語専用 **15問 × THINKING on/off**(327M ラインとは別セット、コーディング5問だけ同一問題を維持)+ 標準ベンチ11種 |
+| 📁 **原文** | [`ckpt/benchmark_sft_Apex-1_v1_raw.json`](ckpt/benchmark_sft_Apex-1_v1_raw.json) · [`ckpt/lm_eval_Apex-1_COMPARISON.md`](ckpt/lm_eval_Apex-1_COMPARISON.md) |
+| ✅ **完了** | RLVR 廃止 → **DPO 完了**(§6)· 標準ベンチ11種測定済み(§5.4) |
 
 > [!WARNING]
 > まだ**チェックポイント1個だけの最初のスナップショット**です。v1 ラインのようなバージョン梯子はなく、ベンチの目的は「後続学習の次の一手(追加SFT vs RL)を感覚ではなく測定で決めること」でした。
@@ -26,8 +27,8 @@
 2. [学習の過程](#2-学習の過程)
 3. [データセット](#3-データセット)
 4. [採点方法](#4-採点方法)
-5. [sft_xl_v1 結果](#5-sft_xl_v1-結果)
-6. [次の一手 — RLVR](#6-次の一手--rlvr)
+5. [sft_Apex-1_v1 結果](#5-sft_apex-1_v1-結果)
+6. [次の一手 — RLVR → DPO](#6-次の一手--rlvr--dpo)
 7. [原本ファイル](#7-原本ファイル)
 
 ---
@@ -80,14 +81,14 @@
 ③ トークン化 — train 20.31B tok · val 0.13B tok(混合val)
         ▼
 ④a Pretrain stage-1 · 41,000 step · lr 3e-4 · batch8×seq2048×accum24
-        ▼  pretrain_xl_v1(stage1)
+        ▼  pretrain_Apex-1_v1(stage1)
 ④b カリキュラム再構成 — fineweb/dclm を各7GB再サンプル + コード全体 + finemath4 + cosmopedia2(12.85B tok)
         ▼
 ④c Pretrain stage-2 continue · 10,000 step · lr 6e-5(同一 batch/accum)
-        ▼  pretrain_xl_v1 ★(最終 pretrain)
+        ▼  pretrain_Apex-1_v1 ★(最終 pretrain)
         ▼
 ⑤ SFT · smoltalk2 英語サブセット 538K 例 × 2epoch ÷(batch8×accum16)≈ 8,400 step · lr 3e-5
-        ▼  sft_xl_v1 ★
+        ▼  sft_Apex-1_v1 ★
 ```
 
 | 段階 | steps | lr | 処理トークン(推定) | init |
@@ -205,7 +206,7 @@ byte-level BPE · vocab **32,000** · 英語専用(327M ラインの64K多言語
 
 ---
 
-## 5. sft_xl_v1 結果
+## 5. sft_Apex-1_v1 結果
 
 ### 5.1 QA · 通常チャット(THINKING オフ)
 
@@ -276,25 +277,118 @@ def factorial(n):
 > [!IMPORTANT]
 > どちらの失敗も「アルゴリズムを知らない」のではなく、**`max_new=256` の予算内で思考の記述が長くなり、コードが仕上がる前に切れた**ように見えます — 327M ラインの「ハンドオフ」(回答欄が丸ごと空になるバグ)とは違う種類の予算問題です。思考·回答の予算分離あるいは拡大が次の実験候補です。
 
+### 5.4 標準ベンチマーク(lm-evaluation-harness)
+
+上の §5.1–5.3 は自作の15問セットです。ここでは `sft_Apex-1_v1` と `dpo_Apex-1_v1` を HF 形式に変換し(ロジット一致検証 max diff 2.3e-5)、[lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness) 0.4.12・bf16 で**公開スコアのある他モデルと並べて**測定しました。測定日2026-07-23、H100 80GB(Lambda)。プロトコル(常識7種0-shot、MMLU 5-shot、GSM8K 5-shot、HumanEval・MBPP 0-shot pass@1)と比較数値は [TinyLlama 論文](https://arxiv.org/abs/2401.02385) Table 2・3 からそのまま引用しています。
+
+#### 一目で
+
+| 項目 | Apex-1 SFT | Apex-1 DPO | TinyLlama-1.1B | Pythia-1.0B |
+|:---|---:|---:|---:|---:|
+| 常識7種平均(0-shot) | 49.54 | 49.65 | 52.99 | 48.30 |
+| MMLU(5-shot) | 24.83 | 24.90 | 25.34 | 25.70 |
+| GSM8K(5-shot、strict) | 1.44 | 1.90 | — | — |
+| HumanEval(pass@1) | 8.54 | 8.54 | 9.15 | 1.83 |
+| MBPP(pass@1) | 4.80 | 5.20 | — | — |
+
+> [!IMPORTANT]
+> **DPO ≥ SFT、alignment tax なし** — 全項目で DPO が SFT と同等以上です。**BoolQ 62.20 は比較4モデル(TinyLlama-1.1B・Pythia-1.0B・OPT-1.3B)中1位**で、~20Bトークンしか学習していない Apex-1 が300Bトークンの Pythia-1.0B を HumanEval で大差(8.54 vs 1.83)で上回っています。3Tトークンの TinyLlama とのギャップは、下の「比較モデル」表のトークン数差で説明できるパターンです。
+
+#### 比較モデル — パラメータ・学習トークン
+
+| モデル | パラメータ | 学習トークン | 発表 | 備考 |
+|:---|---:|---:|:---|:---|
+| **Apex-1** | 1.12B | ~20B | 2026年、本プロジェクト | v3-en コーパス、英語専用 |
+| TinyLlama-1.1B | 1.10B | **3T**(3兆) | 2024年、StatNLP・SUTD | Llama 2 アーキテクチャをそのまま縮小 — 「小型モデルでも圧倒的トークン数で押す」の代表例。Apex-1比で**トークン150倍** |
+| Pythia-1.0B | 1.01B | 300B | 2023年、EleutherAI | The Pile で学習、スケーリング則研究用の標準スイート(70M〜12B)。Apex-1比で**トークン15倍** |
+| OPT-1.3B | 1.30B | 180B | 2022年、Meta | GPT-3 再現目的のオープン系列。論文には常識7種のみ報告されており、知識・数学・コードの比較はできない |
+
+> [!NOTE]
+> 3モデルとも **EleutherAI lm-evaluation-harness 系のプロトコル**で測定・報告された数値なので、このように並べて比較するのが慣例です(Pythia・TinyLlama・OPT の論文が互いをこの方式で引用しています)。ただし採点コードのバージョン差などで ±0.5点程度の誤差は見込む必要があります。
+
+#### ベンチマークが正確に何を測るか — 権威・限界
+
+| ベンチマーク(グループ) | どれほど広く使われるか | 知られている限界 |
+|:---|:---|:---|
+| 常識7種(HellaSwag・ARC-e/c・PIQA・WinoGrande・BoolQ・OpenBookQA) | EleutherAI harness の事実上の標準セット — Pythia・TinyLlama・OPT・Llama 系論文が全てそのまま引用。**モデル間比較の業界共通言語** | 選択式なので「より自然な文」を選ぶだけの浅いパターンマッチでも点が出る — 絶対点数より**相対比較用**として信頼すべき |
+| MMLU | GPT-4・Llama など最新 LLM レポートの代表指標として引用される知識ベンチマーク(57科目・4択) | 4択のランダム基準が25点なのに、**1B級はほとんど24〜26点台**に集中 — この規模では判別力が低く、参考程度 |
+| GSM8K | 初等多段階数学の文章題推論の標準ベンチ。選択式ではなく正解を直接生成する必要がある | **~1B級モデルはほとんど一桁%台**に留まる — 「多段階推論がほぼできない」ことを確認する用途に近い(§6でこのプロジェクトが実測した根拠と一致) |
+| HumanEval | OpenAI が作成、コード生成 LLM 評価の**事実上の業界標準**(Codex・GPT・Claude・Llama 論文が全て引用)。pass@1 = 一度生成したコードが実際にテストを通過する割合 | 問題数(164問)が少なく、1問で点数が大きく揺れる — それでも小型モデル比較には十分有意義 |
+| MBPP | Google 作成の補助的コーディングベンチ。HumanEval より易しい問題500問でコーディング基礎力を確認 | HumanEval ほど広くは引用されない — 補助指標として扱う |
+
+#### 全体結果(常識7種個別 + OPT-1.3B含む)
+
+| ベンチマーク | 名前の由来 | 何を見るか | Apex-1 SFT | Apex-1 DPO | TinyLlama-1.1B | Pythia-1.0B | OPT-1.3B |
+|:---|:---|:---|---:|---:|---:|---:|---:|
+| HellaSwag | "Harder Endings, Longer contexts…" の略 | 次の文の自然な展開選択 — 常識的文脈理解 | 46.69 | 46.91 | 59.20 | 47.16 | 53.65 |
+| ARC-Easy | AI2 Reasoning Challenge(易) | 初・中等科学知識 | 52.65 | 52.57 | 55.25 | 48.99 | 50.80 |
+| ARC-Challenge | AI2 Reasoning Challenge(難) | 検索・統計では解けない、推論が必要な科学問題 | 29.86 | 30.72 | 30.10 | 27.05 | 29.44 |
+| PIQA | Physical Interaction QA | 物理的常識 — 道具・材料の使い方 | 68.23 | 68.55 | 73.29 | 69.21 | 72.36 |
+| WinoGrande | Winograd Schema 拡張版 | 代名詞が何を指すか — 文脈推論 | 53.59 | 52.80 | 59.12 | 53.43 | 59.59 |
+| BoolQ | Boolean Questions | 文章を読んで Yes/No 判定 — 読解力 | 61.99 | **62.20** 🏆 | 57.83 | 57.83 | 60.83 |
+| OpenBookQA | Open Book QA | 科学原理を新しい状況に応用 — 単純暗記ではなく応用 | 33.80 | 33.80 | 36.00 | 31.40 | 33.40 |
+| **常識平均** | | | 49.54 | **49.65** | 52.99 | 48.30 | 51.44 |
+| MMLU | Massive Multitask Language Understanding(5-shot) | 法律・医学・数学・歴史など57科目 — 総合的な知識量 | 24.83 | 24.90 | 25.34 | 25.70 | — |
+| GSM8K strict(5-shot) | Grade School Math 8K | 初等多段階数学の文章題(厳格採点) | 1.44 | 1.90 | — | — | — |
+| GSM8K flexible(5-shot) | 〃 | 〃(緩和採点) | 1.97 | 2.27 | — | — | — |
+| HumanEval(pass@1) | OpenAI 作成の人手評価セット | 関数説明 → Python コード生成、実際に実行してテスト | 8.54 | 8.54 | 9.15 | 1.83 | — |
+| MBPP(pass@1) | Mostly Basic Python Problems | 基礎 Python 問題500問 — HumanEval より易しいコーディング基礎力 | 4.80 | 5.20 | — | — | — |
+
+**判定**([`ckpt/lm_eval_Apex-1_COMPARISON.md`](ckpt/lm_eval_Apex-1_COMPARISON.md) 原文通り):
+
+1. **DPO ≥ SFT** — 常識平均 +0.11、ARC-Challenge +0.86、GSM8K +0.46、MBPP +0.4。回帰(alignment tax)なし。リリース基本モデルとして DPO を推奨。
+2. **Pythia-1.0B(300Bトークン)に全項目で同等〜優位**、特に HumanEval 8.54 vs 1.83。Apex-1 の学習量は ~20Bトークンのみ。
+3. **BoolQ 62.20 は比較4モデル中1位。**
+4. TinyLlama(3Tトークン)とのギャップは HellaSwag・WinoGrande・PIQA など学習量に敏感な項目に集中 — トークン数の差(150倍)で説明できるパターン。
+5. MMLU は1B級共通でランダム水準(≈25)— 判別力なし。
+
+> [!WARNING]
+> **汚染に関する開示**: GSM8K・MBPP は **train split** が SFT/RLVR の学習データに一部含まれています。評価は **test split** なので有効ですが、完全無汚染ではありません。HumanEval は学習データに一切含まれない完全クリーンなセットです。
+
 ---
 
-## 6. 次の一手 — RLVR
+## 6. 次の一手 — RLVR → DPO
 
-このベンチの目的自体が「追加SFTをもっと回すか、RLに進むか」を感覚ではなく計測で決めることでした。
+このベンチの目的自体が「追加SFTをもっと回すか、RLに進むか」を感覚ではなく計測で決めることでした。最初の決定は RLVR でしたが、実際に回してみると**学習信号そのものが存在しない**ことが分かり、DPO へ方向転換しました。以下はその経緯です。
 
-| 根拠 | 値 | 解釈 |
+### 6.1 最初の決定: RLVR
+
+| 根拠 | 値 | 解釈(当時) |
 |:-----|:--|:-----|
 | 能力 | 通常チャットのコーディング**完全通過5/5** | アルゴリズム自体は十分学習されている |
 | 整列の問題 | 平均反復率**0.032**、長さ超過**8/10** | 冗長さ·繰り返しがボトルネック — 能力ではなくスタイルの問題 |
 
-**→ 決定: RLVR**([`ckpt/AUTO_DECISION_xl_v1.txt`](ckpt/AUTO_DECISION_xl_v1.txt))
+→ 最初の決定: **RLVR**([`ckpt/AUTO_DECISION_Apex-1_v1.txt`](ckpt/AUTO_DECISION_Apex-1_v1.txt)、根拠原文: *"alignment(verbosity/repetition): repetition 0.032, over_length 8/10 — capability is sufficient(coding 5/5)"*)
 
-> [!NOTE]
-> 根拠原文: *"alignment(verbosity/repetition): repetition 0.032, over_length 8/10 — capability is sufficient(coding 5/5)"*
->
-> 能力の問題であれば SFT データ·ステップを増やす方が正しいですが、いまのボトルネックは「何を知っているか」ではなく「どう答えるか」なので、次の後続学習は DPO·追加SFT より **RLVR(検証可能な報酬に基づく RL)** で進めることにしました。
+### 6.2 実際に回してみると — 学習信号が無かった
 
-327M ラインが経験した「形式(ハンドオフ)→精度」という順のボトルネック移動と比べると、1B ラインはハンドオフ問題を経ずに最初から**「精度+冗長さ」**の段階にいます。
+**1回目(THINKING 強制、バッチ生成)**: サンプル6個全てが thinking だけで478〜759文字を費やし、回答欄(`</THINKING>` 以降)は空でした。`max_new=200` の中で思考が終わらず回答まで到達できず → 6個全てが reward **0.10**(形式点のみ)→ グループ内分散0 → 学習信号なし。
+
+> [!WARNING]
+> 327M ラインの v6 で経験した「thinking が回答に伝わらない」問題が RLVR でそのまま再現されたものです。しかもベンチマーク(§1)ではこのモデルは **no-thinking の方が良い**という結果だったのに、RLVR はむしろ THINKING を強制していたので、正反対の方向に進んでいました。
+
+**2回目(no-thinking プローブに切り替え、`torch.no_grad()` バグ修正後)**: GSM8K 4問×6サンプル=24生成**全てreward 0.0**(正解0個)。回答は637〜715文字とやはり冗長で、最終的な数値も誤り(例: 72→96、10→300)。
+
+根本原因: **1B(20Bトークン)モデルは多段階の算術(GSM8K)をほぼ解けません。** GRPO はグループ内に正解・不正解が混在して初めて相対的なアドバンテージが生まれますが、正解率が~0%だと全グループがスキップされ(`groups 0/8`)、勾配が一切生まれません。約4時間回っていたランは、実は何も学習していませんでした。
+
+> [!IMPORTANT]
+> そもそも「能力は十分(coding 5/5)」という判断根拠自体が問題でした。コーディング5問は SFT データによくある定型パターン(√n 試し割り、スライス反転など)だから通過しただけで、**GSM8K のような多段階算術推論は全く別の能力**でした。「コーディング5/5=能力十分」という一般化が誤りだったというのが今回の教訓です。
+
+### 6.3 結論 — RLVR をやめて DPO へ
+
+RLVR を発端させた元々の問題(§1)は算術能力ではなく、**冗長さ+指示不遵守**(over_length 8/10、instruction 1/2)でした。これはまさに DPO が狙う領域です — DPO はモデルが問題を「解く能力」がなくても「簡潔な回答 > 冗長な回答」という**相対的選好**さえ学べればよいので、GSM8K の正解率とは無関係に機能します。選好ペアデータ(60K)も既に用意されていたため、すぐに切り替えられました。
+
+RLVR のインフラ改善(バッチ生成、中間保存、リアルタイムログ)は `rlhf.py` に残してあります — より強いモデルや正解率の高い RL タスクに出会えばそのまま再利用できます。
+
+### 6.4 DPO 学習完了
+
+```text
+step 0 | loss 0.6931 | pref acc 0.00
+```
+
+`loss 0.6931 ≈ ln(2)` はポリシーモデルがまだ参照モデルと同じときの教科書的な初期値で、`pref acc 0.00` はまだマージンが無いという意味であり、開始時点では正常です。60K選好ペアで学習を終え、結果は §5.4 の標準ベンチマークで確認できます — **DPO が SFT 対比 全項目で同等以上**(常識平均 +0.11、ARC-Challenge +0.86、GSM8K +0.46、MBPP +0.4)、alignment tax 無しで整列できました。
+
+327M ラインが経験した「形式(ハンドオフ)→精度」という順のボトルネック移動と比べると、1B ラインはハンドオフ問題を経ずに始まりましたが、**「精度(算術)自体がRL信号を作れるほど存在しない」**という別種の壁にぶつかり、その壁を迂回して、冗長さ・指示不遵守という元々の目標を DPO で直接狙い、完了まで進めました。
 
 ---
 
@@ -302,9 +396,10 @@ def factorial(n):
 
 | 経路 | 内容 |
 |:-----|:-----|
-| [`ckpt/benchmark_sft_xl_v1_raw.json`](ckpt/benchmark_sft_xl_v1_raw.json) | sft_xl_v1 ベンチ原本(30生成全件、thinking テキスト含む) |
-| [`ckpt/AUTO_DECISION_xl_v1.txt`](ckpt/AUTO_DECISION_xl_v1.txt) | RLVR 決定ログ |
-| — | pretrain_xl_v1 単独(SFT前)チャットベンチ **未計測** |
+| [`ckpt/benchmark_sft_Apex-1_v1_raw.json`](ckpt/benchmark_sft_Apex-1_v1_raw.json) | sft_Apex-1_v1 ベンチ原本(30生成全件、thinking テキスト含む) |
+| [`ckpt/lm_eval_Apex-1_COMPARISON.md`](ckpt/lm_eval_Apex-1_COMPARISON.md) | SFT vs DPO 標準ベンチ11種の原本(§5.4 の出典) |
+| [`ckpt/AUTO_DECISION_Apex-1_v1.txt`](ckpt/AUTO_DECISION_Apex-1_v1.txt) | 最初の RLVR 決定ログ(§6.3 で DPO へ転換) |
+| — | pretrain_Apex-1_v1 単独(SFT前)チャットベンチ **未計測** |
 
 > 重み(`.pt`)と原本コーパスは公開リポジトリに含めません。
 

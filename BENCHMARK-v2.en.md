@@ -7,6 +7,8 @@
 # 📊 BENCHMARK v2 · APEX-1 (xl, ~1.12B)
 
 > A different line from v1 (327M `base`). A **1B-scale** line trained from scratch with an **English-only** tokenizer (32K) and corpus.
+>
+> `xl` in the checkpoint/log names isn't a product name — it's the preset key from `model.py` (nano/small/base/**xl**). `train.py` auto-generates filenames as `{mode}_{preset}_{tag}.pt`, which is why they read `sft_xl_v1.pt` and so on — **the product name for what this preset (`xl`) trained into is APEX-1**.
 
 | | |
 |:--|:--|

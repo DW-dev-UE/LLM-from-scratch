@@ -15,7 +15,7 @@
 > [!IMPORTANT]
 > **APEX-1 (1B scale) — Pretrain + SFT done**
 >
-> ~**1,119.5M** measured parameters. Model name **APEX-1**.
+> ~**1,119.5M** measured parameters. Model name **APEX-1** (the in-code preset name is `xl` — just a size-tier key in `model.py`; checkpoint filenames are auto-generated from the preset, so they read `sft_xl_v1` etc.).
 >
 > - **Architecture**: 24 layers · d_model 2048 · GQA (16Q/4KV) + RoPE (θ=500K) + SwiGLU + RMSNorm · weight tying
 > - **Context**: max 4096 (trained at 2048)

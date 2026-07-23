@@ -15,7 +15,7 @@
 > [!IMPORTANT]
 > **APEX-1（1B 級）— Pretrain + SFT 完了**
 >
-> 実測 **1,119.5M** パラメータ。モデル名 **APEX-1**。
+> 実測 **1,119.5M** パラメータ。モデル名 **APEX-1**(コード上の preset 名は `xl` — `model.py` のサイズ階層キーにすぎず、チェックポイントのファイル名は `sft_xl_v1` のように preset 基準で自動生成されます)。
 >
 > - **構造**: 24層 · d_model 2048 · GQA（16Q/4KV）+ RoPE（θ=500K）+ SwiGLU + RMSNorm · weight tying
 > - **コンテキスト**: max 4096（学習は 2048）

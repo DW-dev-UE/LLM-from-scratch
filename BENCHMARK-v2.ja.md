@@ -7,6 +7,8 @@
 # 📊 BENCHMARK v2 · APEX-1 (xl, ~1.12B)
 
 > v1(327M `base`)とは別系列です。**英語専用**トークナイザー(32K)・コーパスで最初から学習し直した**1B級ライン**です。
+>
+> チェックポイント・ログの `xl` は製品名ではなく、`model.py` の preset キー(nano/small/base/**xl**)です。`train.py` が `{mode}_{preset}_{tag}.pt` の規則でファイル名を自動生成するため `sft_xl_v1.pt` のように残ります — **この preset(`xl`)で学習した結果物の製品名が APEX-1** です。
 
 | | |
 |:--|:--|

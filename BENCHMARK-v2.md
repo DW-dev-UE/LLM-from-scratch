@@ -7,6 +7,8 @@
 # 📊 BENCHMARK v2 · APEX-1 (xl, ~1.12B)
 
 > v1(327M `base`)과는 다른 계열입니다. **영어 전용** 토크나이저(32K)·코퍼스로 처음부터 다시 학습한 **1B급 라인**입니다.
+>
+> 체크포인트·로그의 `xl`은 제품명이 아니라 `model.py`의 preset 키(nano/small/base/**xl**)입니다. `train.py`가 `{mode}_{preset}_{tag}.pt` 규칙으로 파일명을 자동 생성하기 때문에 `sft_xl_v1.pt`처럼 남습니다 — **이 preset(`xl`)으로 학습한 결과물의 제품명이 APEX-1**입니다.
 
 | | |
 |:--|:--|

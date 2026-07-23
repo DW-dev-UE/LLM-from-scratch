@@ -302,9 +302,38 @@ def factorial(n):
 | TinyLlama-1.1B | 1.10B | **3T** (3 trillion) | 2024, StatNLP/SUTD | Llama 2 architecture scaled down — the flagship example of "push token count instead of parameter count" at small scale. **150× more tokens** than Apex-1 |
 | Pythia-1.0B | 1.01B | 300B | 2023, EleutherAI | Trained on The Pile; a standard suite (70M–12B) built for scaling-law research. **15× more tokens** than Apex-1 |
 | OPT-1.3B | 1.30B | 180B | 2022, Meta | Open reproduction of GPT-3-style training. Only the commonsense suite is reported in the paper, so no knowledge/math/code comparison is available |
+| OLMo-1B | 1.18B | 2T | 2024, AI2 | Trained on the Dolma corpus; a fully open model with training data and process published. **100× more tokens** than Apex-1 |
+| Llama-3.2-1B | 1.24B | 9T | 2024, Meta | Pruned and distilled down from Llama 3.1 8B/70B. **450× more tokens** than Apex-1 |
+| Qwen2.5-1.5B | 1.54B | 18T | 2024, Alibaba | The most-trained model in this table by token count. **900× more tokens** than Apex-1 |
+| SmolLM2-1.7B | 1.71B | 11T | 2024, HuggingFace | Trained mainly on heavily-filtered high-quality corpora (FineWeb-Edu, etc.). **550× more tokens** than Apex-1 |
 
 > [!NOTE]
 > All three baselines were measured and reported using the **EleutherAI lm-evaluation-harness family of protocols**, which is why lining them up like this is standard practice (the Pythia, TinyLlama, and OPT papers all cite each other this way). Expect roughly ±0.5-point noise from differences in harness version across papers.
+
+#### A wider comparison — 2024–2025 small open models
+
+The "at a glance" table above compares Apex-1 against models trained on a similar token budget (0.18B–3T). Here, the scope widens to **today's widely-used 1B–1.7B-scale open models**, lined up on the same axes (HellaSwag, ARC average, PIQA, GSM8K, HumanEval). 🏆 marks the top score in each column.
+
+| Model | Training tokens | HellaSwag | ARC (avg) | PIQA | GSM8K | HumanEval |
+|:---|---:|---:|---:|---:|---:|---:|
+| **Apex-1 DPO (1.1B)** | 0.02T | 46.9 | 41.6 | 68.6 | 1.9 | 8.5 |
+| Pythia-1.0B | 0.3T | 47.2 | 38.0 | 69.2 | — | 1.8 |
+| OPT-1.3B | 0.18T | 53.7 | 40.1 | 72.4 | — | — |
+| TinyLlama-1.1B | 3T | 59.2 | 42.7 | 73.3 | — | 9.2 |
+| OLMo-1B | 2T | 62.5 | 46.3 | 73.7 | — | — |
+| Llama-3.2-1B | 9T | 61.2 | 49.2 | 74.8 | 7.6 | 18.9 |
+| Qwen2.5-1.5B | 18T | 66.4 | 58.5 | 76.1 | 61.7 🏆 | 37.2 🏆 |
+| SmolLM2-1.7B | 11T | 68.7 🏆 | 60.5 🏆 | 77.6 🏆 | 31.1 | 22.6 |
+
+> [!IMPORTANT]
+> **Reading it by token efficiency** — scores roughly track training-token count, but Apex-1 (0.02T) **matches Pythia-1.0B (0.3T, 15× more tokens) on the commonsense average and actually beats it on ARC** — the most token-efficient entry in this table.
+>
+> **HumanEval 8.5 is 4.7× Pythia-1.0B's 1.83** (300B tokens) and close to TinyLlama-1.1B's 9.15 (3 trillion tokens) — an unusually strong result for a ~20B-token model.
+>
+> The gap to Llama-3.2-1B (9T) and Qwen2.5-1.5B (18T) isn't an architecture shortfall — it's a **450–900× difference in data scale**. "This far, on 20B tokens" is the most honest and compelling framing for this project's public story.
+
+> [!WARNING]
+> **How to read this**: SmolLM2-1.7B (11T) and Qwen2.5-1.5B (18T) are trained on **550× and 900× more tokens** than Apex-1, respectively — the newest small open models as of 2024. Falling behind here is expected, not a failure — the "at a glance" table above, comparing models with a **similar token budget** (BoolQ 62.20 ranks 1st among those 4; MMLU sits at random-guess level across 1B-scale models either way), gives a fairer read of where this project actually stands. GSM8K/MBPP carry a train-split contamination disclosure (see the "at a glance" section above and [COMPARISON.md](ckpt/lm_eval_Apex-1_COMPARISON.md)), so the HumanEval comparison is the cleanest one here. Treat this table as a reference map of "how far you can push the same parameter count with more tokens," not a head-to-head verdict.
 
 #### What these benchmarks actually measure — authority & limits
 

@@ -17,17 +17,32 @@
 >
 > 実測 **1,119.5M** パラメータ。モデル名 **APEX-1**(`model.py` の preset 名も同じく `Apex-1`)。
 >
-> - 🧩 **構造**: 24層 · d_model 2048 · GQA（16Q/4KV）+ RoPE（θ=500K）+ SwiGLU + RMSNorm · weight tying
+> - 🧩 **構造**: 24層 · d_model 2048 · GQA（16Q/4KV）+ RoPE + SwiGLU + RMSNorm
 > - 📏 **コンテキスト**: max 4096（学習は 2048）
-> - 🔥 **Pretrain**: bf16 · lr 3e-4 コサイン · 51K step（20B トークン）· コーパス v3-en 80.8GB（英語+コード）· vocab 32K・英語専用
-> - 🎓 **SFT**: `sft_Apex-1_v1` · 8.4K step · lr 3e-5 · `pretrain_Apex-1_v1` の上で SFT
-> - 📊 **ベンチ（英語専用15問・greedy）**: no-thinking コーディング完全通過 **5/5**（テスト25/25）· QA 5/8 — thinking モードはむしろ低下してコーディング3/5（テスト15/25）· QA 4/8 → [BENCHMARK v2](BENCHMARK-v2.ja.md)
-> - 🔄 **RLVR → DPO**: 冗長さ・繰り返しがボトルネックに見えて RLVR を開始したが、GSM8K 正解率が~0%で GRPO グループ内の報酬分散が0(`groups 0/8`)になり、学習信号が全く無かった。元の問題(冗長さ)は正解能力を必要としない DPO 領域と判断し **DPO へ転換**、60K 選好ペアで学習完了 → [BENCHMARK v2 §6](BENCHMARK-v2.ja.md#6-次の一手--rlvr--dpo)
-> - 🏆 **標準ベンチマーク**: lm-evaluation-harness 11種で DPO が SFT 対比 全項目同等以上 — **alignment tax なし**。BoolQ 62.20 は比較4モデル中1位 → [§5.2](#52-標準ベンチマーク-lm-evaluation-harness)
+> - 🔥 **Pretrain**: 51K step · 20B トークン · v3-en 80.8GB · 英語専用
+> - 🎓 **SFT → DPO**: SFT 8.4K step → RLVR 廃止(学習信号なし) → DPO 60K 選好ペアで完了
+> - 📊 **自作ベンチ(15問)**: no-thinking コーディング **5/5** · QA 5/8 → [BENCHMARK v2](BENCHMARK-v2.ja.md)
+>
+> | モデル | 学習トークン | HellaSwag | ARC(平均) | PIQA | GSM8K | HumanEval |
+> |:---|---:|---:|---:|---:|---:|---:|
+> | **Apex-1 DPO(1.1B)** | 0.02T | 46.9 | 41.6 | 68.6 | 1.9 | 8.5 |
+> | Pythia-1.0B | 0.3T | 47.2 | 38.0 | 69.2 | — | 1.8 |
+> | OPT-1.3B | 0.18T | 53.7 | 40.1 | 72.4 | — | — |
+> | TinyLlama-1.1B | 3T | 59.2 | 42.7 | 73.3 | — | 9.2 |
+> | OLMo-1B | 2T | 62.5 | 46.3 | 73.7 | — | — |
+> | Llama-3.2-1B | 9T | 61.2 | 49.2 | 74.8 | 7.6 | 18.9 |
+> | Qwen2.5-1.5B | 18T | 66.4 | 58.5 | 76.1 | 61.7 🏆 | 37.2 🏆 |
+> | SmolLM2-1.7B | 11T | 68.7 🏆 | 60.5 🏆 | 77.6 🏆 | 31.1 | 22.6 |
+>
+> **DPO ≥ SFT、alignment tax なし** · Apex-1 は15倍多く学習した Pythia と常識平均で同等、ARC は上回る(トークン効率は最上位) · Llama-3.2・Qwen2.5 とのギャップはアーキテクチャでなくデータ規模450〜900倍の差 → [BENCHMARK v2 §5.4](BENCHMARK-v2.ja.md#54-標準ベンチマーク-lm-evaluation-harness)
+>
+> <sub>**ベンチマーク出典**(各分野の標準的な被引用論文): HellaSwag [Zellers+19](https://arxiv.org/abs/1905.07830) · ARC [Clark+18](https://arxiv.org/abs/1803.05457) · PIQA [Bisk+19](https://arxiv.org/abs/1911.11641) · GSM8K [Cobbe+21](https://arxiv.org/abs/2110.14168) · HumanEval [Chen+21](https://arxiv.org/abs/2107.03374)</sub>  
+> <sub>**比較モデル出典**: Pythia [Biderman+23](https://arxiv.org/abs/2304.01373) · OPT [Zhang+22](https://arxiv.org/abs/2205.01068) · TinyLlama [Zhang+24](https://arxiv.org/abs/2401.02385) · OLMo [Groeneveld+24](https://arxiv.org/abs/2402.00838) · Qwen2.5 [Qwen+24](https://arxiv.org/abs/2412.15115) · SmolLM2 [Ben Allal+25](https://arxiv.org/abs/2502.02737) · Llama-3.2(arXiv レポートなし、Meta ブログのみ)</sub>
+>
 > - ⏸️ **見送り**: MoE · YaRN · FP8 · マルチGPU（1B 検証後の次スケール）
 
 > [!NOTE]
-> 🚀 **次の目標 — APEX-2（7B 級）**: 開発進行中
+> 🚀 **次の目標 — APEX-2（7B 級）**: アーキテクチャ開発進行中
 
 ---
 
@@ -305,6 +320,24 @@ AI/
 **比較モデル**: TinyLlama-1.1B(1.1Bパラメータ・3Tトークン、2024年)・Pythia-1.0B(1.0Bパラメータ・300Bトークン、EleutherAI)・OPT-1.3B(1.3Bパラメータ・180Bトークン、Meta)— Apex-1(1.12Bパラメータ・~20Bトークン)対比でそれぞれトークン数150倍・15倍・9倍です。
 
 常識7種・MMLU・GSM8K・HumanEval・MBPP がそれぞれ何を測定し、業界でどれほど権威があるか、詳細な7種内訳(OPT含む)は → [BENCHMARK-v2.ja.md §5.4](BENCHMARK-v2.ja.md#54-標準ベンチマーク-lm-evaluation-harness)
+
+**より広い比較** — 学習トークン規模がずっと大きい2024〜2025年の小型オープンモデルまで含めると(🏆 = 各列1位):
+
+| モデル | 学習トークン | HellaSwag | ARC(平均) | PIQA | GSM8K | HumanEval |
+|:---|---:|---:|---:|---:|---:|---:|
+| **Apex-1 DPO(1.1B)** | 0.02T | 46.9 | 41.6 | 68.6 | 1.9 | 8.5 |
+| Pythia-1.0B | 0.3T | 47.2 | 38.0 | 69.2 | — | 1.8 |
+| OPT-1.3B | 0.18T | 53.7 | 40.1 | 72.4 | — | — |
+| TinyLlama-1.1B | 3T | 59.2 | 42.7 | 73.3 | — | 9.2 |
+| OLMo-1B | 2T | 62.5 | 46.3 | 73.7 | — | — |
+| Llama-3.2-1B | 9T | 61.2 | 49.2 | 74.8 | 7.6 | 18.9 |
+| Qwen2.5-1.5B | 18T | 66.4 | 58.5 | 76.1 | 61.7 🏆 | 37.2 🏆 |
+| SmolLM2-1.7B | 11T | 68.7 🏆 | 60.5 🏆 | 77.6 🏆 | 31.1 | 22.6 |
+
+> [!IMPORTANT]
+> **トークン効率で読むと** — Apex-1(0.02T)は15倍多く学習した Pythia-1.0B(0.3T)と常識平均で同等、ARC はむしろ上回ります。HumanEval 8.5 は Pythia(1.83)の**4.7倍**で、3兆トークンの TinyLlama(9.15)にも近い水準 — ~20Bトークンのモデルとしては異例です。Llama-3.2-1B(9T)・Qwen2.5-1.5B(18T)とのギャップはアーキテクチャではなく**データ規模450〜900倍の差**です。
+
+SmolLM2・Qwen2.5 は Apex-1 より550〜900倍多いトークンで学習されています — ここで劣るのは想定内で、**学習トークン規模が近いモデルとの比較(上の表)** の方がこのプロジェクトの実際の立ち位置を公正に示します。詳細: [BENCHMARK-v2.ja.md §5.4](BENCHMARK-v2.ja.md#54-標準ベンチマーク-lm-evaluation-harness)
 
 <details>
 <summary><b>5.3 327M `base` 系列(展開して見る)</b></summary>

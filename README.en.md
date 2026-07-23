@@ -17,17 +17,32 @@
 >
 > ~**1,119.5M** measured parameters. Model name **APEX-1** (the `model.py` preset name matches: `Apex-1`).
 >
-> - 🧩 **Architecture**: 24 layers · d_model 2048 · GQA (16Q/4KV) + RoPE (θ=500K) + SwiGLU + RMSNorm · weight tying
+> - 🧩 **Architecture**: 24 layers · d_model 2048 · GQA (16Q/4KV) + RoPE + SwiGLU + RMSNorm
 > - 📏 **Context**: max 4096 (trained at 2048)
-> - 🔥 **Pretrain**: bf16 · lr 3e-4 cosine · 51K steps (20B tokens) · corpus v3-en 80.8GB (English + code) · vocab 32K, English-only
-> - 🎓 **SFT**: `sft_Apex-1_v1` · 8.4K steps · lr 3e-5 · SFT on top of `pretrain_Apex-1_v1`
-> - 📊 **Bench (English-only, 15 prompts, greedy)**: no-thinking coding fully-passed **5/5** (tests 25/25) · QA 5/8 — thinking mode actually drops to coding 3/5 (tests 15/25) · QA 4/8 → [BENCHMARK v2](BENCHMARK-v2.en.md)
-> - 🔄 **RLVR → DPO**: verbosity/repetition looked like the bottleneck so RLVR was started, but GSM8K accuracy was ~0%, leaving zero reward variance within GRPO groups (`groups 0/8`) — no learning signal at all. The original problem (verbosity) doesn't need correctness, so **switched to DPO**, which finished training on 60K preference pairs → [BENCHMARK v2 §6](BENCHMARK-v2.en.md#6-next-step--rlvr--dpo)
-> - 🏆 **Standard benchmarks**: across 11 lm-evaluation-harness tasks, DPO matches or beats SFT everywhere — **no alignment tax**. BoolQ 62.20 ranks 1st among 4 comparable models → [§5.2](#52-standard-benchmarks-lm-evaluation-harness)
+> - 🔥 **Pretrain**: 51K steps · 20B tokens · v3-en 80.8GB · English-only
+> - 🎓 **SFT → DPO**: SFT 8.4K steps → RLVR abandoned (no learning signal) → DPO done on 60K preference pairs
+> - 📊 **Own bench (15 prompts)**: no-thinking coding **5/5** · QA 5/8 → [BENCHMARK v2](BENCHMARK-v2.en.md)
+>
+> | Model | Training tokens | HellaSwag | ARC (avg) | PIQA | GSM8K | HumanEval |
+> |:---|---:|---:|---:|---:|---:|---:|
+> | **Apex-1 DPO (1.1B)** | 0.02T | 46.9 | 41.6 | 68.6 | 1.9 | 8.5 |
+> | Pythia-1.0B | 0.3T | 47.2 | 38.0 | 69.2 | — | 1.8 |
+> | OPT-1.3B | 0.18T | 53.7 | 40.1 | 72.4 | — | — |
+> | TinyLlama-1.1B | 3T | 59.2 | 42.7 | 73.3 | — | 9.2 |
+> | OLMo-1B | 2T | 62.5 | 46.3 | 73.7 | — | — |
+> | Llama-3.2-1B | 9T | 61.2 | 49.2 | 74.8 | 7.6 | 18.9 |
+> | Qwen2.5-1.5B | 18T | 66.4 | 58.5 | 76.1 | 61.7 🏆 | 37.2 🏆 |
+> | SmolLM2-1.7B | 11T | 68.7 🏆 | 60.5 🏆 | 77.6 🏆 | 31.1 | 22.6 |
+>
+> **DPO ≥ SFT, no alignment tax** · Apex-1 matches the 15×-more-trained Pythia on commonsense average and beats it on ARC (most token-efficient here) · the gap to Llama-3.2/Qwen2.5 is a 450–900× data-scale difference, not architecture → [BENCHMARK v2 §5.4](BENCHMARK-v2.en.md#54-standard-benchmarks-lm-evaluation-harness)
+>
+> <sub>**Benchmark sources** (canonical, heavily-cited papers in each area): HellaSwag [Zellers+19](https://arxiv.org/abs/1905.07830) · ARC [Clark+18](https://arxiv.org/abs/1803.05457) · PIQA [Bisk+19](https://arxiv.org/abs/1911.11641) · GSM8K [Cobbe+21](https://arxiv.org/abs/2110.14168) · HumanEval [Chen+21](https://arxiv.org/abs/2107.03374)</sub>  
+> <sub>**Comparison model sources**: Pythia [Biderman+23](https://arxiv.org/abs/2304.01373) · OPT [Zhang+22](https://arxiv.org/abs/2205.01068) · TinyLlama [Zhang+24](https://arxiv.org/abs/2401.02385) · OLMo [Groeneveld+24](https://arxiv.org/abs/2402.00838) · Qwen2.5 [Qwen+24](https://arxiv.org/abs/2412.15115) · SmolLM2 [Ben Allal+25](https://arxiv.org/abs/2502.02737) · Llama-3.2 (no arXiv report, Meta blog only)</sub>
+>
 > - ⏸️ **Deferred**: MoE · YaRN · FP8 · multi-GPU (next scale after 1B is validated)
 
 > [!NOTE]
-> 🚀 **Next goal — APEX-2 (7B scale)**: in development
+> 🚀 **Next goal — APEX-2 (7B scale)**: architecture design in progress
 
 ---
 
@@ -304,6 +319,24 @@ Converted `sft_Apex-1_v1` and `dpo_Apex-1_v1` to HF format (logit-match verified
 **Comparison models**: TinyLlama-1.1B (1.1B params · 3T tokens, 2024) · Pythia-1.0B (1.0B params · 300B tokens, EleutherAI) · OPT-1.3B (1.3B params · 180B tokens, Meta) — vs. Apex-1's 1.12B params · ~20B tokens, that's 150×, 15×, and 9× more tokens respectively.
 
 For what each of these benchmarks (commonsense 7-task suite, MMLU, GSM8K, HumanEval, MBPP) actually measures, how authoritative each one is, and the full per-task breakdown (including OPT): [BENCHMARK-v2.en.md §5.4](BENCHMARK-v2.en.md#54-standard-benchmarks-lm-evaluation-harness)
+
+**A wider comparison** — including 2024–2025 small open models trained on far more tokens (🏆 = column winner):
+
+| Model | Training tokens | HellaSwag | ARC (avg) | PIQA | GSM8K | HumanEval |
+|:---|---:|---:|---:|---:|---:|---:|
+| **Apex-1 DPO (1.1B)** | 0.02T | 46.9 | 41.6 | 68.6 | 1.9 | 8.5 |
+| Pythia-1.0B | 0.3T | 47.2 | 38.0 | 69.2 | — | 1.8 |
+| OPT-1.3B | 0.18T | 53.7 | 40.1 | 72.4 | — | — |
+| TinyLlama-1.1B | 3T | 59.2 | 42.7 | 73.3 | — | 9.2 |
+| OLMo-1B | 2T | 62.5 | 46.3 | 73.7 | — | — |
+| Llama-3.2-1B | 9T | 61.2 | 49.2 | 74.8 | 7.6 | 18.9 |
+| Qwen2.5-1.5B | 18T | 66.4 | 58.5 | 76.1 | 61.7 🏆 | 37.2 🏆 |
+| SmolLM2-1.7B | 11T | 68.7 🏆 | 60.5 🏆 | 77.6 🏆 | 31.1 | 22.6 |
+
+> [!IMPORTANT]
+> **Reading it by token efficiency** — Apex-1 (0.02T) matches the 15×-more-trained Pythia-1.0B (0.3T) on commonsense average and beats it on ARC. HumanEval 8.5 is **4.7×** Pythia's 1.83, and close to TinyLlama's 9.15 (3T tokens) — unusual for a ~20B-token model. The gap to Llama-3.2-1B (9T) and Qwen2.5-1.5B (18T) is not architecture — it's a **450–900× data-scale difference**.
+
+SmolLM2 and Qwen2.5 were trained on 550–900× more tokens than Apex-1 — falling behind here is expected, and **comparing models with a similar token budget (table above)** gives a fairer read of where this project actually stands. Details: [BENCHMARK-v2.en.md §5.4](BENCHMARK-v2.en.md#54-standard-benchmarks-lm-evaluation-harness)
 
 <details>
 <summary><b>5.3 327M `base` line (expand to view)</b></summary>

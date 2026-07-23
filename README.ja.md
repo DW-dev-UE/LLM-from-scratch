@@ -15,13 +15,10 @@
 > [!IMPORTANT]
 > **APEX-1（1B 級）— Pretrain・SFT・DPO 完了**
 >
-> 実測 **1,119.5M** パラメータ。モデル名 **APEX-1**(`model.py` の preset 名も同じく `Apex-1`)。
+> 実測 **1,119.5M** パラメータ。( 24層 · d_model 2048 · GQA（16Q/4KV）+ RoPE + SwiGLU + RMSNorm )
 >
-> - 🧩 **構造**: 24層 · d_model 2048 · GQA（16Q/4KV）+ RoPE + SwiGLU + RMSNorm
 > - 📏 **コンテキスト**: max 4096（学習は 2048）
 > - 🔥 **Pretrain**: 51K step · 20B トークン · v3-en 80.8GB · 英語専用
-> - 🎓 **SFT → DPO**: SFT 8.4K step → RLVR 廃止(学習信号なし) → DPO 60K 選好ペアで完了
-> - 📊 **自作ベンチ(15問)**: no-thinking コーディング **5/5** · QA 5/8 → [BENCHMARK v2](BENCHMARK-v2.ja.md)
 >
 > | モデル | 学習トークン | HellaSwag | ARC(平均) | PIQA | GSM8K | HumanEval |
 > |:---|---:|---:|---:|---:|---:|---:|

@@ -15,13 +15,10 @@
 > [!IMPORTANT]
 > **APEX-1 (1B급) — Pretrain · SFT · DPO 완료**
 >
-> 실측 **1,119.5M** 파라미터. 모델명 **APEX-1** (`model.py`의 preset명도 동일하게 `Apex-1`).
+> 실측 **1,119.5M** 파라미터. ( 24층 · d_model 2048 · GQA(16Q/4KV) + RoPE + SwiGLU + RMSNorm )
 >
-> - 🧩 **구조**: 24층 · d_model 2048 · GQA(16Q/4KV) + RoPE + SwiGLU + RMSNorm
-> - 📏 **컨텍스트**: max 4096 (학습 2048)
-> - 🔥 **Pretrain**: 51K step · 20B 토큰 · v3-en 80.8GB · 영어 전용
-> - 🎓 **SFT → DPO**: SFT 8.4K step → RLVR 폐기(학습 신호 없음) → DPO 60K 선호쌍 완료
-> - 📊 **자체 벤치 (15문항)**: no-thinking 코딩 **5/5** · QA 5/8 → [BENCHMARK v2](BENCHMARK-v2.md)
+> - **컨텍스트**: max 4096 (학습 2048)
+> - **Pretrain**: 51K step · 20B 토큰 · v3-en 80.8GB · 영어 전용
 >
 > | 모델 | 학습 토큰 | HellaSwag | ARC(평균) | PIQA | GSM8K | HumanEval |
 > |:---|---:|---:|---:|---:|---:|---:|

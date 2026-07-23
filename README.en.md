@@ -15,13 +15,10 @@
 > [!IMPORTANT]
 > **APEX-1 (1B scale) — Pretrain · SFT · DPO done**
 >
-> ~**1,119.5M** measured parameters. Model name **APEX-1** (the `model.py` preset name matches: `Apex-1`).
+> ~**1,119.5M** measured parameters. ( 24 layers · d_model 2048 · GQA (16Q/4KV) + RoPE + SwiGLU + RMSNorm )
 >
-> - 🧩 **Architecture**: 24 layers · d_model 2048 · GQA (16Q/4KV) + RoPE + SwiGLU + RMSNorm
 > - 📏 **Context**: max 4096 (trained at 2048)
 > - 🔥 **Pretrain**: 51K steps · 20B tokens · v3-en 80.8GB · English-only
-> - 🎓 **SFT → DPO**: SFT 8.4K steps → RLVR abandoned (no learning signal) → DPO done on 60K preference pairs
-> - 📊 **Own bench (15 prompts)**: no-thinking coding **5/5** · QA 5/8 → [BENCHMARK v2](BENCHMARK-v2.en.md)
 >
 > | Model | Training tokens | HellaSwag | ARC (avg) | PIQA | GSM8K | HumanEval |
 > |:---|---:|---:|---:|---:|---:|---:|

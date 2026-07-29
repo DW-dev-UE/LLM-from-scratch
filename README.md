@@ -26,22 +26,29 @@
 > | **Apex-1 DPO (1.1B)** | 0.02T | 46.9 | 41.6 | 68.6 | 1.9 | 8.5 |
 > | Pythia-1.0B | 0.3T | 47.2 | 38.0 | 69.2 | — | 1.8 |
 > | OPT-1.3B | 0.18T | 53.7 | 40.1 | 72.4 | — | — |
-> | TinyLlama-1.1B | 3T | 59.2 | 42.7 | 73.3 | — | 9.2 |
-> | OLMo-1B | 2T | 62.5 | 46.3 | 73.7 | — | — |
-> | Llama-3.2-1B | 9T | 61.2 | 49.2 | 74.8 | 7.6 | 18.9 |
-> | Qwen2.5-1.5B | 18T | 66.4 | 58.5 | 76.1 | 61.7 🏆 | 37.2 🏆 |
-> | SmolLM2-1.7B | 11T | 68.7 🏆 | 60.5 🏆 | 77.6 🏆 | 31.1 | 22.6 |
+
+> <sub>**벤치마크 출처**(각 분야 표준 인용 논문): HellaSwag [Zellers+19](https://arxiv.org/abs/1905.07830) · ARC [Clark+18](https://arxiv.org/abs/1803.05457) · PIQA [Bisk+19](https://arxiv.org/abs/1911.11641) · GSM8K [Cobbe+21](https://arxiv.org/abs/2110.14168) <br> HumanEval [Chen+21](https://arxiv.org/abs/2107.03374)
+> <br>**비교 모델 출처**: Pythia [Biderman+23](https://arxiv.org/abs/2304.01373) · OPT [Zhang+22](https://arxiv.org/abs/2205.01068)
 >
-> **DPO ≥ SFT, alignment tax 없음** · Apex-1은 15배 더 학습한 Pythia와 상식 동급·ARC 우위(토큰당 효율 최상위권) · Llama-3.2·Qwen2.5와의 격차는 아키텍처가 아니라 데이터 규모 450~900배 차이 → [BENCHMARK v2 §5.4](BENCHMARK-v2.md#54-표준-벤치마크-lm-evaluation-harness)
->
-> <sub>**벤치마크 출처**(각 분야 표준 인용 논문): HellaSwag [Zellers+19](https://arxiv.org/abs/1905.07830) · ARC [Clark+18](https://arxiv.org/abs/1803.05457) · PIQA [Bisk+19](https://arxiv.org/abs/1911.11641) · GSM8K [Cobbe+21](https://arxiv.org/abs/2110.14168) · HumanEval [Chen+21](https://arxiv.org/abs/2107.03374)</sub>  
-> <sub>**비교 모델 출처**: Pythia [Biderman+23](https://arxiv.org/abs/2304.01373) · OPT [Zhang+22](https://arxiv.org/abs/2205.01068) · TinyLlama [Zhang+24](https://arxiv.org/abs/2401.02385) · OLMo [Groeneveld+24](https://arxiv.org/abs/2402.00838) · Qwen2.5 [Qwen+24](https://arxiv.org/abs/2412.15115) · SmolLM2 [Ben Allal+25](https://arxiv.org/abs/2502.02737) · Llama-3.2(arXiv 리포트 없음, Meta 블로그로만 공개)</sub>
->
-> - ⏸️ **미채택**: MoE · YaRN · FP8 · 멀티GPU (1B 검증 후 다음 스케일)
 
 ---
 > [!NOTE]
-> 🚀 **다음 목표 — APEX-2 (7B급)**: 아키텍처 개발 진행 중
+> 🚀 **다음 목표 — APEX-2 (7B급)** 사전학습 진행중
+> 
+> ComposeLM 라이브러리 사용 ( 32층 · d_model 4096 · GQA(32Q/8KV) + SwiGLU + QK-RMSNorm + Pre-RMSNorm ) 
+>
+> 아래는 ComposeLM 라이브러리를 사용하여 아키텍처를 아주 쉽게 적용한 예제 코드입니다. 자세한 사항은 https://github.com/DW-dev-UE/ComposeLM 라이브러리를 참조하세요.
+```python
+from composelm import (ModelConfig, Trainer, TrainingConfig, build_model, load_model_weights, save_model_weights)
+from composelm.distributed import destroy_distributed, init_distributed_from_env
+
+def apex2_config(*, loss_chunk_size: int, compile_model: bool) -> ModelConfig:
+    return ModelConfig.from_arch("custom", d_model=4_096, n_layers=32, n_heads=32, n_kv_heads=8, head_dim=128, vocab_size=APEX2_VOCAB_SIZE, attention_type="gqa", ffn_type="swiglu", intermediate_size=13_056, norm="rmsnorm", norm_placement="pre", qk_norm="rmsnorm", norm_eps=1e-5, pos_emb="rope", rope_dim=128, rope_theta=1_000_000.0, rope_scaling=None,
+    max_seq_len=APEX2_MAX_SEQ_LEN, use_bias=False, qkv_bias=False, attention_output_bias=False, ffn_bias=False, attention_dropout=0.0, residual_dropout=0.0, embed_dropout=0.0, tie_word_embeddings=True, block_type="serial", sliding_window=None, precision=APEX2_PRECISION, activation_checkpointing=True, loss_chunk_size=loss_chunk_size, use_flash_attn="auto", use_compile=compile_model)
+
+model_config = apex2_config(loss_chunk_size=args.loss_chunk_size, compile_model=args.compile)
+model = build_model(model_config)
+```
 
 ---
 

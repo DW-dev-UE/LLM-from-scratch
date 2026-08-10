@@ -33,21 +33,27 @@
 
 ---
 > [!NOTE]
-> 🚀 **다음 목표 — APEX-2 (7B급)** 사전학습 진행중
+> 🚀 **다음 목표 — APEX-2 (3.02B급)** 사전학습 진행중
 > 
-> ComposeLM 라이브러리 사용 ( 32층 · d_model 4096 · GQA(32Q/8KV) + SwiGLU + QK-RMSNorm + Pre-RMSNorm ) 
+> ComposeLM 라이브러리 사용 (3.02B 파라미터 · 28층 · d_model 3072 · GQA(24Q/8KV) · SwiGLU 8192 · Pre-RMSNorm · RoPE 4K → YaRN 16K)
 >
 > 아래는 ComposeLM 라이브러리를 사용하여 아키텍처를 아주 쉽게 적용한 예제 코드입니다. 자세한 사항은 https://github.com/DW-dev-UE/ComposeLM 라이브러리를 참조하세요.
 ```python
-from composelm import (ModelConfig, Trainer, TrainingConfig, build_model, load_model_weights, save_model_weights)
-from composelm.distributed import destroy_distributed, init_distributed_from_env
+from composelm import ModelConfig, build_model
 
-def apex2_config(*, loss_chunk_size: int, compile_model: bool) -> ModelConfig:
-    return ModelConfig.from_arch("custom", d_model=4_096, n_layers=32, n_heads=32, n_kv_heads=8, head_dim=128, vocab_size=APEX2_VOCAB_SIZE, attention_type="gqa", ffn_type="swiglu", intermediate_size=13_056, norm="rmsnorm", norm_placement="pre", qk_norm="rmsnorm", norm_eps=1e-5, pos_emb="rope", rope_dim=128, rope_theta=1_000_000.0, rope_scaling=None,
-    max_seq_len=APEX2_MAX_SEQ_LEN, use_bias=False, qkv_bias=False, attention_output_bias=False, ffn_bias=False, attention_dropout=0.0, residual_dropout=0.0, embed_dropout=0.0, tie_word_embeddings=True, block_type="serial", sliding_window=None, precision=APEX2_PRECISION, activation_checkpointing=True, loss_chunk_size=loss_chunk_size, use_flash_attn="auto", use_compile=compile_model)
+def apex2_config() -> ModelConfig:
+    return ModelConfig.from_arch(
+        "custom",
+        d_model=3_072, n_layers=28, n_heads=24, n_kv_heads=8, head_dim=128,
+        intermediate_size=8_192, vocab_size=65_536, max_seq_len=4_096,
+        attention_type="gqa", ffn_type="swiglu", norm="rmsnorm",
+        norm_placement="pre", pos_emb="rope", rope_theta=10_000.0,
+        original_max_seq_len=4_096, tie_word_embeddings=True,
+        use_bias=False, qkv_bias=False, attention_output_bias=False, ffn_bias=False,
+        activation_checkpointing=False, loss_chunk_size=2_048, precision="bf16_mixed",
+    )
 
-model_config = apex2_config(loss_chunk_size=args.loss_chunk_size, compile_model=args.compile)
-model = build_model(model_config)
+model = build_model(apex2_config())  # stage 1: 4K RoPE base
 ```
 
 ---
@@ -227,12 +233,12 @@ val이 코퍼스 파일 순서의 마지막 1%였는데, ko위키 꼬리 단일 
 | 10M ~ 50M | 학습 루프, tokenizer, loss 감소 확인 |
 | 100M ~ 300M | completion, FIM, 기본 instruction |
 | 1B | 작은 coding assistant 실험 |
-| 3B | 사내 도구 연동 후보 |
-| 7B+ | 외부 노출을 고민할 최소 규모 |
+| 3B (APEX-2) | 3.02B 영어 중심 사전학습 · code/math 평가 · 사내 도구 연동 후보 |
+| 7B+ | 이후 외부 노출을 검토할 규모 |
 
-1B(APEX-1)까지 Pretrain·SFT·DPO를 마치고, 3B는 건너뛰고 곧바로 **APEX-2(7B급)**를 개발 중입니다.
+1B(APEX-1)까지 Pretrain·SFT·DPO를 마치고, 현재 **APEX-2(3.02B급)**를 외부 사전학습 가중치 없이 학습 중입니다.
 
-두 라인을 병행 중입니다: 1B `Apex-1` 라인 최신은 **`dpo_Apex-1_v1`** (pretrain+SFT+DPO 완료, 표준 벤치 11종 측정 완료), 327M `base` 라인 최신은 **`sft_base_v6`** 입니다. 다음 목표는 **APEX-2 (7B급)** 개발입니다. → [§5 벤치마크 한눈에](#5-벤치마크-한눈에) · 버전별 상세 기록 [BENCHMARK v2](BENCHMARK-v2.md)
+두 라인을 병행 중입니다: 1B `Apex-1` 라인 최신은 **`dpo_Apex-1_v1`** (pretrain+SFT+DPO 완료, 표준 벤치 11종 측정 완료), 327M `base` 라인 최신은 **`sft_base_v6`** 입니다. 현재 목표는 **APEX-2 (3.02B급)** 사전학습입니다. → [§5 벤치마크 한눈에](#5-벤치마크-한눈에) · 버전별 상세 기록 [BENCHMARK v2](BENCHMARK-v2.md)
 
 ---
 

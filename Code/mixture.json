@@ -1,0 +1,124 @@
+{
+  "_comment": "Apex-2 3.02B pretrain corpus. Weights are sampling probabilities over packed uint16 shards and sum to 1.0. Budget 450B tokens (extendable to 600B via --decay-start). target_tokens/avail_tokens are informational: epochs = target/avail, keep it under ~2.0 or quality degrades. Every source is now under 1.0 epoch at 450B and under 1.2 at 600B — check both when reweighting, since the 600B extension reuses these same shards.",
+  "budget_tokens": 450000000000,
+  "seq_len": 4096,
+  "sources": [
+    {
+      "name": "fineweb-edu",
+      "weight": 0.34,
+      "hf_id": "HuggingFaceFW/fineweb-edu",
+      "hf_config": "sample-350BT",
+      "text_field": "text",
+      "target_tokens": 153000000000,
+      "avail_tokens": 350000000000,
+      "note": "ARC/MMLU 핵심. FineWeb 논문 ablation ARC 46%->57%."
+    },
+    {
+      "name": "dclm-baseline",
+      "weight": 0.243,
+      "hf_id": "mlfoundations/dclm-baseline-1.0-parquet",
+      "hf_config": null,
+      "text_field": "text",
+      "target_tokens": 109350000000,
+      "avail_tokens": 4000000000000,
+      "note": "FineWeb-Edu의 교육 편향 상쇄. 언어 유창성. 0.14 -> 0.20: HellaSwag/PIQA 같은 상식 추론은 일반 웹 토큰 수에 직접 비례하는데, edu 34% + 코드 + 수학이 이미 특수 도메인 비중을 크게 만들어 놓았다. 0.20 -> 0.243 (2026-08-06): cosmopedia web v1/v2 실측 부족분(0.043) 흡수."
+    },
+    {
+      "name": "stack-v3",
+      "weight": 0.2,
+      "hf_id": "HuggingFaceCode/stack-v3-train",
+      "hf_config": null,
+      "text_field": "content",
+      "target_tokens": 90000000000,
+      "avail_tokens": 775000000000,
+      "license": "ODC-BY",
+      "note": "코드 전량. permissive 라이선스만 포함(non_permissive 제외), opt-out 반영, repo_path/commit_id/detected_licenses 프로비넌스 제공. 배포용으로 Stack-Edu(무라이선스 파일 다수, 데이터셋 라이선스 미명시)를 대체함 — edu 필터링 품질은 포기. 0.26 -> 0.20: 필터링 없는 raw 코드는 토큰당 HumanEval 기여가 낮아(StarCoder2-3B가 3T 코드로 pass@1 31.7) 117B에서 90B로 줄여도 목표치 15~22%에 영향이 없는 반면, 넘긴 6%p는 상식 추론에 그대로 반영된다. 언어별 config가 있으면 분할해 균형을 잡을 것. (2026-08-07) 레코드가 repo 단위 중첩 구조(files[].content)라 format=stack_repo로 처리: <|repo_name|>/<|file_sep|> 레이아웃, is_vendor 제외.",
+      "format": "stack_repo"
+    },
+    {
+      "name": "cosmopedia-web-v1",
+      "weight": 0.0175,
+      "hf_id": "HuggingFaceTB/cosmopedia",
+      "hf_config": "web_samples_v1",
+      "text_field": "text",
+      "target_tokens": 7875000000,
+      "avail_tokens": 8982793664,
+      "note": "0.045 -> 0.0175 (2026-08-06): 실측 보유 8.98B (추정 69B 오류). 450B 0.88ep / 600B 1.17ep."
+    },
+    {
+      "name": "cosmopedia-web-v2",
+      "weight": 0.0145,
+      "hf_id": "HuggingFaceTB/cosmopedia",
+      "hf_config": "web_samples_v2",
+      "text_field": "text",
+      "target_tokens": 6525000000,
+      "avail_tokens": 7311140902,
+      "note": "0.030 -> 0.0145 (2026-08-06): 실측 보유 7.31B (추정 50B 오류). 450B 0.89ep / 600B 1.19ep."
+    },
+    {
+      "name": "cosmopedia-math",
+      "weight": 0.0025,
+      "hf_id": "HuggingFaceTB/cosmopedia",
+      "hf_config": "auto_math_text",
+      "text_field": "text",
+      "target_tokens": 1125000000,
+      "avail_tokens": 1274391587,
+      "note": "0.004 -> 0.0025: 2026-08-05 실측 보유량이 1.274B(65,536 토크나이저 기준, avail은 실측값)라 0.004는 450B에서 1.41 epoch였다. 0.0025면 450B 0.88ep / 600B 1.18ep. 차액 0.0015는 finemath-3plus로."
+    },
+    {
+      "name": "cosmopedia-stanford",
+      "weight": 0.002,
+      "hf_id": "HuggingFaceTB/cosmopedia",
+      "hf_config": "stanford",
+      "text_field": "text",
+      "target_tokens": 900000000,
+      "avail_tokens": 1000000000,
+      "note": "0.005 -> 0.002: 위와 동일(2.25 epoch)."
+    },
+    {
+      "name": "finemath-3plus",
+      "weight": 0.0605,
+      "hf_id": "HuggingFaceTB/finemath",
+      "hf_config": "finemath-3plus",
+      "text_field": "text",
+      "target_tokens": 27225000000,
+      "avail_tokens": 34000000000
+    },
+    {
+      "name": "infiwebmath-3plus",
+      "weight": 0.03,
+      "hf_id": "HuggingFaceTB/finemath",
+      "hf_config": "infiwebmath-3plus",
+      "text_field": "text",
+      "target_tokens": 13500000000,
+      "avail_tokens": 20000000000
+    },
+    {
+      "name": "pes2o",
+      "weight": 0.04,
+      "hf_id": "common-pile/peS2o_filtered",
+      "hf_config": null,
+      "text_field": "text",
+      "target_tokens": 18000000000,
+      "avail_tokens": 40000000000
+    },
+    {
+      "name": "stackexchange",
+      "weight": 0.03,
+      "hf_id": "common-pile/stackexchange_filtered",
+      "hf_config": null,
+      "text_field": "text",
+      "target_tokens": 13500000000,
+      "avail_tokens": 25000000000
+    },
+    {
+      "name": "wikimedia",
+      "weight": 0.02,
+      "hf_id": "common-pile/wikimedia_filtered",
+      "hf_config": null,
+      "text_field": "text",
+      "target_tokens": 9000000000,
+      "avail_tokens": 12000000000
+    }
+  ]
+}

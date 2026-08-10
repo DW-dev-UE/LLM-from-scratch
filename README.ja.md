@@ -33,21 +33,27 @@
 
 ---
 > [!NOTE]
-> 🚀 **次の目標 — APEX-2（7B 級）** 事前学習を実行中
+> 🚀 **次の目標 — APEX-2（3.02B 級）** 事前学習を実行中
 >
-> ComposeLM ライブラリを使用（ 32層 · d_model 4096 · GQA（32Q/8KV）+ SwiGLU + QK-RMSNorm + Pre-RMSNorm ）
+> ComposeLM ライブラリを使用（3.02B パラメータ · 28層 · d_model 3072 · GQA（24Q/8KV）· SwiGLU 8192 · Pre-RMSNorm · RoPE 4K → YaRN 16K）
 >
 > 以下は ComposeLM ライブラリを使ってアーキテクチャを非常に簡単に適用した例のコードです。詳細は https://github.com/DW-dev-UE/ComposeLM ライブラリを参照してください。
 ```python
-from composelm import (ModelConfig, Trainer, TrainingConfig, build_model, load_model_weights, save_model_weights)
-from composelm.distributed import destroy_distributed, init_distributed_from_env
+from composelm import ModelConfig, build_model
 
-def apex2_config(*, loss_chunk_size: int, compile_model: bool) -> ModelConfig:
-    return ModelConfig.from_arch("custom", d_model=4_096, n_layers=32, n_heads=32, n_kv_heads=8, head_dim=128, vocab_size=APEX2_VOCAB_SIZE, attention_type="gqa", ffn_type="swiglu", intermediate_size=13_056, norm="rmsnorm", norm_placement="pre", qk_norm="rmsnorm", norm_eps=1e-5, pos_emb="rope", rope_dim=128, rope_theta=1_000_000.0, rope_scaling=None,
-    max_seq_len=APEX2_MAX_SEQ_LEN, use_bias=False, qkv_bias=False, attention_output_bias=False, ffn_bias=False, attention_dropout=0.0, residual_dropout=0.0, embed_dropout=0.0, tie_word_embeddings=True, block_type="serial", sliding_window=None, precision=APEX2_PRECISION, activation_checkpointing=True, loss_chunk_size=loss_chunk_size, use_flash_attn="auto", use_compile=compile_model)
+def apex2_config() -> ModelConfig:
+    return ModelConfig.from_arch(
+        "custom",
+        d_model=3_072, n_layers=28, n_heads=24, n_kv_heads=8, head_dim=128,
+        intermediate_size=8_192, vocab_size=65_536, max_seq_len=4_096,
+        attention_type="gqa", ffn_type="swiglu", norm="rmsnorm",
+        norm_placement="pre", pos_emb="rope", rope_theta=10_000.0,
+        original_max_seq_len=4_096, tie_word_embeddings=True,
+        use_bias=False, qkv_bias=False, attention_output_bias=False, ffn_bias=False,
+        activation_checkpointing=False, loss_chunk_size=2_048, precision="bf16_mixed",
+    )
 
-model_config = apex2_config(loss_chunk_size=args.loss_chunk_size, compile_model=args.compile)
-model = build_model(model_config)
+model = build_model(apex2_config())  # stage 1: 4K RoPE base
 ```
 
 ---
@@ -228,12 +234,12 @@ val はコーパスファイル順の最後の 1% だったが、ko-wiki の末�
 | 10M ~ 50M | 学習ループ、tokenizer、loss 減少の確認 |
 | 100M ~ 300M | completion、FIM、基本 instruction |
 | 1B | 小さな coding assistant 実験 |
-| 3B | 社内ツール連携の候補 |
-| 7B+ | 外部公開を考える最小規模 |
+| 3B（APEX-2） | 3.02B の英語中心事前学習・code/math 評価・社内ツール連携候補 |
+| 7B+ | 将来、外部公開を検討する規模 |
 
-1B(APEX-1)まで Pretrain・SFT・DPO を終え、3B は飛ばして直接 **APEX-2(7B 級)** を開発中です。
+1B(APEX-1)まで Pretrain・SFT・DPO を終え、現在は **APEX-2（3.02B 級）** を外部事前学習重みなしで学習中です。
 
-2つの系列を並行しています。1B `Apex-1` 系列の最新は **`dpo_Apex-1_v1`**(pretrain+SFT+DPO 完了、標準ベンチ11種測定済み)、327M `base` 系列の最新は **`sft_base_v6`** です。次の目標は **APEX-2(7B 級)** です。→ [§5 ベンチマーク一覧](#5-ベンチマーク一覧) · バージョン別詳細記録 [BENCHMARK v2](BENCHMARK-v2.ja.md)
+2つの系列を並行しています。1B `Apex-1` 系列の最新は **`dpo_Apex-1_v1`**(pretrain+SFT+DPO 完了、標準ベンチ11種測定済み)、327M `base` 系列の最新は **`sft_base_v6`** です。現在の目標は **APEX-2（3.02B 級）** の事前学習です。→ [§5 ベンチマーク一覧](#5-ベンチマーク一覧) · バージョン別詳細記録 [BENCHMARK v2](BENCHMARK-v2.ja.md)
 
 ---
 

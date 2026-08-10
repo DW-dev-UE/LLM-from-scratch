@@ -33,21 +33,27 @@
 
 ---
 > [!NOTE]
-> 🚀 **Next goal — APEX-2 (7B scale)** — pretraining in progress
+> 🚀 **Next goal — APEX-2 (3.02B scale)** — pretraining in progress
 >
-> Built with the ComposeLM library ( 32 layers · d_model 4096 · GQA (32Q/8KV) + SwiGLU + QK-RMSNorm + Pre-RMSNorm )
+> Built with the ComposeLM library (3.02B parameters · 28 layers · d_model 3072 · GQA 24Q/8KV · SwiGLU 8192 · Pre-RMSNorm · 4K RoPE → 16K YaRN)
 >
 > Below is example code showing how easily the architecture can be applied using the ComposeLM library. For details, see the https://github.com/DW-dev-UE/ComposeLM library.
 ```python
-from composelm import (ModelConfig, Trainer, TrainingConfig, build_model, load_model_weights, save_model_weights)
-from composelm.distributed import destroy_distributed, init_distributed_from_env
+from composelm import ModelConfig, build_model
 
-def apex2_config(*, loss_chunk_size: int, compile_model: bool) -> ModelConfig:
-    return ModelConfig.from_arch("custom", d_model=4_096, n_layers=32, n_heads=32, n_kv_heads=8, head_dim=128, vocab_size=APEX2_VOCAB_SIZE, attention_type="gqa", ffn_type="swiglu", intermediate_size=13_056, norm="rmsnorm", norm_placement="pre", qk_norm="rmsnorm", norm_eps=1e-5, pos_emb="rope", rope_dim=128, rope_theta=1_000_000.0, rope_scaling=None,
-    max_seq_len=APEX2_MAX_SEQ_LEN, use_bias=False, qkv_bias=False, attention_output_bias=False, ffn_bias=False, attention_dropout=0.0, residual_dropout=0.0, embed_dropout=0.0, tie_word_embeddings=True, block_type="serial", sliding_window=None, precision=APEX2_PRECISION, activation_checkpointing=True, loss_chunk_size=loss_chunk_size, use_flash_attn="auto", use_compile=compile_model)
+def apex2_config() -> ModelConfig:
+    return ModelConfig.from_arch(
+        "custom",
+        d_model=3_072, n_layers=28, n_heads=24, n_kv_heads=8, head_dim=128,
+        intermediate_size=8_192, vocab_size=65_536, max_seq_len=4_096,
+        attention_type="gqa", ffn_type="swiglu", norm="rmsnorm",
+        norm_placement="pre", pos_emb="rope", rope_theta=10_000.0,
+        original_max_seq_len=4_096, tie_word_embeddings=True,
+        use_bias=False, qkv_bias=False, attention_output_bias=False, ffn_bias=False,
+        activation_checkpointing=False, loss_chunk_size=2_048, precision="bf16_mixed",
+    )
 
-model_config = apex2_config(loss_chunk_size=args.loss_chunk_size, compile_model=args.compile)
-model = build_model(model_config)
+model = build_model(apex2_config())  # stage 1: 4K RoPE base
 ```
 
 ---
@@ -227,12 +233,12 @@ So the rule is:
 | 10M ~ 50M | training loop, tokenizer, loss drop |
 | 100M ~ 300M | completion, FIM, basic instruction |
 | 1B | small coding assistant experiments |
-| 3B | in-house tool integration candidate |
-| 7B+ | minimum size worth external exposure |
+| 3B (APEX-2) | 3.02B English-first pretraining · code/math evaluation · in-house tool integration candidate |
+| 7B+ | future scale for considering external exposure |
 
-Pretrain·SFT·DPO are done through 1B (APEX-1); 3B is being skipped in favor of going straight to **APEX-2 (7B scale)**, now in development.
+Pretrain·SFT·DPO are done through 1B (APEX-1); the current target is **APEX-2 (3.02B scale)**, trained without external pretrained weights.
 
-Two lines run in parallel: the 1B `Apex-1` line's latest is **`dpo_Apex-1_v1`** (pretrain+SFT+DPO done, all 11 standard benchmarks measured), the 327M `base` line's latest is **`sft_base_v6`**. Next goal: **APEX-2 (7B scale)**. → [§5 Benchmark snapshot](#5-benchmark-snapshot) · per-version write-up [BENCHMARK v2](BENCHMARK-v2.en.md)
+Two lines run in parallel: the 1B `Apex-1` line's latest is **`dpo_Apex-1_v1`** (pretrain+SFT+DPO done, all 11 standard benchmarks measured), the 327M `base` line's latest is **`sft_base_v6`**. The current goal is **APEX-2 (3.02B scale)** pretraining. → [§5 Benchmark snapshot](#5-benchmark-snapshot) · per-version write-up [BENCHMARK v2](BENCHMARK-v2.en.md)
 
 ---
 

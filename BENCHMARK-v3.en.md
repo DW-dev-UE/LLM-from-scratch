@@ -32,19 +32,31 @@
 
 ## 1. At a glance
 
-| Area | Benchmark | base | **SFT (final)** | DPO (dropped) |
+| Area | Benchmark | **SFT (final)** | base | DPO (dropped) |
 |:--|:--|--:|--:|--:|
-| Code | HumanEval / HumanEval+ | 36.6 / 32.9 | **43.9 / 41.5** | 36.0 / 32.3 |
-| Code | MBPP / MBPP+ | 54.8 / 46.3 | **56.3 / 48.9** | 45.2 / 37.3 |
-| Code | MultiPL-E HumanEval C++ / MBPP C++ | — | **36.0 / 41.6** | 8.1 / 3.8 |
-| Code | LiveCodeBench v5–v6 (easy / medium / hard) | — | 3.2 (11.9 / 1.0 / 0.0) | 3.5 |
-| Code | CRUXEval-O / -I | — | 8.5 / 3.2 | 12.1 / 8.9 |
-| Math | GSM8K | 15.1 (8-shot) | **32.4** (0-shot CoT) | 14.3 |
-| Math | MATH-500 (0-shot CoT) | — | **21.0** | 14.8 |
-| Instruction following | IFEval prompt / instruction strict | — | **44.7 / 56.6** | 35.7 / 49.2 |
-| Knowledge | MMLU (5-shot) | 28.2 | 28.6 | 28.3 |
-| Commonsense | HellaSwag / ARC-e / ARC-c (acc_norm) | 60.8 / 66.7 / 39.7 | 62.2 / 64.1 / 38.4 | 63.1 / 64.6 / 39.2 |
-| Commonsense | PIQA (acc_norm) / WinoGrande / LAMBADA | 73.9 / 60.1 / 54.5 | 74.8 / 61.8 / 52.8 | 74.4 / 63.3 / 51.2 |
+| Code | HumanEval | **43.9** | 36.6 | 36.0 |
+| Code | HumanEval+ | **41.5** | 32.9 | 32.3 |
+| Code | MBPP | **56.3** | 54.8 | 45.2 |
+| Code | MBPP+ | **48.9** | 46.3 | 37.3 |
+| Code | MultiPL-E HumanEval C++ | **36.0** | — | 8.1 |
+| Code | MultiPL-E MBPP C++ | **41.6** | — | 3.8 |
+| Code | LiveCodeBench v5–v6 | 3.2 | — | 3.5 |
+| Code | └ LCB easy (84) | 11.9 | — | 10.7 |
+| Code | └ LCB medium (104) | 1.0 | — | 2.9 |
+| Code | └ LCB hard (154) | 0.0 | — | 0.0 |
+| Code | CRUXEval-O | 8.5 | — | 12.1 |
+| Code | CRUXEval-I | 3.2 | — | 8.9 |
+| Math | GSM8K | **32.4** (0-shot CoT) | 15.1 (8-shot) | 14.3 |
+| Math | MATH-500 (0-shot CoT) | **21.0** | — | 14.8 |
+| Instruction following | IFEval prompt strict | **44.7** | — | 35.7 |
+| Instruction following | IFEval instruction strict | **56.6** | — | 49.2 |
+| Knowledge | MMLU (5-shot) | 28.6 | 28.2 | 28.3 |
+| Commonsense | HellaSwag (acc_norm) | 62.2 | 60.8 | 63.1 |
+| Commonsense | ARC-e (acc_norm) | 64.1 | 66.7 | 64.6 |
+| Commonsense | ARC-c (acc_norm) | 38.4 | 39.7 | 39.2 |
+| Commonsense | PIQA (acc_norm) | 74.8 | 73.9 | 74.4 |
+| Commonsense | WinoGrande (acc) | 61.8 | 60.1 | 63.3 |
+| Commonsense | LAMBADA (acc) | 52.8 | 54.5 | 51.2 |
 
 - SFT raised code, math and instruction following; knowledge and commonsense stayed at the pretraining level (within ±2).
 - base GSM8K is 8-shot, so it is not the same protocol as the SFT 0-shot CoT score.

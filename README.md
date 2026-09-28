@@ -300,17 +300,31 @@ AI/
 
 SFT 모델을 vLLM greedy · 0-shot 채팅으로 측정했습니다 (모델이 쓴 코드는 샌드박스에서 실행해 채점). base는 사전학습 직후 모델입니다.
 
-| 항목 | base | **SFT (최종)** |
-|:--|--:|--:|
-| HumanEval / HumanEval+ | 36.6 / 32.9 | **43.9 / 41.5** |
-| MBPP / MBPP+ | 54.8 / 46.3 | **56.3 / 48.9** |
-| MultiPL-E C++ (HumanEval / MBPP) | — | 36.0 / 41.6 |
-| LiveCodeBench v5–v6 | — | 3.2 |
-| GSM8K | 15.1 (8-shot) | **32.4** (0-shot CoT) |
-| MATH-500 | — | 21.0 |
-| IFEval (prompt / inst strict) | — | 44.7 / 56.6 |
-| MMLU (5-shot) | 28.2 | 28.6 |
-| HellaSwag / ARC-c / PIQA | 60.8 / 39.7 / 73.9 | 62.2 / 38.4 / 74.8 |
+| 분야 | 벤치마크 | **SFT (최종)** | base |
+|:--|:--|--:|--:|
+| 코드 | HumanEval | **43.9** | 36.6 |
+| 코드 | HumanEval+ | **41.5** | 32.9 |
+| 코드 | MBPP | **56.3** | 54.8 |
+| 코드 | MBPP+ | **48.9** | 46.3 |
+| 코드 | MultiPL-E HumanEval C++ | **36.0** | — |
+| 코드 | MultiPL-E MBPP C++ | **41.6** | — |
+| 코드 | LiveCodeBench v5–v6 | 3.2 | — |
+| 코드 | └ LCB easy (84) | 11.9 | — |
+| 코드 | └ LCB medium (104) | 1.0 | — |
+| 코드 | └ LCB hard (154) | 0.0 | — |
+| 코드 | CRUXEval-O | 8.5 | — |
+| 코드 | CRUXEval-I | 3.2 | — |
+| 수학 | GSM8K | **32.4** (0-shot CoT) | 15.1 (8-shot) |
+| 수학 | MATH-500 (0-shot CoT) | **21.0** | — |
+| 지시 수행 | IFEval prompt strict | **44.7** | — |
+| 지시 수행 | IFEval instruction strict | **56.6** | — |
+| 지식 | MMLU (5-shot) | 28.6 | 28.2 |
+| 상식 | HellaSwag (acc_norm) | 62.2 | 60.8 |
+| 상식 | ARC-e (acc_norm) | 64.1 | 66.7 |
+| 상식 | ARC-c (acc_norm) | 38.4 | 39.7 |
+| 상식 | PIQA (acc_norm) | 74.8 | 73.9 |
+| 상식 | WinoGrande (acc) | 61.8 | 60.1 |
+| 상식 | LAMBADA (acc) | 52.8 | 54.5 |
 
 DPO(Dolci-Instruct-DPO)는 답이 2.3배 길어지며 코드·수학·지시 수행이 떨어져 폐기했고, SFT를 최종으로 했습니다. 상세: [BENCHMARK-v3.md](BENCHMARK-v3.md)
 

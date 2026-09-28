@@ -300,17 +300,31 @@ Two lines run in parallel: **1B `Apex-1`** (English-only) and **327M `base`** (K
 
 The SFT model was measured with vLLM greedy 0-shot chat (model-written code is executed in a sandbox). base is the model right after pretraining.
 
-| Item | base | **SFT (final)** |
-|:--|--:|--:|
-| HumanEval / HumanEval+ | 36.6 / 32.9 | **43.9 / 41.5** |
-| MBPP / MBPP+ | 54.8 / 46.3 | **56.3 / 48.9** |
-| MultiPL-E C++ (HumanEval / MBPP) | — | 36.0 / 41.6 |
-| LiveCodeBench v5–v6 | — | 3.2 |
-| GSM8K | 15.1 (8-shot) | **32.4** (0-shot CoT) |
-| MATH-500 | — | 21.0 |
-| IFEval (prompt / inst strict) | — | 44.7 / 56.6 |
-| MMLU (5-shot) | 28.2 | 28.6 |
-| HellaSwag / ARC-c / PIQA | 60.8 / 39.7 / 73.9 | 62.2 / 38.4 / 74.8 |
+| Area | Benchmark | **SFT (final)** | base |
+|:--|:--|--:|--:|
+| Code | HumanEval | **43.9** | 36.6 |
+| Code | HumanEval+ | **41.5** | 32.9 |
+| Code | MBPP | **56.3** | 54.8 |
+| Code | MBPP+ | **48.9** | 46.3 |
+| Code | MultiPL-E HumanEval C++ | **36.0** | — |
+| Code | MultiPL-E MBPP C++ | **41.6** | — |
+| Code | LiveCodeBench v5–v6 | 3.2 | — |
+| Code | └ LCB easy (84) | 11.9 | — |
+| Code | └ LCB medium (104) | 1.0 | — |
+| Code | └ LCB hard (154) | 0.0 | — |
+| Code | CRUXEval-O | 8.5 | — |
+| Code | CRUXEval-I | 3.2 | — |
+| Math | GSM8K | **32.4** (0-shot CoT) | 15.1 (8-shot) |
+| Math | MATH-500 (0-shot CoT) | **21.0** | — |
+| Instruction following | IFEval prompt strict | **44.7** | — |
+| Instruction following | IFEval instruction strict | **56.6** | — |
+| Knowledge | MMLU (5-shot) | 28.6 | 28.2 |
+| Commonsense | HellaSwag (acc_norm) | 62.2 | 60.8 |
+| Commonsense | ARC-e (acc_norm) | 64.1 | 66.7 |
+| Commonsense | ARC-c (acc_norm) | 38.4 | 39.7 |
+| Commonsense | PIQA (acc_norm) | 74.8 | 73.9 |
+| Commonsense | WinoGrande (acc) | 61.8 | 60.1 |
+| Commonsense | LAMBADA (acc) | 52.8 | 54.5 |
 
 DPO (Dolci-Instruct-DPO) made answers 2.3× longer and lowered code, math and instruction following, so it was dropped and SFT is final. Details: [BENCHMARK-v3.en.md](BENCHMARK-v3.en.md)
 

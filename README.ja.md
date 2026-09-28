@@ -301,17 +301,31 @@ AI/
 
 SFT モデルを vLLM の greedy・0-shot チャットで測定しました(モデルが書いたコードはサンドボックスで実行して採点)。base は事前学習直後のモデルです。
 
-| 項目 | base | **SFT(最終)** |
-|:--|--:|--:|
-| HumanEval / HumanEval+ | 36.6 / 32.9 | **43.9 / 41.5** |
-| MBPP / MBPP+ | 54.8 / 46.3 | **56.3 / 48.9** |
-| MultiPL-E C++ (HumanEval / MBPP) | — | 36.0 / 41.6 |
-| LiveCodeBench v5–v6 | — | 3.2 |
-| GSM8K | 15.1 (8-shot) | **32.4** (0-shot CoT) |
-| MATH-500 | — | 21.0 |
-| IFEval (prompt / inst strict) | — | 44.7 / 56.6 |
-| MMLU (5-shot) | 28.2 | 28.6 |
-| HellaSwag / ARC-c / PIQA | 60.8 / 39.7 / 73.9 | 62.2 / 38.4 / 74.8 |
+| 分野 | ベンチマーク | **SFT(最終)** | base |
+|:--|:--|--:|--:|
+| コード | HumanEval | **43.9** | 36.6 |
+| コード | HumanEval+ | **41.5** | 32.9 |
+| コード | MBPP | **56.3** | 54.8 |
+| コード | MBPP+ | **48.9** | 46.3 |
+| コード | MultiPL-E HumanEval C++ | **36.0** | — |
+| コード | MultiPL-E MBPP C++ | **41.6** | — |
+| コード | LiveCodeBench v5–v6 | 3.2 | — |
+| コード | └ LCB easy (84) | 11.9 | — |
+| コード | └ LCB medium (104) | 1.0 | — |
+| コード | └ LCB hard (154) | 0.0 | — |
+| コード | CRUXEval-O | 8.5 | — |
+| コード | CRUXEval-I | 3.2 | — |
+| 数学 | GSM8K | **32.4** (0-shot CoT) | 15.1 (8-shot) |
+| 数学 | MATH-500 (0-shot CoT) | **21.0** | — |
+| 指示追従 | IFEval prompt strict | **44.7** | — |
+| 指示追従 | IFEval instruction strict | **56.6** | — |
+| 知識 | MMLU (5-shot) | 28.6 | 28.2 |
+| 常識 | HellaSwag (acc_norm) | 62.2 | 60.8 |
+| 常識 | ARC-e (acc_norm) | 64.1 | 66.7 |
+| 常識 | ARC-c (acc_norm) | 38.4 | 39.7 |
+| 常識 | PIQA (acc_norm) | 74.8 | 73.9 |
+| 常識 | WinoGrande (acc) | 61.8 | 60.1 |
+| 常識 | LAMBADA (acc) | 52.8 | 54.5 |
 
 DPO(Dolci-Instruct-DPO)は回答が 2.3 倍長くなり、コード・数学・指示追従が下がったため廃止し、SFT を最終としました。詳細: [BENCHMARK-v3.ja.md](BENCHMARK-v3.ja.md)
 

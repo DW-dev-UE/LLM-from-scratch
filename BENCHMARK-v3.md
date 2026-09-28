@@ -32,19 +32,31 @@
 
 ## 1. 한눈에 보기
 
-| 분야 | 벤치마크 | base | **SFT (최종)** | DPO (폐기) |
+| 분야 | 벤치마크 | **SFT (최종)** | base | DPO (폐기) |
 |:--|:--|--:|--:|--:|
-| 코드 | HumanEval / HumanEval+ | 36.6 / 32.9 | **43.9 / 41.5** | 36.0 / 32.3 |
-| 코드 | MBPP / MBPP+ | 54.8 / 46.3 | **56.3 / 48.9** | 45.2 / 37.3 |
-| 코드 | MultiPL-E HumanEval C++ / MBPP C++ | — | **36.0 / 41.6** | 8.1 / 3.8 |
-| 코드 | LiveCodeBench v5–v6 (easy / medium / hard) | — | 3.2 (11.9 / 1.0 / 0.0) | 3.5 |
-| 코드 | CRUXEval-O / -I | — | 8.5 / 3.2 | 12.1 / 8.9 |
-| 수학 | GSM8K | 15.1 (8-shot) | **32.4** (0-shot CoT) | 14.3 |
-| 수학 | MATH-500 (0-shot CoT) | — | **21.0** | 14.8 |
-| 지시 수행 | IFEval prompt / instruction strict | — | **44.7 / 56.6** | 35.7 / 49.2 |
-| 지식 | MMLU (5-shot) | 28.2 | 28.6 | 28.3 |
-| 상식 | HellaSwag / ARC-e / ARC-c (acc_norm) | 60.8 / 66.7 / 39.7 | 62.2 / 64.1 / 38.4 | 63.1 / 64.6 / 39.2 |
-| 상식 | PIQA (acc_norm) / WinoGrande / LAMBADA | 73.9 / 60.1 / 54.5 | 74.8 / 61.8 / 52.8 | 74.4 / 63.3 / 51.2 |
+| 코드 | HumanEval | **43.9** | 36.6 | 36.0 |
+| 코드 | HumanEval+ | **41.5** | 32.9 | 32.3 |
+| 코드 | MBPP | **56.3** | 54.8 | 45.2 |
+| 코드 | MBPP+ | **48.9** | 46.3 | 37.3 |
+| 코드 | MultiPL-E HumanEval C++ | **36.0** | — | 8.1 |
+| 코드 | MultiPL-E MBPP C++ | **41.6** | — | 3.8 |
+| 코드 | LiveCodeBench v5–v6 | 3.2 | — | 3.5 |
+| 코드 | └ LCB easy (84) | 11.9 | — | 10.7 |
+| 코드 | └ LCB medium (104) | 1.0 | — | 2.9 |
+| 코드 | └ LCB hard (154) | 0.0 | — | 0.0 |
+| 코드 | CRUXEval-O | 8.5 | — | 12.1 |
+| 코드 | CRUXEval-I | 3.2 | — | 8.9 |
+| 수학 | GSM8K | **32.4** (0-shot CoT) | 15.1 (8-shot) | 14.3 |
+| 수학 | MATH-500 (0-shot CoT) | **21.0** | — | 14.8 |
+| 지시 수행 | IFEval prompt strict | **44.7** | — | 35.7 |
+| 지시 수행 | IFEval instruction strict | **56.6** | — | 49.2 |
+| 지식 | MMLU (5-shot) | 28.6 | 28.2 | 28.3 |
+| 상식 | HellaSwag (acc_norm) | 62.2 | 60.8 | 63.1 |
+| 상식 | ARC-e (acc_norm) | 64.1 | 66.7 | 64.6 |
+| 상식 | ARC-c (acc_norm) | 38.4 | 39.7 | 39.2 |
+| 상식 | PIQA (acc_norm) | 74.8 | 73.9 | 74.4 |
+| 상식 | WinoGrande (acc) | 61.8 | 60.1 | 63.3 |
+| 상식 | LAMBADA (acc) | 52.8 | 54.5 | 51.2 |
 
 - SFT가 코드·수학·지시 수행을 올렸고, 지식·상식은 사전학습 수준 그대로입니다 (±2 이내).
 - base의 GSM8K는 8-shot이라 SFT의 0-shot CoT와 방식이 다릅니다.

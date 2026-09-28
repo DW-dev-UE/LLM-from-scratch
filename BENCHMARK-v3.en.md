@@ -134,18 +134,18 @@
 
 Other models' numbers come from official model cards and technical reports. Shots, CoT, IFEval metric and LiveCodeBench window differ between models, so treat this as a **rough comparison**.
 
-| Model | Pretraining tokens | HE+ | MBPP+ | GSM8K | IFEval | MMLU |
-|:--|--:|--:|--:|--:|--:|--:|
-| **Apex-2 SFT (3.87B · 1.45B active)** | **0.087T** | **41.5** | **48.9** | **32.4** | **44.7** | **28.6** |
-| Qwen2.5-1.5B-Instruct | 18T | (HE 61.6) | (MBPP 63.2) | 73.2 | 42.5 | 50.7 |
-| Qwen2.5-Coder-1.5B-Instruct | 5.5T | 66.5 | 59.4 | — | — | — |
-| Qwen3-1.7B (non-thinking) | 36T | — | — | — | 68.2 | 64.4 |
-| Llama-3.2-1B-Instruct | 9T | — | — | 44.4 | 59.5* | 49.3 |
-| Gemma-3-1B-it | 2T | (HE 41.5) | (MBPP 35.2) | 62.8 | 80.2* | 38.8 |
-| OLMoE-1B-7B (1.3B active) | 5.1T | 54.4 | — | 72.4 | 66.4* | 55.1 |
-| DeepSeek-Coder-1.3B | 2T | 60.4 | 54.8 | — | — | — |
+| Model | Pretraining tokens | HumanEval | HumanEval+ | MBPP | MBPP+ | GSM8K | IFEval | MMLU |
+|:---|---:|---:|---:|---:|---:|---:|---:|---:|
+| **Apex-2 SFT (3.87B · 1.45B active)** | **0.087T** | **43.9** | **41.5** | **56.3** | **48.9** | **32.4** | **44.7** | **28.6** |
+| Qwen2.5-1.5B-Instruct | 18T | 61.6 | — | 63.2 | — | 73.2 | 42.5 | 50.7 |
+| Qwen2.5-Coder-1.5B-Instruct | 5.5T | 70.7 | 66.5 | 69.2 | 59.4 | — | — | — |
+| Qwen3-1.7B (non-thinking) | 36T | — | — | — | — | — | 68.2 | 64.4 |
+| Llama-3.2-1B-Instruct | 9T | — | — | — | — | 44.4 | 59.5* | 49.3 |
+| Gemma-3-1B-it | 2T | 41.5 | — | 35.2 | — | 62.8 | 80.2* | 38.8 |
+| OLMoE-1B-7B (1.3B active) | 5.1T | 62.3 | 54.4 | — | — | 72.4 | 66.4* | 55.1 |
+| DeepSeek-Coder-1.3B | 2T | 65.9 | 60.4 | 65.3 | 54.8 | — | — | — |
 
-<sub>Parenthesized values are HumanEval/MBPP. \* Different IFEval metric (Apex-2 · Qwen: prompt-level strict). Qwen2.5 · Qwen3 MMLU is MMLU-Redux; OLMoE MMLU uses CoT.</sub>
+<sub>DeepSeek-Coder numbers are the Qwen2.5-Coder report's re-evaluation. \* Different IFEval metric (Apex-2 · Qwen: prompt-level strict). Qwen2.5 · Qwen3 MMLU is MMLU-Redux; OLMoE MMLU uses CoT.</sub>
 
 **Base models** (right after pretraining)
 

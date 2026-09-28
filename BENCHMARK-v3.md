@@ -134,18 +134,18 @@
 
 다른 모델 점수는 공식 모델 카드·기술 보고서 값입니다. few-shot 수, CoT, IFEval 지표, LiveCodeBench 기간이 모델마다 달라 **대략적인 비교**로만 봐 주세요.
 
-| 모델 | 사전학습 토큰 | HE+ | MBPP+ | GSM8K | IFEval | MMLU |
-|:--|--:|--:|--:|--:|--:|--:|
-| **Apex-2 SFT (3.87B · 활성 1.45B)** | **0.087T** | **41.5** | **48.9** | **32.4** | **44.7** | **28.6** |
-| Qwen2.5-1.5B-Instruct | 18T | (HE 61.6) | (MBPP 63.2) | 73.2 | 42.5 | 50.7 |
-| Qwen2.5-Coder-1.5B-Instruct | 5.5T | 66.5 | 59.4 | — | — | — |
-| Qwen3-1.7B (non-thinking) | 36T | — | — | — | 68.2 | 64.4 |
-| Llama-3.2-1B-Instruct | 9T | — | — | 44.4 | 59.5* | 49.3 |
-| Gemma-3-1B-it | 2T | (HE 41.5) | (MBPP 35.2) | 62.8 | 80.2* | 38.8 |
-| OLMoE-1B-7B (활성 1.3B) | 5.1T | 54.4 | — | 72.4 | 66.4* | 55.1 |
-| DeepSeek-Coder-1.3B | 2T | 60.4 | 54.8 | — | — | — |
+| 모델 | 사전학습 토큰 | HumanEval | HumanEval+ | MBPP | MBPP+ | GSM8K | IFEval | MMLU |
+|:---|---:|---:|---:|---:|---:|---:|---:|---:|
+| **Apex-2 SFT (3.87B · 활성 1.45B)** | **0.087T** | **43.9** | **41.5** | **56.3** | **48.9** | **32.4** | **44.7** | **28.6** |
+| Qwen2.5-1.5B-Instruct | 18T | 61.6 | — | 63.2 | — | 73.2 | 42.5 | 50.7 |
+| Qwen2.5-Coder-1.5B-Instruct | 5.5T | 70.7 | 66.5 | 69.2 | 59.4 | — | — | — |
+| Qwen3-1.7B (non-thinking) | 36T | — | — | — | — | — | 68.2 | 64.4 |
+| Llama-3.2-1B-Instruct | 9T | — | — | — | — | 44.4 | 59.5* | 49.3 |
+| Gemma-3-1B-it | 2T | 41.5 | — | 35.2 | — | 62.8 | 80.2* | 38.8 |
+| OLMoE-1B-7B (활성 1.3B) | 5.1T | 62.3 | 54.4 | — | — | 72.4 | 66.4* | 55.1 |
+| DeepSeek-Coder-1.3B | 2T | 65.9 | 60.4 | 65.3 | 54.8 | — | — | — |
 
-<sub>괄호 값은 HumanEval/MBPP. \* IFEval 지표가 다름 (Apex-2·Qwen: prompt-level strict). Qwen2.5·Qwen3 MMLU는 MMLU-Redux, OLMoE MMLU는 CoT.</sub>
+<sub>DeepSeek-Coder는 Qwen2.5-Coder 보고서의 재측정값. \* IFEval 지표가 다름 (Apex-2·Qwen: prompt-level strict). Qwen2.5·Qwen3 MMLU는 MMLU-Redux, OLMoE MMLU는 CoT.</sub>
 
 **base끼리 비교** (사전학습 직후)
 

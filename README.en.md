@@ -22,19 +22,19 @@
 > - 🔥 **Pretrain**: 54,250 steps · 86.5B tokens (web · code · math · curated mix) → **SFT** 2.77B tokens (2 stages)
 > - 📊 **Details**: [BENCHMARK v3](BENCHMARK-v3.en.md) · previous model APEX-1 (1.1B dense): [BENCHMARK v2](BENCHMARK-v2.en.md) · [HF Apex-1-DPO](https://huggingface.co/YOON1v/Apex-1-DPO)
 >
-> | Model | Pretraining tokens | HE+ | MBPP+ | GSM8K | IFEval | MMLU |
-> |:---|---:|---:|---:|---:|---:|---:|
-> | **Apex-2 SFT (3.87B · 1.45B active)** | **0.087T** | **41.5** | **48.9** | **32.4** | **44.7** | **28.6** |
-> | Apex-1 DPO (1.1B dense) | 0.02T | (HE 8.5) | (MBPP 5.2) | 1.9 | — | 24.9 |
-> | Qwen2.5-1.5B-Instruct | 18T | (HE 61.6) | (MBPP 63.2) | 73.2 | 42.5 | 50.7 |
-> | Qwen2.5-Coder-1.5B-Instruct | 5.5T | 66.5 | 59.4 | — | — | — |
-> | Qwen3-1.7B | 36T | — | — | — | 68.2 | 64.4 |
-> | Llama-3.2-1B-Instruct | 9T | — | — | 44.4 | 59.5* | 49.3 |
-> | Gemma-3-1B-it | 2T | (HE 41.5) | (MBPP 35.2) | 62.8 | 80.2* | 38.8 |
-> | OLMoE-1B-7B (active 1.3B) | 5.1T | 54.4 | — | 72.4 | 66.4* | 55.1 |
-> | DeepSeek-Coder-1.3B | 2T | 60.4 | 54.8 | — | — | — |
+> | Model | Pretraining tokens | HumanEval | HumanEval+ | MBPP | MBPP+ | GSM8K | IFEval | MMLU |
+> |:---|---:|---:|---:|---:|---:|---:|---:|---:|
+> | **Apex-2 SFT (3.87B · 1.45B active)** | **0.087T** | **43.9** | **41.5** | **56.3** | **48.9** | **32.4** | **44.7** | **28.6** |
+> | Apex-1 DPO (1.1B dense) | 0.02T | 8.5 | — | 5.2 | — | 1.9 | — | 24.9 |
+> | Qwen2.5-1.5B-Instruct | 18T | 61.6 | — | 63.2 | — | 73.2 | 42.5 | 50.7 |
+> | Qwen2.5-Coder-1.5B-Instruct | 5.5T | 70.7 | 66.5 | 69.2 | 59.4 | — | — | — |
+> | Qwen3-1.7B | 36T | — | — | — | — | — | 68.2 | 64.4 |
+> | Llama-3.2-1B-Instruct | 9T | — | — | — | — | 44.4 | 59.5* | 49.3 |
+> | Gemma-3-1B-it | 2T | 41.5 | — | 35.2 | — | 62.8 | 80.2* | 38.8 |
+> | OLMoE-1B-7B (active 1.3B) | 5.1T | 62.3 | 54.4 | — | — | 72.4 | 66.4* | 55.1 |
+> | DeepSeek-Coder-1.3B | 2T | 65.9 | 60.4 | 65.3 | 54.8 | — | — | — |
 
-> <sub>Values in parentheses are the published HumanEval/MBPP scores (no HE+/MBPP+ reported). \* Different IFEval metric (Apex-2 · Qwen: prompt-level strict; others: an average of metrics or unspecified). Apex-1 values are lm-eval (GSM8K 5-shot, MMLU 5-shot). Apex-2 was measured by us with greedy 0-shot chat (GSM8K 0-shot CoT, MMLU 5-shot); other models use official model-card / tech-report numbers, so protocols differ → [BENCHMARK v3 §6](BENCHMARK-v3.en.md#6-comparison-with-similar-size-models)
+> <sub>DeepSeek-Coder numbers are the Qwen2.5-Coder report's re-evaluation. \* Different IFEval metric (Apex-2 · Qwen: prompt-level strict; others: an average of metrics or unspecified). Apex-1 values are lm-eval (GSM8K 5-shot, MMLU 5-shot). Apex-2 was measured by us with greedy 0-shot chat (GSM8K 0-shot CoT, MMLU 5-shot); other models use official model-card / tech-report numbers, so protocols differ → [BENCHMARK v3 §6](BENCHMARK-v3.en.md#6-comparison-with-similar-size-models)
 > <br>**Benchmark sources**: HumanEval+ · MBPP+ [Liu+23 (EvalPlus)](https://arxiv.org/abs/2305.01210) · GSM8K [Cobbe+21](https://arxiv.org/abs/2110.14168) · IFEval [Zhou+23](https://arxiv.org/abs/2311.07911) · MMLU [Hendrycks+21](https://arxiv.org/abs/2009.03300)
 > <br>**Comparison model sources**: Qwen2.5 [Qwen+24](https://arxiv.org/abs/2412.15115) · Qwen2.5-Coder [Hui+24](https://arxiv.org/abs/2409.12186) · Qwen3 [Qwen+25](https://arxiv.org/abs/2505.09388) · Llama 3.2 [model card](https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct) · Gemma 3 [Gemma+25](https://arxiv.org/abs/2503.19786) · OLMoE [model card](https://huggingface.co/allenai/OLMoE-1B-7B-0125-Instruct) · DeepSeek-Coder [Guo+24](https://arxiv.org/abs/2401.14196)
 >

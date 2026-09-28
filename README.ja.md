@@ -13,6 +13,33 @@
 > AI で学ぶのは良いですが、文を何度も書き直し自分の知識を整理する方が大切です。
 
 > [!IMPORTANT]
+> **APEX-2（MoE · 3.87B / アクティブ 1.45B）— Pretrain・SFT 完了**
+>
+> 実測 **3,869.1M** パラメータ(トークンあたりアクティブ **1,453.2M**)。( 32層 · d_model 2048 · GQA（16Q/4KV）+ QK-Norm + RoPE + SwiGLU MoE（16 experts · top-4）+ RMSNorm )
+>
+> - 🤗 **公開**: [huggingface.co/YOON1v/Apex-2](https://huggingface.co/YOON1v/Apex-2) — `transformers`・vLLM でそのままロード可能(Qwen3MoeForCausalLM アーキテクチャにマッピング)
+> - 📏 **コンテキスト**: 4096
+> - 🔥 **Pretrain**: 54,250 step · 86.5B トークン(Web・コード・数学・キュレーション混合)→ **SFT** 2.77B トークン(2段階)
+> - 📊 **詳細**: [BENCHMARK v3](BENCHMARK-v3.ja.md) · 前モデル APEX-1(1.1B dense)は [BENCHMARK v2](BENCHMARK-v2.ja.md) · [HF Apex-1-DPO](https://huggingface.co/YOON1v/Apex-1-DPO)
+>
+> | モデル | 事前学習トークン | HE+ | MBPP+ | GSM8K | IFEval | MMLU |
+> |:---|---:|---:|---:|---:|---:|---:|
+> | **Apex-2 SFT（3.87B · アクティブ 1.45B）** | **0.087T** | **41.5** | **48.9** | **32.4** | **44.7** | **28.6** |
+> | Apex-1 DPO(1.1B dense) | 0.02T | (HE 8.5) | (MBPP 5.2) | 1.9 | — | 24.9 |
+> | Qwen2.5-1.5B-Instruct | 18T | (HE 61.6) | (MBPP 63.2) | 73.2 | 42.5 | 50.7 |
+> | Qwen2.5-Coder-1.5B-Instruct | 5.5T | 66.5 | 59.4 | — | — | — |
+> | Qwen3-1.7B | 36T | — | — | — | 68.2 | 64.4 |
+> | Llama-3.2-1B-Instruct | 9T | — | — | 44.4 | 59.5* | 49.3 |
+> | Gemma-3-1B-it | 2T | (HE 41.5) | (MBPP 35.2) | 62.8 | 80.2* | 38.8 |
+> | OLMoE-1B-7B (アクティブ 1.3B) | 5.1T | 54.4 | — | 72.4 | 66.4* | 55.1 |
+> | DeepSeek-Coder-1.3B | 2T | 60.4 | 54.8 | — | — | — |
+
+> <sub>括弧内は HE+/MBPP+ の代わりに公開されている HumanEval/MBPP のスコアです。\* IFEval の指標が異なります(Apex-2・Qwen: prompt-level strict、その他: 複数指標の平均または未記載)。Apex-1 は lm-eval(GSM8K 5-shot、MMLU 5-shot)の値です。Apex-2 は greedy・0-shot チャット(GSM8K は 0-shot CoT、MMLU は 5-shot)で自前測定し、他モデルは公式モデルカード・技術報告の値のため評価方式が異なります → [BENCHMARK v3 §6](BENCHMARK-v3.ja.md#6-同規模モデルとの比較)
+> <br>**ベンチマーク出典**: HumanEval+ · MBPP+ [Liu+23 (EvalPlus)](https://arxiv.org/abs/2305.01210) · GSM8K [Cobbe+21](https://arxiv.org/abs/2110.14168) · IFEval [Zhou+23](https://arxiv.org/abs/2311.07911) · MMLU [Hendrycks+21](https://arxiv.org/abs/2009.03300)
+> <br>**比較モデル出典**: Qwen2.5 [Qwen+24](https://arxiv.org/abs/2412.15115) · Qwen2.5-Coder [Hui+24](https://arxiv.org/abs/2409.12186) · Qwen3 [Qwen+25](https://arxiv.org/abs/2505.09388) · Llama 3.2 [model card](https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct) · Gemma 3 [Gemma+25](https://arxiv.org/abs/2503.19786) · OLMoE [model card](https://huggingface.co/allenai/OLMoE-1B-7B-0125-Instruct) · DeepSeek-Coder [Guo+24](https://arxiv.org/abs/2401.14196)
+>
+
+> [!NOTE]
 > **APEX-1（1B 級）— Pretrain・SFT・DPO 完了**
 >
 > 実測 **1,119.5M** パラメータ。( 24層 · d_model 2048 · GQA（16Q/4KV）+ RoPE + SwiGLU + RMSNorm )
@@ -30,31 +57,6 @@
 > <sub>**ベンチマーク出典**(各分野の標準的な被引用論文): HellaSwag [Zellers+19](https://arxiv.org/abs/1905.07830) · ARC [Clark+18](https://arxiv.org/abs/1803.05457) · PIQA [Bisk+19](https://arxiv.org/abs/1911.11641) · GSM8K [Cobbe+21](https://arxiv.org/abs/2110.14168) <br> HumanEval [Chen+21](https://arxiv.org/abs/2107.03374)
 > <br>**比較モデル出典**: Pythia [Biderman+23](https://arxiv.org/abs/2304.01373) · OPT [Zhang+22](https://arxiv.org/abs/2205.01068)
 >
-
----
-> [!NOTE]
-> 🚀 **次の目標 — APEX-2（3.02B 級）** 事前学習を実行中
->
-> ComposeLM ライブラリを使用（3.02B パラメータ · 28層 · d_model 3072 · GQA（24Q/8KV）· SwiGLU 8192 · Pre-RMSNorm · RoPE 4K → YaRN 16K）
->
-> 以下は ComposeLM ライブラリを使ってアーキテクチャを非常に簡単に適用した例のコードです。詳細は https://github.com/DW-dev-UE/ComposeLM ライブラリを参照してください。
-```python
-from composelm import ModelConfig, build_model
-
-def apex2_config() -> ModelConfig:
-    return ModelConfig.from_arch(
-        "custom",
-        d_model=3_072, n_layers=28, n_heads=24, n_kv_heads=8, head_dim=128,
-        intermediate_size=8_192, vocab_size=65_536, max_seq_len=4_096,
-        attention_type="gqa", ffn_type="swiglu", norm="rmsnorm",
-        norm_placement="pre", pos_emb="rope", rope_theta=10_000.0,
-        original_max_seq_len=4_096, tie_word_embeddings=True,
-        use_bias=False, qkv_bias=False, attention_output_bias=False, ffn_bias=False,
-        activation_checkpointing=False, loss_chunk_size=2_048, precision="bf16_mixed",
-    )
-
-model = build_model(apex2_config())  # stage 1: 4K RoPE base
-```
 
 ---
 
@@ -131,6 +133,7 @@ val はコーパスファイル順の最後の 1% だったが、ko-wiki の末�
 | [GLOSSARY](GLOSSARY.ja.md) | Transformer、RoPE、DPO などの用語 |
 | [ARCHITECTURE](ARCHITECTURE.ja.md) | トランスフォーマーのウォークスルー · モデル設計 · トークナイザー · 学習 · 推論 |
 | [POST-TRAINING](POST-TRAINING.ja.md) | デプロイ後の人間フィードバックループ |
+| [BENCHMARK v3](BENCHMARK-v3.ja.md) | APEX-2(MoE 3.87B · アクティブ 1.45B)ベンチ・DPO 廃止記録 |
 | [BENCHMARK v2](BENCHMARK-v2.ja.md) | APEX-1(1B)ベンチ・RLVR → DPO 転換記録 |
 | [BENCHMARK v1](BENCHMARK-v1.ja.md) | Base モデル(327M)ベンチ(学習過程 · Q&A 含む) |
 | [ThinkingLab](ThinkingLab/ThinkingLab.ja.md) | 仮説・ブレインストーミングログ（まだ検証されていない考え） |
@@ -234,12 +237,12 @@ val はコーパスファイル順の最後の 1% だったが、ko-wiki の末�
 | 10M ~ 50M | 学習ループ、tokenizer、loss 減少の確認 |
 | 100M ~ 300M | completion、FIM、基本 instruction |
 | 1B | 小さな coding assistant 実験 |
-| 3B（APEX-2） | 3.02B の英語中心事前学習・code/math 評価・社内ツール連携候補 |
+| 3.9B MoE（APEX-2、アクティブ 1.45B） | 86.5B トークン事前学習・SFT・コード/数学/指示追従評価 |
 | 7B+ | 将来、外部公開を検討する規模 |
 
-1B(APEX-1)まで Pretrain・SFT・DPO を終え、現在は **APEX-2（3.02B 級）** を外部事前学習重みなしで学習中です。
+1B(APEX-1)に続き、**APEX-2(MoE 3.87B、アクティブ 1.45B)** まで外部事前学習重みなしで Pretrain・SFT を終えました。
 
-2つの系列を並行しています。1B `Apex-1` 系列の最新は **`dpo_Apex-1_v1`**(pretrain+SFT+DPO 完了、標準ベンチ11種測定済み)、327M `base` 系列の最新は **`sft_base_v6`** です。現在の目標は **APEX-2（3.02B 級）** の事前学習です。→ [§5 ベンチマーク一覧](#5-ベンチマーク一覧) · バージョン別詳細記録 [BENCHMARK v2](BENCHMARK-v2.ja.md)
+2つの系列を並行しています。1B `Apex-1` 系列の最新は **`dpo_Apex-1_v1`**(pretrain+SFT+DPO 完了、標準ベンチ11種測定済み)、327M `base` 系列の最新は **`sft_base_v6`** です。APEX-2 は MoE 系列として別に記録します。→ [§5 ベンチマーク一覧](#5-ベンチマーク一覧) · バージョン別詳細記録 [BENCHMARK v3](BENCHMARK-v3.ja.md) · [BENCHMARK v2](BENCHMARK-v2.ja.md)
 
 ---
 
@@ -269,6 +272,7 @@ AI/
 ├── GLOSSARY.md               用語
 ├── ARCHITECTURE.md           モデル · 学習 · 推論
 ├── POST-TRAINING.md          フィードバック後続学習
+├── BENCHMARK-v3.md           APEX-2(MoE) ベンチレポート
 ├── BENCHMARK-v2.md           APEX-1(1B) ベンチレポート
 ├── BENCHMARK-v1.md           327M ベンチレポート
 └── llm/                      実装
@@ -293,7 +297,25 @@ AI/
 
 2つの系列が並行しています: **1B `Apex-1`**(英語専用)と **327M `base`**(韓/日/英 多言語)。セットも別物です。
 
-### 5.1 1B `Apex-1` 系列 ⭐ 主力
+### 5.0 APEX-2（MoE 3.87B · アクティブ 1.45B）⭐ 最新
+
+SFT モデルを vLLM の greedy・0-shot チャットで測定しました(モデルが書いたコードはサンドボックスで実行して採点)。base は事前学習直後のモデルです。
+
+| 項目 | base | **SFT(最終)** |
+|:--|--:|--:|
+| HumanEval / HumanEval+ | 36.6 / 32.9 | **43.9 / 41.5** |
+| MBPP / MBPP+ | 54.8 / 46.3 | **56.3 / 48.9** |
+| MultiPL-E C++ (HumanEval / MBPP) | — | 36.0 / 41.6 |
+| LiveCodeBench v5–v6 | — | 3.2 |
+| GSM8K | 15.1 (8-shot) | **32.4** (0-shot CoT) |
+| MATH-500 | — | 21.0 |
+| IFEval (prompt / inst strict) | — | 44.7 / 56.6 |
+| MMLU (5-shot) | 28.2 | 28.6 |
+| HellaSwag / ARC-c / PIQA | 60.8 / 39.7 / 73.9 | 62.2 / 38.4 / 74.8 |
+
+DPO(Dolci-Instruct-DPO)は回答が 2.3 倍長くなり、コード・数学・指示追従が下がったため廃止し、SFT を最終としました。詳細: [BENCHMARK-v3.ja.md](BENCHMARK-v3.ja.md)
+
+### 5.1 1B `Apex-1` 系列
 
 英語専用15問 × THINKING on/off(コーディング5問は327Mセットと同一問題)。  
 最新スナップショット: **`sft_Apex-1_v1`**(`ckpt/benchmark_sft_Apex-1_v1_raw.json`、2026-07-22)。Pretrain 51K step(20B トークン)+ SFT 8.4K step + RLVR 廃止後の DPO まで全て完了(§6 in [BENCHMARK v2](BENCHMARK-v2.ja.md))。
@@ -415,6 +437,6 @@ v6 ハイライト（v5 比）:
 
 **次に読む**
 
-[用語](GLOSSARY.ja.md) · [アーキテクチャ](ARCHITECTURE.ja.md) · [後続学習](POST-TRAINING.ja.md) · [ベンチマーク v1](BENCHMARK-v1.ja.md) · [ベンチマーク v2](BENCHMARK-v2.ja.md) · [思考実験室](ThinkingLab/ThinkingLab.ja.md)
+[用語](GLOSSARY.ja.md) · [アーキテクチャ](ARCHITECTURE.ja.md) · [後続学習](POST-TRAINING.ja.md) · [ベンチマーク v1](BENCHMARK-v1.ja.md) · [ベンチマーク v2](BENCHMARK-v2.ja.md) · [ベンチマーク v3](BENCHMARK-v3.ja.md) · [思考実験室](ThinkingLab/ThinkingLab.ja.md)
 
 </div>

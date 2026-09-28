@@ -13,6 +13,33 @@
 > Learning with AI is fine, but rewriting sentences myself to organize my knowledge matters more.
 
 > [!IMPORTANT]
+> **APEX-2 (MoE · 3.87B / 1.45B active) — Pretrain · SFT done**
+>
+> ~**3,869.1M** measured parameters (**1,453.2M** active per token). ( 32 layers · d_model 2048 · GQA (16Q/4KV) + QK-Norm + RoPE + SwiGLU MoE (16 experts · top-4) + RMSNorm )
+>
+> - 🤗 **Released**: [huggingface.co/YOON1v/Apex-2](https://huggingface.co/YOON1v/Apex-2) — loads directly with `transformers` and vLLM (mapped onto the Qwen3MoeForCausalLM architecture)
+> - 📏 **Context**: 4096
+> - 🔥 **Pretrain**: 54,250 steps · 86.5B tokens (web · code · math · curated mix) → **SFT** 2.77B tokens (2 stages)
+> - 📊 **Details**: [BENCHMARK v3](BENCHMARK-v3.en.md) · previous model APEX-1 (1.1B dense): [BENCHMARK v2](BENCHMARK-v2.en.md) · [HF Apex-1-DPO](https://huggingface.co/YOON1v/Apex-1-DPO)
+>
+> | Model | Pretraining tokens | HE+ | MBPP+ | GSM8K | IFEval | MMLU |
+> |:---|---:|---:|---:|---:|---:|---:|
+> | **Apex-2 SFT (3.87B · 1.45B active)** | **0.087T** | **41.5** | **48.9** | **32.4** | **44.7** | **28.6** |
+> | Apex-1 DPO (1.1B dense) | 0.02T | (HE 8.5) | (MBPP 5.2) | 1.9 | — | 24.9 |
+> | Qwen2.5-1.5B-Instruct | 18T | (HE 61.6) | (MBPP 63.2) | 73.2 | 42.5 | 50.7 |
+> | Qwen2.5-Coder-1.5B-Instruct | 5.5T | 66.5 | 59.4 | — | — | — |
+> | Qwen3-1.7B | 36T | — | — | — | 68.2 | 64.4 |
+> | Llama-3.2-1B-Instruct | 9T | — | — | 44.4 | 59.5* | 49.3 |
+> | Gemma-3-1B-it | 2T | (HE 41.5) | (MBPP 35.2) | 62.8 | 80.2* | 38.8 |
+> | OLMoE-1B-7B (active 1.3B) | 5.1T | 54.4 | — | 72.4 | 66.4* | 55.1 |
+> | DeepSeek-Coder-1.3B | 2T | 60.4 | 54.8 | — | — | — |
+
+> <sub>Values in parentheses are the published HumanEval/MBPP scores (no HE+/MBPP+ reported). \* Different IFEval metric (Apex-2 · Qwen: prompt-level strict; others: an average of metrics or unspecified). Apex-1 values are lm-eval (GSM8K 5-shot, MMLU 5-shot). Apex-2 was measured by us with greedy 0-shot chat (GSM8K 0-shot CoT, MMLU 5-shot); other models use official model-card / tech-report numbers, so protocols differ → [BENCHMARK v3 §6](BENCHMARK-v3.en.md#6-comparison-with-similar-size-models)
+> <br>**Benchmark sources**: HumanEval+ · MBPP+ [Liu+23 (EvalPlus)](https://arxiv.org/abs/2305.01210) · GSM8K [Cobbe+21](https://arxiv.org/abs/2110.14168) · IFEval [Zhou+23](https://arxiv.org/abs/2311.07911) · MMLU [Hendrycks+21](https://arxiv.org/abs/2009.03300)
+> <br>**Comparison model sources**: Qwen2.5 [Qwen+24](https://arxiv.org/abs/2412.15115) · Qwen2.5-Coder [Hui+24](https://arxiv.org/abs/2409.12186) · Qwen3 [Qwen+25](https://arxiv.org/abs/2505.09388) · Llama 3.2 [model card](https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct) · Gemma 3 [Gemma+25](https://arxiv.org/abs/2503.19786) · OLMoE [model card](https://huggingface.co/allenai/OLMoE-1B-7B-0125-Instruct) · DeepSeek-Coder [Guo+24](https://arxiv.org/abs/2401.14196)
+>
+
+> [!NOTE]
 > **APEX-1 (1B scale) — Pretrain · SFT · DPO done**
 >
 > ~**1,119.5M** measured parameters. ( 24 layers · d_model 2048 · GQA (16Q/4KV) + RoPE + SwiGLU + RMSNorm )
@@ -30,31 +57,6 @@
 > <sub>**Benchmark sources** (canonical, heavily-cited papers in each area): HellaSwag [Zellers+19](https://arxiv.org/abs/1905.07830) · ARC [Clark+18](https://arxiv.org/abs/1803.05457) · PIQA [Bisk+19](https://arxiv.org/abs/1911.11641) · GSM8K [Cobbe+21](https://arxiv.org/abs/2110.14168) <br> HumanEval [Chen+21](https://arxiv.org/abs/2107.03374)
 > <br>**Comparison model sources**: Pythia [Biderman+23](https://arxiv.org/abs/2304.01373) · OPT [Zhang+22](https://arxiv.org/abs/2205.01068)
 >
-
----
-> [!NOTE]
-> 🚀 **Next goal — APEX-2 (3.02B scale)** — pretraining in progress
->
-> Built with the ComposeLM library (3.02B parameters · 28 layers · d_model 3072 · GQA 24Q/8KV · SwiGLU 8192 · Pre-RMSNorm · 4K RoPE → 16K YaRN)
->
-> Below is example code showing how easily the architecture can be applied using the ComposeLM library. For details, see the https://github.com/DW-dev-UE/ComposeLM library.
-```python
-from composelm import ModelConfig, build_model
-
-def apex2_config() -> ModelConfig:
-    return ModelConfig.from_arch(
-        "custom",
-        d_model=3_072, n_layers=28, n_heads=24, n_kv_heads=8, head_dim=128,
-        intermediate_size=8_192, vocab_size=65_536, max_seq_len=4_096,
-        attention_type="gqa", ffn_type="swiglu", norm="rmsnorm",
-        norm_placement="pre", pos_emb="rope", rope_theta=10_000.0,
-        original_max_seq_len=4_096, tie_word_embeddings=True,
-        use_bias=False, qkv_bias=False, attention_output_bias=False, ffn_bias=False,
-        activation_checkpointing=False, loss_chunk_size=2_048, precision="bf16_mixed",
-    )
-
-model = build_model(apex2_config())  # stage 1: 4K RoPE base
-```
 
 ---
 
@@ -131,6 +133,7 @@ The common thread across all three: none of it was the model being dumb — the 
 | [GLOSSARY](GLOSSARY.en.md) | Terms like Transformer, RoPE, DPO |
 | [ARCHITECTURE](ARCHITECTURE.en.md) | Transformer walkthrough · model design · tokenizer · train · infer |
 | [POST-TRAINING](POST-TRAINING.en.md) | Post-deploy human feedback loop |
+| [BENCHMARK v3](BENCHMARK-v3.en.md) | APEX-2 (MoE 3.87B · 1.45B active) benchmark · why DPO was dropped |
 | [BENCHMARK v2](BENCHMARK-v2.en.md) | APEX-1 (1B) benchmark · RLVR → DPO decision log |
 | [BENCHMARK v1](BENCHMARK-v1.en.md) | Base model (327M) benchmark (training process · Q&A) |
 | [ThinkingLab](ThinkingLab/ThinkingLab.en.md) | Hypothesis / brainstorming log (not-yet-validated ideas) |
@@ -233,12 +236,12 @@ So the rule is:
 | 10M ~ 50M | training loop, tokenizer, loss drop |
 | 100M ~ 300M | completion, FIM, basic instruction |
 | 1B | small coding assistant experiments |
-| 3B (APEX-2) | 3.02B English-first pretraining · code/math evaluation · in-house tool integration candidate |
+| 3.9B MoE (APEX-2, 1.45B active) | 86.5B-token pretraining · SFT · code/math/instruction-following evaluation |
 | 7B+ | future scale for considering external exposure |
 
-Pretrain·SFT·DPO are done through 1B (APEX-1); the current target is **APEX-2 (3.02B scale)**, trained without external pretrained weights.
+After 1B (APEX-1), **APEX-2 (MoE 3.87B, 1.45B active)** has finished Pretrain·SFT, again without external pretrained weights.
 
-Two lines run in parallel: the 1B `Apex-1` line's latest is **`dpo_Apex-1_v1`** (pretrain+SFT+DPO done, all 11 standard benchmarks measured), the 327M `base` line's latest is **`sft_base_v6`**. The current goal is **APEX-2 (3.02B scale)** pretraining. → [§5 Benchmark snapshot](#5-benchmark-snapshot) · per-version write-up [BENCHMARK v2](BENCHMARK-v2.en.md)
+Two lines run in parallel: the 1B `Apex-1` line's latest is **`dpo_Apex-1_v1`** (pretrain+SFT+DPO done, all 11 standard benchmarks measured), the 327M `base` line's latest is **`sft_base_v6`**. APEX-2 is recorded separately as the MoE line. → [§5 Benchmark snapshot](#5-benchmark-snapshot) · per-version write-ups [BENCHMARK v3](BENCHMARK-v3.en.md) · [BENCHMARK v2](BENCHMARK-v2.en.md)
 
 ---
 
@@ -268,6 +271,7 @@ AI/
 ├── GLOSSARY.md               terms
 ├── ARCHITECTURE.md           model · train · infer
 ├── POST-TRAINING.md          feedback post-training
+├── BENCHMARK-v3.md           APEX-2 (MoE) bench report
 ├── BENCHMARK-v2.md           APEX-1 (1B) bench report
 ├── BENCHMARK-v1.md           327M bench report
 └── llm/                      implementation
@@ -292,7 +296,25 @@ AI/
 
 Two lines run in parallel: **1B `Apex-1`** (English-only) and **327M `base`** (KO/JA/EN multilingual). The prompt sets differ too.
 
-### 5.1 1B `Apex-1` line ⭐ primary
+### 5.0 APEX-2 (MoE 3.87B · 1.45B active) ⭐ latest
+
+The SFT model was measured with vLLM greedy 0-shot chat (model-written code is executed in a sandbox). base is the model right after pretraining.
+
+| Item | base | **SFT (final)** |
+|:--|--:|--:|
+| HumanEval / HumanEval+ | 36.6 / 32.9 | **43.9 / 41.5** |
+| MBPP / MBPP+ | 54.8 / 46.3 | **56.3 / 48.9** |
+| MultiPL-E C++ (HumanEval / MBPP) | — | 36.0 / 41.6 |
+| LiveCodeBench v5–v6 | — | 3.2 |
+| GSM8K | 15.1 (8-shot) | **32.4** (0-shot CoT) |
+| MATH-500 | — | 21.0 |
+| IFEval (prompt / inst strict) | — | 44.7 / 56.6 |
+| MMLU (5-shot) | 28.2 | 28.6 |
+| HellaSwag / ARC-c / PIQA | 60.8 / 39.7 / 73.9 | 62.2 / 38.4 / 74.8 |
+
+DPO (Dolci-Instruct-DPO) made answers 2.3× longer and lowered code, math and instruction following, so it was dropped and SFT is final. Details: [BENCHMARK-v3.en.md](BENCHMARK-v3.en.md)
+
+### 5.1 1B `Apex-1` line
 
 English-only 15 prompts × THINKING on/off (the 5 coding prompts are the same items as the 327M set).  
 Latest snapshot: **`sft_Apex-1_v1`** (`ckpt/benchmark_sft_Apex-1_v1_raw.json`, 2026-07-22). Pretrain 51K steps (20B tokens) + SFT 8.4K steps + RLVR abandoned then DPO — all done (§6 in [BENCHMARK v2](BENCHMARK-v2.en.md)).
@@ -414,6 +436,6 @@ Still early-stage. Later versions keep the same prompt set for comparison.
 
 **Next**
 
-[Glossary](GLOSSARY.en.md) · [Architecture](ARCHITECTURE.en.md) · [Post-training](POST-TRAINING.en.md) · [Benchmark v1](BENCHMARK-v1.en.md) · [Benchmark v2](BENCHMARK-v2.en.md) · [ThinkingLab](ThinkingLab/ThinkingLab.en.md)
+[Glossary](GLOSSARY.en.md) · [Architecture](ARCHITECTURE.en.md) · [Post-training](POST-TRAINING.en.md) · [Benchmark v1](BENCHMARK-v1.en.md) · [Benchmark v2](BENCHMARK-v2.en.md) · [Benchmark v3](BENCHMARK-v3.en.md) · [ThinkingLab](ThinkingLab/ThinkingLab.en.md)
 
 </div>

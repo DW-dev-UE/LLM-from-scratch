@@ -13,6 +13,33 @@
 > 물론 AI를 통해 배우는것은 좋지만 문장을 몇 번씩 다듬으면서 나의 지식을 정리하는게 더 중요합니다.
 
 > [!IMPORTANT]
+> **APEX-2 (MoE · 3.87B / 활성 1.45B) — Pretrain · SFT 완료**
+>
+> 실측 **3,869.1M** 파라미터 (토큰당 활성 **1,453.2M**). ( 32층 · d_model 2048 · GQA(16Q/4KV) + QK-Norm + RoPE + SwiGLU MoE(16 experts · top-4) + RMSNorm )
+>
+> - 🤗 **공개**: [huggingface.co/YOON1v/Apex-2](https://huggingface.co/YOON1v/Apex-2) — `transformers`·vLLM으로 바로 로드 가능 (Qwen3MoeForCausalLM 아키텍처 매핑)
+> - 📏 **컨텍스트**: 4096
+> - 🔥 **Pretrain**: 54,250 step · 86.5B 토큰 (웹·코드·수학·큐레이션 혼합) → **SFT** 2.77B 토큰 (2단계)
+> - 📊 **상세**: [BENCHMARK v3](BENCHMARK-v3.md) · 이전 모델 APEX-1(1.1B dense)은 [BENCHMARK v2](BENCHMARK-v2.md) · [HF Apex-1-DPO](https://huggingface.co/YOON1v/Apex-1-DPO)
+>
+> | 모델 | 사전학습 토큰 | HE+ | MBPP+ | GSM8K | IFEval | MMLU |
+> |:---|---:|---:|---:|---:|---:|---:|
+> | **Apex-2 SFT (3.87B · 활성 1.45B)** | **0.087T** | **41.5** | **48.9** | **32.4** | **44.7** | **28.6** |
+> | Apex-1 DPO (1.1B dense) | 0.02T | (HE 8.5) | (MBPP 5.2) | 1.9 | — | 24.9 |
+> | Qwen2.5-1.5B-Instruct | 18T | (HE 61.6) | (MBPP 63.2) | 73.2 | 42.5 | 50.7 |
+> | Qwen2.5-Coder-1.5B-Instruct | 5.5T | 66.5 | 59.4 | — | — | — |
+> | Qwen3-1.7B | 36T | — | — | — | 68.2 | 64.4 |
+> | Llama-3.2-1B-Instruct | 9T | — | — | 44.4 | 59.5* | 49.3 |
+> | Gemma-3-1B-it | 2T | (HE 41.5) | (MBPP 35.2) | 62.8 | 80.2* | 38.8 |
+> | OLMoE-1B-7B (활성 1.3B) | 5.1T | 54.4 | — | 72.4 | 66.4* | 55.1 |
+> | DeepSeek-Coder-1.3B | 2T | 60.4 | 54.8 | — | — | — |
+
+> <sub>괄호 값은 HE+/MBPP+ 대신 공개된 HumanEval/MBPP 점수입니다. \* IFEval 지표가 다릅니다 (Apex-2·Qwen: prompt-level strict, 나머지: 여러 지표 평균 또는 미표기). Apex-1은 lm-eval(GSM8K 5-shot, MMLU 5-shot) 값입니다. Apex-2는 greedy · 0-shot 채팅(GSM8K는 0-shot CoT, MMLU는 5-shot)으로 직접 측정했고, 다른 모델은 공식 모델 카드·기술 보고서 값이라 평가 방식이 서로 다릅니다 → [BENCHMARK v3 §6](BENCHMARK-v3.md#6-비슷한-크기-모델과-비교)
+> <br>**벤치마크 출처**: HumanEval+ · MBPP+ [Liu+23 (EvalPlus)](https://arxiv.org/abs/2305.01210) · GSM8K [Cobbe+21](https://arxiv.org/abs/2110.14168) · IFEval [Zhou+23](https://arxiv.org/abs/2311.07911) · MMLU [Hendrycks+21](https://arxiv.org/abs/2009.03300)
+> <br>**비교 모델 출처**: Qwen2.5 [Qwen+24](https://arxiv.org/abs/2412.15115) · Qwen2.5-Coder [Hui+24](https://arxiv.org/abs/2409.12186) · Qwen3 [Qwen+25](https://arxiv.org/abs/2505.09388) · Llama 3.2 [model card](https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct) · Gemma 3 [Gemma+25](https://arxiv.org/abs/2503.19786) · OLMoE [model card](https://huggingface.co/allenai/OLMoE-1B-7B-0125-Instruct) · DeepSeek-Coder [Guo+24](https://arxiv.org/abs/2401.14196)
+>
+
+> [!NOTE]
 > **APEX-1 (1B급) — Pretrain · SFT · DPO 완료**
 >
 > 실측 **1,119.5M** 파라미터. ( 24층 · d_model 2048 · GQA(16Q/4KV) + RoPE + SwiGLU + RMSNorm )
@@ -30,31 +57,6 @@
 > <sub>**벤치마크 출처**(각 분야 표준 인용 논문): HellaSwag [Zellers+19](https://arxiv.org/abs/1905.07830) · ARC [Clark+18](https://arxiv.org/abs/1803.05457) · PIQA [Bisk+19](https://arxiv.org/abs/1911.11641) · GSM8K [Cobbe+21](https://arxiv.org/abs/2110.14168) <br> HumanEval [Chen+21](https://arxiv.org/abs/2107.03374)
 > <br>**비교 모델 출처**: Pythia [Biderman+23](https://arxiv.org/abs/2304.01373) · OPT [Zhang+22](https://arxiv.org/abs/2205.01068)
 >
-
----
-> [!NOTE]
-> 🚀 **다음 목표 — APEX-2 (3.02B급)** 사전학습 진행중
-> 
-> ComposeLM 라이브러리 사용 (3.02B 파라미터 · 28층 · d_model 3072 · GQA(24Q/8KV) · SwiGLU 8192 · Pre-RMSNorm · RoPE 4K → YaRN 16K)
->
-> 아래는 ComposeLM 라이브러리를 사용하여 아키텍처를 아주 쉽게 적용한 예제 코드입니다. 자세한 사항은 https://github.com/DW-dev-UE/ComposeLM 라이브러리를 참조하세요.
-```python
-from composelm import ModelConfig, build_model
-
-def apex2_config() -> ModelConfig:
-    return ModelConfig.from_arch(
-        "custom",
-        d_model=3_072, n_layers=28, n_heads=24, n_kv_heads=8, head_dim=128,
-        intermediate_size=8_192, vocab_size=65_536, max_seq_len=4_096,
-        attention_type="gqa", ffn_type="swiglu", norm="rmsnorm",
-        norm_placement="pre", pos_emb="rope", rope_theta=10_000.0,
-        original_max_seq_len=4_096, tie_word_embeddings=True,
-        use_bias=False, qkv_bias=False, attention_output_bias=False, ffn_bias=False,
-        activation_checkpointing=False, loss_chunk_size=2_048, precision="bf16_mixed",
-    )
-
-model = build_model(apex2_config())  # stage 1: 4K RoPE base
-```
 
 ---
 
@@ -132,6 +134,7 @@ val이 코퍼스 파일 순서의 마지막 1%였는데, ko위키 꼬리 단일 
 | [GLOSSARY](GLOSSARY.md) | Transformer, RoPE, DPO 같은 용어 |
 | [ARCHITECTURE](ARCHITECTURE.md) | 트랜스포머 워크스루 · 모델 설계 · 토크나이저 · 학습 · 추론 |
 | [POST-TRAINING](POST-TRAINING.md) | 배포 후 인간 피드백 루프 |
+| [BENCHMARK v3](BENCHMARK-v3.md) | APEX-2(MoE 3.87B · 활성 1.45B) 벤치마크 · DPO 폐기 기록 |
 | [BENCHMARK v2](BENCHMARK-v2.md) | APEX-1(1B) 벤치마크 · RLVR → DPO 전환 기록 |
 | [BENCHMARK v1](BENCHMARK-v1.md) | Base 모델(327M) 벤치마크 (학습 과정 · Q&A 포함) |
 | [ThinkingLab](ThinkingLab/ThinkingLab.md) | 가설 · 브레인스토밍 로그 (아직 검증되지 않은 생각들) |
@@ -233,12 +236,12 @@ val이 코퍼스 파일 순서의 마지막 1%였는데, ko위키 꼬리 단일 
 | 10M ~ 50M | 학습 루프, tokenizer, loss 감소 확인 |
 | 100M ~ 300M | completion, FIM, 기본 instruction |
 | 1B | 작은 coding assistant 실험 |
-| 3B (APEX-2) | 3.02B 영어 중심 사전학습 · code/math 평가 · 사내 도구 연동 후보 |
+| 3.9B MoE (APEX-2, 활성 1.45B) | 86.5B 토큰 사전학습 · SFT · 코드/수학/지시 수행 평가 |
 | 7B+ | 이후 외부 노출을 검토할 규모 |
 
-1B(APEX-1)까지 Pretrain·SFT·DPO를 마치고, 현재 **APEX-2(3.02B급)**를 외부 사전학습 가중치 없이 학습 중입니다.
+1B(APEX-1)에 이어 **APEX-2(MoE 3.87B, 활성 1.45B)**까지 외부 사전학습 가중치 없이 Pretrain·SFT를 마쳤습니다.
 
-두 라인을 병행 중입니다: 1B `Apex-1` 라인 최신은 **`dpo_Apex-1_v1`** (pretrain+SFT+DPO 완료, 표준 벤치 11종 측정 완료), 327M `base` 라인 최신은 **`sft_base_v6`** 입니다. 현재 목표는 **APEX-2 (3.02B급)** 사전학습입니다. → [§5 벤치마크 한눈에](#5-벤치마크-한눈에) · 버전별 상세 기록 [BENCHMARK v2](BENCHMARK-v2.md)
+두 라인을 병행 중입니다: 1B `Apex-1` 라인 최신은 **`dpo_Apex-1_v1`** (pretrain+SFT+DPO 완료, 표준 벤치 11종 측정 완료), 327M `base` 라인 최신은 **`sft_base_v6`** 입니다. APEX-2는 MoE 라인으로 따로 기록합니다. → [§5 벤치마크 한눈에](#5-벤치마크-한눈에) · 버전별 상세 기록 [BENCHMARK v3](BENCHMARK-v3.md) · [BENCHMARK v2](BENCHMARK-v2.md)
 
 ---
 
@@ -268,6 +271,7 @@ AI/
 ├── GLOSSARY.md               용어
 ├── ARCHITECTURE.md           모델 · 학습 · 추론
 ├── POST-TRAINING.md          피드백 후속학습
+├── BENCHMARK-v3.md           APEX-2(MoE) 벤치 리포트
 ├── BENCHMARK-v2.md           APEX-1(1B) 벤치 리포트
 ├── BENCHMARK-v1.md           327M 벤치 리포트
 └── llm/                      구현
@@ -292,7 +296,25 @@ AI/
 
 두 라인이 병행됩니다: **1B `Apex-1`**(영어 전용) 와 **327M `base`** (한/일/영 다국어). 세트도 서로 다릅니다.
 
-### 5.1 1B `Apex-1` 라인 ⭐ 주력
+### 5.0 APEX-2 (MoE 3.87B · 활성 1.45B) ⭐ 최신
+
+SFT 모델을 vLLM greedy · 0-shot 채팅으로 측정했습니다 (모델이 쓴 코드는 샌드박스에서 실행해 채점). base는 사전학습 직후 모델입니다.
+
+| 항목 | base | **SFT (최종)** |
+|:--|--:|--:|
+| HumanEval / HumanEval+ | 36.6 / 32.9 | **43.9 / 41.5** |
+| MBPP / MBPP+ | 54.8 / 46.3 | **56.3 / 48.9** |
+| MultiPL-E C++ (HumanEval / MBPP) | — | 36.0 / 41.6 |
+| LiveCodeBench v5–v6 | — | 3.2 |
+| GSM8K | 15.1 (8-shot) | **32.4** (0-shot CoT) |
+| MATH-500 | — | 21.0 |
+| IFEval (prompt / inst strict) | — | 44.7 / 56.6 |
+| MMLU (5-shot) | 28.2 | 28.6 |
+| HellaSwag / ARC-c / PIQA | 60.8 / 39.7 / 73.9 | 62.2 / 38.4 / 74.8 |
+
+DPO(Dolci-Instruct-DPO)는 답이 2.3배 길어지며 코드·수학·지시 수행이 떨어져 폐기했고, SFT를 최종으로 했습니다. 상세: [BENCHMARK-v3.md](BENCHMARK-v3.md)
+
+### 5.1 1B `Apex-1` 라인
 
 영어 전용 15문항 × THINKING on/off (코딩 5문항은 327M 세트와 동일 문항).  
 최신 스냅샷: **`sft_Apex-1_v1`** (`ckpt/benchmark_sft_Apex-1_v1_raw.json`, 2026-07-22). Pretrain 51K step(20B 토큰) + SFT 8.4K step + RLVR 폐기 후 DPO까지 전부 완료(§6 in [BENCHMARK v2](BENCHMARK-v2.md)).
@@ -414,6 +436,6 @@ v6 하이라이트 (v5 대비):
 
 **이어서 읽기**
 
-[용어](GLOSSARY.md) · [아키텍처](ARCHITECTURE.md) · [후속학습](POST-TRAINING.md) · [벤치마크 v1](BENCHMARK-v1.md) · [벤치마크 v2](BENCHMARK-v2.md) · [생각 실험실](ThinkingLab/ThinkingLab.md)
+[용어](GLOSSARY.md) · [아키텍처](ARCHITECTURE.md) · [후속학습](POST-TRAINING.md) · [벤치마크 v1](BENCHMARK-v1.md) · [벤치마크 v2](BENCHMARK-v2.md) · [벤치마크 v3](BENCHMARK-v3.md) · [생각 실험실](ThinkingLab/ThinkingLab.md)
 
 </div>

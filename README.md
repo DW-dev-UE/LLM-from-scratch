@@ -4,6 +4,11 @@
 
 ![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white) ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=white) ![CUDA](https://img.shields.io/badge/CUDA-76B900?logo=nvidia&logoColor=white)
 
+> [!IMPORTANT]
+> **새로운 목표 : Apex-3 학습 중**
+>
+> 총 **7.30B** / 활성 **3.36B** MoE · 30층 · d_model 2,560 · GQA(20Q/4KV) + QK-Norm · local:global 5:1 · 라우팅 전문가 32개 top-8 + 공유 1개 · SuperBPE 204,800 · 목표 ~2T 토큰 → [ThinkingLab](ThinkingLab/ThinkingLab.md)
+
 > [!NOTE]
 > **이 저장소는 계속 다듬는 중입니다.**  
 > 학습 결과, 벤치마크, 문서가 버전마다 바뀔 수 있습니다. 최신 커밋을 기준으로 봐 주세요. Issue / PR 환영합니다.

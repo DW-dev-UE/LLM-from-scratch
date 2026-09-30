@@ -4,6 +4,11 @@
 
 ![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white) ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=white) ![CUDA](https://img.shields.io/badge/CUDA-76B900?logo=nvidia&logoColor=white)
 
+> [!IMPORTANT]
+> **New goal : Apex-3 in training**
+>
+> **7.30B** total / **3.36B** active MoE · 30 layers · d_model 2,560 · GQA (20Q/4KV) + QK-Norm · local:global 5:1 · 32 routed experts top-8 + 1 shared · SuperBPE 204,800 · target ~2T tokens → [ThinkingLab](ThinkingLab/ThinkingLab.en.md)
+
 > [!NOTE]
 > **This repo is actively updated.**  
 > Training results, benchmarks, and docs change over time. Prefer the latest commit. Issues and PRs welcome.

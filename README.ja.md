@@ -4,6 +4,11 @@
 
 ![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white) ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=white) ![CUDA](https://img.shields.io/badge/CUDA-76B900?logo=nvidia&logoColor=white)
 
+> [!IMPORTANT]
+> **新しい目標 : Apex-3 学習中**
+>
+> 総 **7.30B** / アクティブ **3.36B** MoE · 30層 · d_model 2,560 · GQA（20Q/4KV）+ QK-Norm · local:global 5:1 · ルーティング専門家 32 個 top-8 + 共有 1 個 · SuperBPE 204,800 · 目標 ~2T トークン → [ThinkingLab](ThinkingLab/ThinkingLab.ja.md)
+
 > [!NOTE]
 > **このリポジトリは継続更新中です。**  
 > 学習結果・ベンチ・ドキュメントはバージョンごとに変わります。最新コミットを見てください。Issue / PR 歓迎。

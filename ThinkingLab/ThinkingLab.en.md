@@ -186,6 +186,120 @@ Worth trying. From here on, training runs in FP8. Though there are several diffe
 
 ---
 
+## 5. Problems and solutions during Apex-2 development
+
+### Bottleneck 1. Compute
+
+It goes without saying, but the more compute an LLM uses, the better the model performs.
+But an individual can't afford that. Never mind DDP — an H100, or a B200 if you can spare it, is probably the limit of what can be experimented with.
+In the end, there's no choice but to optimize to the extreme within limited compute.
+
+In my case, the GH200 was cheaper than the H100 at **$2.29** per hour, so I trained up to the 4B-class parameters with it.
+Up to 1B-class I could fit a batch on a single GPU, but from the larger models up, VRAM ran short and OOM occurred.
+
+I had to agonize over many things, like whether to process compute in FP8 or reduce the precision of D_MODEL.
+
+> [!NOTE]
+> The Apex-2 model was designed as a 3.87B-class model, 16 Experts, 1.45B active parameters, ~1T tokens, and the optimization path is as follows.
+
+### Bottleneck 2. VRAM
+
+As parameters grow, the amount of data that must always stay on the GPU — the optimizer, FP32 parameters, FP32 grads, and so on — becomes extremely large.
+The original plan, fp32 parameters + autocast + fp32 AdamW, took **69.7GB** for state memory alone. Adding activations brought it to **91GB**, so 2 micro-batches barely fit into 80GB. In the end, I used 8-bit AdamW to avoid OOM.
+
+Adopting 8-bit AdamW for the optimizer memory cut **31GB** down to **9.6GB**, and even that was placed on Grace as Paged, thanks to the Grace architecture.
+As a result, I managed to raise mb to 4.
+
+For compute precision, I adopted GEMM=BF16, with master and grad accumulation in FP32.
+
+> [!CAUTION]
+> => Pure BF16 was rejected because of numerical collapse.
+
+### Bottleneck 3. MFU
+
+No matter how good the tensor cores are, if VRAM is referenced heavily, memory bandwidth leaves the tensor cores IDLE.
+This is called a memory bottleneck.
+
+The first way I reduced the memory bottleneck was cutting parameter casting + grad accumulation.
+Parameters are stored in fp32, but GEMM runs in bf16. Autocast converts each weight to bf16 every time forward meets a linear, and in backward the GEMM emits a bf16 dW.
+
+The bytes I actually measured are as follows.
+
+- forward cast fp32 -> bf16: read 15.5GB, write 7.7GB
+- backward cast bf16 dW -> fp32: read 7.7GB, write 15.5GB
+- AccumulateGrad p.grad += dW: read 31.0GB, write 15.5GB
+
+In total it used **93GB**; converted at HBM3 bandwidth of about 4TB/s that's 23ms, and the measured value was 28.4ms.
+In other words, this 93GB costs the same whether it processes 8,192 tokens or 16,384 tokens. So, to cut the pointless work, I stored the attention and experts weights directly in BF16.
+
+> [!TIP]
+> The result was 46GB, nearly halved.
+
+Beyond that, I reduced the casting bottleneck by changing FP32 to BF16 and the like in CE head dW accumulation, MoE dispatch/combine, and so on.
+
+As a result, I managed to raise MFU by more than **9%p**.
+In this state, with FP32 and loss matching to 4 digits, I got most of what could be gained.
+
+> [!WARNING]
+> Of course, Hopper has FP8 Tensor cores, but optimizing beyond this is an unsafe choice. Replacing the optimizer is the same.
+
+### Final architecture: DiLoCo
+
+B200 GPUs couldn't be rented, and the remaining alternatives were GH200 (96GB) and H100 (80GB).
+
+In the end I chose the GH200: with 96GB of VRAM I could use MicroBatch to raise the batch-size up to 4, and while the H100 SXM5 was $4 per hour, the GH200 was $2.29 per hour despite being the same H100.
+Either way the GH200 was advantageous, so I chose it. However, since it was the Grace architecture, appropriate code changes were necessary.
+
+But even raising MFU to 40%+, the time to train 80B~1T tokens was hopelessly short. So I adopted the DiLoCo architecture.
+The principle is that each instance keeps a copy of the model, trains H steps independently on its own data, and merges afterward. It had drawbacks — if either one stops, the other instance's steps for that round become unusable, and the corpus data has to be managed as two sets — but
+since the data centers were physically very close to each other, merging usually completed within a minute. So I made two instances and could finish pretraining about **1.9x** faster.
+
+---
+
+## 6. Problems and solutions during Apex-3 development, and notable points
+
+> [!NOTE]
+> Apex-3 is 7.3B parameters with 3.36B active MoE, 30 layers, and a target token count of ~2T.
+
+### Bottleneck 1. Storage
+
+As tokens grew to the Trillion scale, even the compressed .bin corpus alone — not the raw data — came to **5TB**, which couldn't even be stored on a typical home SSD.
+
+I rented a virtual machine on Azure to do the downloading and tokenizing, and solved it by using Google Drive's storage plan.
+
+> [!WARNING]
+> I felt that if the parameters go beyond 21B, 70B, or more, the bottleneck would inevitably become impossible for an individual to handle.
+
+### Notable Point 1. Emergent Abilities
+
+As described on the page above, humans still don't understand the principles of LLMs. We don't know "why" these outputs come out. The goal was to observe the related phenomena in order to study this more deeply.
+For this model, the goal is to observe the following 3 phenomena.
+
+#### Phenomenon 1. Induction head phase transition
+
+> [!NOTE]
+> Early in training, the ability to copy patterns within context suddenly appears over a short interval, and a small bend shows up in the loss curve
+
+Since it appears within the first few billion tokens, it should be observable.
+
+#### Phenomenon 2. Emergent abilities
+
+> [!NOTE]
+> Benchmark scores such as multi-step arithmetic shoot up at some point
+
+> [!TIP]
+> With discontinuous metrics like accuracy it looks like a sudden jump, but with continuous metrics most of it rises gradually — this counterargument is strong. Logging both metrics together lets you observe both
+
+#### Phenomenon 3. Grokking
+
+> [!NOTE]
+> Generalization suddenly happens long after the memorization stage. Originally discovered on small algorithmic datasets
+
+> [!TIP]
+> In 2025, there was research that found domain-specific grokking in 7B-class MoE pretraining through routing patterns, and since Apex-3 is also a 7B MoE, it was worth trying.
+
+---
+
 ## References
 
 | Source | Link |

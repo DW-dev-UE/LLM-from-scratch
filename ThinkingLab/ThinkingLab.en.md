@@ -127,7 +127,7 @@ I don't yet have anything concrete on how to actually test each threshold, so I'
 
 ## 2. Under limited resources, you shouldn't go multilingual
 
-Training a 7B-class model from scratch on a single H100 works out to roughly **6.6 years** (this varies a lot depending on assumed token count and GPU utilization). Current LLMs run at 1T-parameter scale or beyond, so limited resources have to be spent efficiently.
+Training a 7B-class model from scratch on a single H100 works out to roughly 6.6 years (this varies a lot depending on assumed token count and GPU utilization). Current LLMs run at 1T-parameter scale or beyond, so limited resources have to be spent efficiently.
 
 That means the model pretty much has to lean on an English-heavy corpus.
 
@@ -259,7 +259,7 @@ since the data centers were physically very close to each other, merging usually
 ## 6. Problems and solutions during Apex-3 development, and notable points
 
 > [!NOTE]
-> Apex-3 is 7.3B parameters with 3.36B active MoE, 30 layers, and a target token count of ~2T.
+> Apex-3 is 21B parameters with 3.36B active MoE, 30 layers, and a target token count of ~2T.
 
 ### Bottleneck 1. Storage
 
@@ -270,30 +270,65 @@ I rented a virtual machine on Azure to do the downloading and tokenizing, and so
 > [!WARNING]
 > I felt that if the parameters go beyond 21B, 70B, or more, the bottleneck would inevitably become impossible for an individual to handle.
 
-### Notable Point 1. Emergent Abilities
+### Bottleneck 2. Still not enough compute
+
+The target token count is 2T, but realistically that's impossible. This time too, I plan to proceed with two GH200 96GB GPUs using the DiLoCo architecture.
+
+In Apex-3, I used SuperBPE to secure ~27%+ efficiency even with the same compute.
+
+> [!TIP]
+> SuperBPE is not a token unit but ""
+
+However, the 21B parameters caused a severe MFU drop, to 21%. Naturally, that's because 21B parameters can't fit inside a single GPU's VRAM.
+
+This was due to BF16, full recomputation, and CPU offload, and if I couldn't resolve it, pretraining on just 0.5T tokens would take 2.6 years.
+
+By optimizing the architecture to the extreme, I raised it to 49.2% on the benchmark and 47.4% in actual training.
+
+1. Per-layer torch.compile, MoE staticization [ MFU 27.9% ] [ Compiled kernels bundled per layer; made the dispatch buffer a fixed size to eliminate CPU waiting ]
+
+2. CPU-side gradient accumulation [ MFU 33.2% ] [ For each micro-batch, added the gradient on the CPU instead of the GPU ]
+
+3. FlashAttention 3 [ MFU 34.4% ] [ Hopper only; FA-4 is for the Blackwell architecture ]
+
+4. C++ addition, experts 64x1280 [ MFU 37.3% ] [ Replaced the CPU addition that fluctuated from run to run. Made the experts coarser to raise GEMM efficiency ]
+
+5. Triton output-layer CE [ MFU 42.2% ] [ Changed how loss is computed for the output layer with a vocabulary of 204,800 to a fused kernel ]
+
+6. Graph break removal and keeping the gate up output on the CPU [ MFU 45.7% ] [ Kept the activations to be recomputed on the CPU; fixed the places where the compiled graph was breaking ]
+
+7. FP8 tensorwise [ MFU 49.2% ] [ Computed dense matmuls in FP8; with only 1 scale per tensor, the quantization cost was low. ]
+
+Because DiLoCo was used, the weights were averaged every 6.5 hours, so the MFU dropped to the 47.4% range.
+I raised the total throughput to about 4.5x ( 43.4K tok/s ).
+
+An additional method would be raising the power limit to 900W or 1,000W, but the power limit was 700W, so I couldn't raise it any further.
+
+It was truly a time when I put all my attention into optimization. While analyzing even the Hopper chip's board architecture, I conceived all sorts of strange methods — using the L2 Cache in the middle in a different way, starting with whether there's a way to quantize tokens through matrix/operation products, or a way to use only one of forward/backward propagation, or a way to compute only some of the weights and just guess the rest, and so on.
+
+But even so, the upper limit would be 1T tokens, and a Blackwell chip would be needed.
+
+### Additional observation goals
 
 As described on the page above, humans still don't understand the principles of LLMs. We don't know "why" these outputs come out. The goal was to observe the related phenomena in order to study this more deeply.
 For this model, the goal is to observe the following 3 phenomena.
 
 #### Phenomenon 1. Induction head phase transition
 
-> [!NOTE]
-> Early in training, the ability to copy patterns within context suddenly appears over a short interval, and a small bend shows up in the loss curve
+Early in training, the ability to copy patterns within context suddenly appears over a short interval, and a small bend shows up in the loss curve
 
 Since it appears within the first few billion tokens, it should be observable.
 
 #### Phenomenon 2. Emergent abilities
 
-> [!NOTE]
-> Benchmark scores such as multi-step arithmetic shoot up at some point
+Benchmark scores such as multi-step arithmetic shoot up at some point
 
 > [!TIP]
 > With discontinuous metrics like accuracy it looks like a sudden jump, but with continuous metrics most of it rises gradually — this counterargument is strong. Logging both metrics together lets you observe both
 
 #### Phenomenon 3. Grokking
 
-> [!NOTE]
-> Generalization suddenly happens long after the memorization stage. Originally discovered on small algorithmic datasets
+Generalization suddenly happens long after the memorization stage. Originally discovered on small algorithmic datasets
 
 > [!TIP]
 > In 2025, there was research that found domain-specific grokking in 7B-class MoE pretraining through routing patterns, and since Apex-3 is also a 7B MoE, it was worth trying.

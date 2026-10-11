@@ -1,0 +1,15 @@
+config,category,ms,source
+BF16 + Triton CE,Dense GEMM,1185,RUNLOG GEMM efficiency analysis (corrected trace classification)
+BF16 + Triton CE,Grouped GEMM (experts),686,RUNLOG GEMM efficiency analysis
+BF16 + Triton CE,Inductor fused kernels,285,RUNLOG GEMM efficiency analysis
+BF16 + Triton CE,Attention (FA3),190,RUNLOG GEMM efficiency analysis
+BF16 + Triton CE,CuTe copy,60,RUNLOG GEMM efficiency analysis
+BF16 + Triton CE,Other,61,elementwise 17 + CE 21 + reduce/index/sort 22
+BF16 + Triton CE,GPU idle,51,RUNLOG MFU pause results
+FP8 row-wise linears,Dense GEMM,718,RUNLOG first FP8 pause (includes FP8 nvjet 433+31)
+FP8 row-wise linears,Grouped GEMM (experts),647,RUNLOG first FP8 pause
+FP8 row-wise linears,Inductor fused kernels,850,RUNLOG first FP8 pause (rowwise quantization +565)
+FP8 row-wise linears,Attention (FA3),182,RUNLOG first FP8 pause
+FP8 row-wise linears,CuTe copy,59,RUNLOG first FP8 pause
+FP8 row-wise linears,Other,61,remainder of the 2573 ms window
+FP8 row-wise linears,GPU idle,56,RUNLOG first FP8 pause

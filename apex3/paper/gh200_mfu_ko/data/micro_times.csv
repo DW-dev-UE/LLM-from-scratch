@@ -1,0 +1,7 @@
+config,kernel_ms,idle_ms,total_ms,mfu_pct,reserved_gib,note
+BF16 + Triton CE,2467,51,2501,42.24,88.15,baseline (includes 250-285 ms recompute)
+Storage v1 (all gate/up),2199,410,2615,40.44,93.12,allocator stalls increase idle time
+Storage v1 (routed experts only),2323,211,2559,41.32,93.15,
+Storage v2 + budget 0.1,,,2309,45.71,83.29,allocation fixed + no graph breaks
+FP8 tensor-wise + storage,,,2147,49.15,74.24,
+FP8 tensor-wise + full storage,,,2078,50.74,79.9,

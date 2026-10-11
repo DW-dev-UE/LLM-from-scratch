@@ -1,0 +1,14 @@
+stage,label,detail,kind,micro_tokens,micro_s,mfu_pct,reserved_gib,accum,source,runlog_section
+0,Baseline (BF16 + full recompute),"BF16, optimizer offloaded to CPU, full recompute, compiled elementwise only, MoE chunking off",system,65536,6.677,21.09,74.7,1,A bench.jsonl:5,benchmark C
+1,Per-block torch.compile,"+ --compile-blocks (whole block compiled, static MoE shapes)",system,65536,5.096,27.85,75.1,1,A bench.jsonl:16,improvement 2
+2,Compiler activation-memory budget,+ --recompute none --act-budget 0.1 (partitioner picks what to recompute),system,32768,2.499,28.4,85.5,1,A bench.jsonl:19,improvement 2
+3,CPU-side grad accumulation,"+ BF16 grads copied by copy engine, FP32 accumulation on CPU",system,32768,2.131,33.2,85.5,1,A bench.jsonl:21,improvement 3
+4,FlashAttention-3,+ FA3,system,32768,2.057,34.4,83.4,1,A bench.jsonl:26,improvement 4
+5,C++ accumulation kernel,OpenMP C++ BF16->FP32 accumulate (re-measured with --accum 8),system,32768,2.079,34.1,84.85,8,A bench_kern.jsonl:1,CPU add kernel
+6,Experts 128x640 -> 64x1280 (model),expert shape 128x640 top-8 -> 64x1280 top-4 (model change),model,32768,1.892,37.3,83.71,8,A bench_kern.jsonl:4,CPU add kernel
+6b,Re-measured at 48K microbatch,"same, 48K tokens, budget 0.05",system,49152,2.836,37.3,88.15,8,A bench_kern.jsonl:6,CPU add kernel
+7,Fused output-layer CE (Triton),+ Triton fused output-layer cross-entropy (chunk 4096),system,49152,2.501,42.24,88.15,8,A bench_mfu2_10071230.jsonl:3,MFU pause results
+8a,No graph breaks,"cu_seqlens_k cloned: graph breaks 24 -> 0 (alone: more recompute, less memory)",system,49152,2.569,41.2,71.1,8,A bench_fp8_10081759.jsonl:5,second pause
+8,Store FFN gate/up outputs in CPU memory,"+ FFN gate/up GEMM outputs MUST_SAVE + CPU stash (all), budget 0.1, BF16",system,49152,2.309,45.71,83.29,8,A bench_decide_10081829.jsonl:3,second pause
+9,FP8 tensor-wise linears,"+ torchao FP8 tensorwise (attn proj, shared expert, dense FFN), budget 0.15",precision,49152,2.147,49.15,74.24,8,B bench_plan_10090423.jsonl:2,instance B
+10,Also store FP8 GEMM outputs,+ _scaled_mm outputs marked MUST_SAVE (stash 56.4 GiB / 118 tensors),system,49152,2.078,50.74,79.9,8,B bench_plan_10101907.txt,FP8 stash extension

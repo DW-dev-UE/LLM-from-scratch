@@ -1,0 +1,8 @@
+name,detail,micro_tokens,mfu_fp8,mfu_bf16,bf16_baseline,source_fp8,source_bf16
+TE block scaling + FP8 weights,"full recompute, 32K",32768,13.6,20.0,BF16 full recompute 32K,A bench.jsonl:1,A bench.jsonl:3
+"TE FP8, non-expert linears","full recompute, 64K, BF16 weights",65536,21.2,21.1,BF16 same setting,A bench.jsonl:9,A bench.jsonl:5
+torchao row-wise linears,"no graph breaks, budget 0.05",49152,38.9,41.2,BF16 budget 0.05,A bench_fp8_10081759.jsonl:6,A bench_fp8_10081759.jsonl:5
+Row-wise + FP8 grouped experts,"no graph breaks, budget 0.05",49152,37.6,41.2,BF16 budget 0.05,A bench_fp8_10081759.jsonl:7,A bench_fp8_10081759.jsonl:5
+Row-wise + storage,budget 0.05,49152,40.7,44.9,BF16 + storage budget 0.05,A bench_fp8_10081759.jsonl:8,A bench_fp8_10081759.jsonl:10
+Tensor-wise linears,"no graph breaks, budget 0.05",49152,43.6,41.2,BF16 budget 0.05,A bench_decide_10081829.jsonl:4,A bench_fp8_10081759.jsonl:5
+Tensor-wise + storage (budget 0.15),"instance B, same day and code",49152,49.15,45.78,BF16 + storage budget 0.10 (setup before stage 9),B bench_plan_10090423.jsonl:2,B bench_plan_10090423.jsonl:1

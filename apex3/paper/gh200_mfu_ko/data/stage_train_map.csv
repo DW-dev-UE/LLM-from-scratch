@@ -1,0 +1,6 @@
+stage,tok_from_B,tok_to_B,note
+6b,0.0,1.999,main run 0-2B (BF16 + torch CE)
+7,2.0,2.999,2-3B (Triton CE)
+8,3.0,3.999,3-4B (stash + budget 0.1 + BF16)
+9,8.0,9.999,8-10B (FP8 tensorwise + per-worker batch 1.8-1.9M)
+10,10.0,99.0,10B+ (FP8 GEMM outputs stashed)

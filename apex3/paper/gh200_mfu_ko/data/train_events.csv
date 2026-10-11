@@ -1,0 +1,9 @@
+tok_B,hosts,label,short
+0.0,A,"Main run starts (BF16, budget 0.05)",BF16
+2.0,A,Triton CE,+Triton CE
+3.0,A,"Proportional bias, no graph breaks, gate/up stash (BF16)",+stash
+4.0,AB,FP8 tensorwise + 2-worker DiLoCo,+FP8/DiLoCo
+6.0,AB,Sequence aux loss 1e-4 -> 1e-3,aux loss ×10
+8.0,AB,Arithmetic probe added,+probe
+9.0,B,B paused 22 min for a benchmark,B pause
+10.0,AB,Stash FP8 GEMM outputs,+FP8 stash

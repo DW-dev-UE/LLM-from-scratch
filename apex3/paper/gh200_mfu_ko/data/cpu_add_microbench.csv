@@ -1,0 +1,8 @@
+method,seconds_21B_elements,threads,note,alt_seconds
+torch add_ (FP32 += BF16),1.12,62,another run: 1.55 s (unstable),1.55
+FP32 += FP32,0.92,62,,
+BF16 -> FP32 copy only,0.45,62,,
+Inductor-compiled kernel,0.8,62,,
+C++ OpenMP kernel,0.78,62,"16-bit shift BF16->FP32, GIL released, bit-identical to torch",
+C++ OpenMP kernel,0.76,48,,
+C++ OpenMP kernel,0.75,32,,

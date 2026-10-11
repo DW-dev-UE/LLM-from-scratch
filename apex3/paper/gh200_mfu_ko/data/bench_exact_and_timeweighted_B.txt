@@ -1,0 +1,12 @@
+=== bench_plan exact
+bench_plan_10090423.jsonl 1 bf16 rowwise mfu_at_batch=0.4577935959041442 {'act_offload_gib': 72.0, 'gemm_offload': 'hooks', 'gemm_offload_part': 'all', 'max_mem_alloc_gib': 76.511, 'max_mem_reserved_gib': 83.289, 'offloaded_gib': 56.383, 'offloaded_tensors': 118, 'kept_gib': 64.485, 'overflow_gib': 0.0, 'offload': True, 'offload_accum': 'cpu', 'offload_gpu_share': 0.0}
+bench_plan_10090423.jsonl 2 fp8_rowwise tensorwise mfu_at_batch=0.49154190774132783 {'act_offload_gib': 72.0, 'gemm_offload': 'hooks', 'gemm_offload_part': 'all', 'max_mem_alloc_gib': 67.783, 'max_mem_reserved_gib': 74.244, 'offloaded_gib': 40.914, 'offloaded_tensors': 87, 'kept_gib': 57.688, 'overflow_gib': 0.0, 'offload': True, 'offload_accum': 'cpu', 'offload_gpu_share': 0.0}
+bench_plan_10090423.jsonl 3 fp8_rowwise tensorwise mfu_at_batch=0.4579592763381753 {'act_offload_gib': 72.0, 'gemm_offload': 'hooks', 'gemm_offload_part': 'all', 'max_mem_alloc_gib': 61.174, 'max_mem_reserved_gib': 68.951, 'offloaded_gib': 40.914, 'offloaded_tensors': 87, 'kept_gib': 50.844, 'overflow_gib': 0.0, 'offload': True, 'offload_accum': 'cpu', 'offload_gpu_share': 0.0}
+bench_plan_10090423.jsonl 4 fp8_rowwise tensorwise mfu_at_batch=0.47030042286096335 {'act_offload_gib': 0.0, 'gemm_offload': 'none', 'gemm_offload_part': 'all', 'max_mem_alloc_gib': 76.349, 'max_mem_reserved_gib': 81.354, 'offload': True, 'offload_accum': 'cpu', 'offload_gpu_share': 0.0}
+bench_plan_10090423.jsonl 5 bf16 rowwise mfu_at_batch=0.45734451408919397 {'act_offload_gib': 72.0, 'gemm_offload': 'hooks', 'gemm_offload_part': 'all', 'max_mem_alloc_gib': 76.745, 'max_mem_reserved_gib': 83.523, 'offloaded_gib': 56.383, 'offloaded_tensors': 118, 'kept_gib': 64.719, 'overflow_gib': 0.0, 'offload': True, 'offload_accum': 'cpu', 'offload_gpu_share': 0.0}
+=== train.py mfu lines next9 vs next10 vs current
+/home/ubuntu/apex3 48fca535 3
+=== time-weighted MFU
+seg 4.01-5.99B lines=69 workers=2 time-weighted tok/s/gpu=21112 mfu=0.4606 (vs median line)
+seg 6.01-7.98B lines=61 workers=2 time-weighted tok/s/gpu=21398 mfu=0.4668 (vs median line)
+seg 8.01-8.40B lines=12 workers=2 time-weighted tok/s/gpu=21797 mfu=0.4755 (vs median line)

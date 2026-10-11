@@ -1,0 +1,11 @@
+key,value,source
+GPU HBM3 usable,94.5 GiB,RUNLOG server
+Grace LPDDR5X (NUMA 0),431 GiB,RUNLOG server
+CPU cores visible to VM,64,RUNLOG server
+NVLink-C2C (spec; both directions),900 GB/s,NVIDIA GH200 datasheet
+NVLink-C2C measured CPU->GPU,375 GB/s,schieffer2024grace
+NVLink-C2C measured GPU->CPU,297 GB/s,schieffer2024grace
+GPU power limit (enforced),700 W,nvidia-smi
+BF16 dense peak (MFU denominator),989 TFLOPS,H100 SXM datasheet
+Dense BF16 GEMM at 700 W (measured),640-665 TFLOPS,RUNLOG GEMM efficiency analysis
+Grouped GEMM at 700 W (measured mean),599 TFLOPS,RUNLOG GEMM efficiency analysis

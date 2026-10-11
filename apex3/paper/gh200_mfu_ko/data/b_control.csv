@@ -1,0 +1,11 @@
+label,series,precision,stash,budget,code,micro_s,mfu_pct,reserved_gib,stash_gib,stash_tensors,source
+BF16 + stash,BF16 + stash,bf16,all,0.10,old,2.308,45.78,83.29,56.383,118,B bench_plan_10090423.jsonl:1
+BF16 + stash,BF16 + stash,bf16,all,0.15,old,2.310,45.73,83.52,,,B bench_plan_10090423.jsonl:5
+FP8 tw + stash,FP8 tw + partial stash (old code),fp8_tw,all,0.10,old,2.307,45.80,68.95,,,B bench_plan_10090423.jsonl:3
+FP8 tw + stash,FP8 tw + partial stash (old code),fp8_tw,all,0.15,old,2.147,49.15,74.24,40.914,87,B bench_plan_10090423.jsonl:2
+FP8 tw no stash,FP8 tw (no stash),fp8_tw,none,0.15,old,2.245,47.03,81.35,0,0,B bench_plan_10090423.jsonl:4
+FP8 tw + stash (re-measured 10-10),FP8 tw + partial stash (old code),fp8_tw,all,0.15,old,2.143,49.23,74.2,40.91,87,B bench_plan_10101903.txt
+FP8 tw + full stash,FP8 tw + full stash (fixed code),fp8_tw,all_ext,0.10,next11,,50.78,80.2,56.38,118,B bench_plan_10101907.txt
+FP8 tw + full stash,FP8 tw + full stash (fixed code),fp8_tw,all_ext,0.15,next11,2.078,50.74,79.9,56.38,118,B bench_plan_10101907.txt
+FP8 tw + full stash,FP8 tw + full stash (fixed code),fp8_tw,all_ext,0.20,next11,,50.77,80.1,56.38,118,B bench_plan_10101907.txt
+BF16 + stash (fixed code),BF16 + stash,bf16,all,0.10,next11,,45.84,83.3,,,B bench_plan_10101907.txt

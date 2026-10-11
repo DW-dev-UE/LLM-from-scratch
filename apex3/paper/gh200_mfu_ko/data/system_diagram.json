@@ -1,0 +1,39 @@
+{
+  "_status": "final (code-verified 2026-10-11). Short English labels for the figure; details live in the LaTeX caption.",
+  "gpu": {
+    "title": "GPU · Hopper · 96 GB HBM3",
+    "weights": ["BF16 working weights", "39.1 GiB"],
+    "activations": ["Activations + workspace", "≈36 GiB"],
+    "compute_header": "Compute (all on GPU)",
+    "compute": [
+      "Per-block torch.compile",
+      "FlashAttention-3 (varlen, sliding window)",
+      "Routed experts: BF16 grouped GEMM",
+      "FP8 tensor-wise: attn. proj., shared expert, dense FFN",
+      "Fused output-layer CE (Triton)",
+      "Optimizer kernels: clip, Muon, AdamW"
+    ]
+  },
+  "cpu": {
+    "title": "CPU · Grace · 480 GB LPDDR5X (431 GiB usable)",
+    "state_group": "FP32 state, pinned + mapped (238.5 GiB)",
+    "state": [
+      ["Master weights", "78.2 GiB"],
+      ["Gradient accumulator", "78.2 GiB"],
+      ["Muon momentum", "74.3 GiB"],
+      ["AdamW m, v", "7.8 GiB"]
+    ],
+    "staging": ["BF16 staging buffer", "39.1 GiB"],
+    "compute": "C++ OpenMP accumulate (BF16 → FP32)",
+    "stash": ["gate/up CPU storage region", "72 GiB"]
+  },
+  "link": ["NVLink-C2C", "450 GB/s per direction"],
+  "arrows": [
+    {"id": "1", "from": "gpu.compute", "to": "cpu.staging", "both": false, "label": "BF16 grads (each microbatch)"},
+    {"id": "2", "from": "cpu.staging", "to": "cpu.state", "both": false, "label": "accumulate"},
+    {"id": "3", "from": "gpu.activations", "to": "cpu.stash", "both": true, "label": "gate/up outputs: store fwd / fetch bwd"},
+    {"id": "4", "from": "gpu.weights", "to": "cpu.state", "both": true, "label": "optimizer step on mapped state"},
+    {"id": "5", "from": "cpu", "to": "peer", "both": true, "label": "DiLoCo sync (every 1B tokens)"}
+  ],
+  "peer": "Peer GH200 (DiLoCo worker)"
+}

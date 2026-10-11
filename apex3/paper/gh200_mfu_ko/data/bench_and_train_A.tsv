@@ -1,0 +1,103 @@
+file	row	n_layers	precision	fp8_recipe	experts	attn	recompute	compile	micro_bs	seq_len	accum	act_budget	gemm_offload	gemm_offload_part	act_offload_gib	ce_impl	ce_chunk	offload_accum	step_s_median	optimizer_s_median	micro_s_median	mfu_vs_bf16_peak	mfu_at_batch	tokens_per_s_at_batch	gflop_per_token	active_params	max_mem_alloc_gib	max_mem_reserved_gib
+bench.jsonl	1	30	fp8_block	None	te	fa2	full	False	4	8192	1	None	None	None	None	None	None	None	13.77	8.527	5.246	0.05198	0.1356	6205	21.61	3364945920	57.51	58.89
+bench.jsonl	2	30	fp8_block	None	te	fa2	full	False	8	8192	1	None	None	None	None	None	None	None	25.25	13.47	11.78	0.0567	0.1204	5513	21.61	3364945920	67.22	68.69
+bench.jsonl	3	30	bf16	None	grouped_mm	fa2	full	True	4	8192	1	None	None	None	None	None	None	None	9.147	5.59	3.557	0.07826	0.2	9153	21.61	3364945920	55.17	57.68
+bench.jsonl	4	30	bf16	None	grouped_mm	fa2	full	True	8	8192	1	None	None	None	None	None	None	None	23.13	15.47	7.657	0.0619	0.1839	8420	21.61	3364945920	62.25	64.89
+bench.jsonl	5	30	bf16	None	grouped_mm	fa2	full	True	8	8192	1	None	None	None	None	None	None	None	20.13	13.46	6.677	0.07111	0.2109	9656	21.61	3364945920	71.11	74.67
+bench.jsonl	6	30	bf16	None	grouped_mm	fa2	none	True	1	8192	1	None	None	None	None	None	None	None	6.898	5.572	1.326	0.02594	0.1344	6152	21.61	3364945920	64	64.47
+bench.jsonl	7	30	bf16	None	grouped_mm	fa2	none	True	2	8192	1	None	None	None	None	None	None	None	25.4	23.2	2.198	0.01409	0.1594	7297	21.61	3364945920	82.74	85.17
+bench.jsonl	8	30	fp8_block	None	grouped_mm	fa2	full	True	8	8192	1	None	None	None	None	None	None	None	28.58	17.98	10.6	0.05009	0.1333	6100	21.61	3364945920	71.47	75.03
+bench.jsonl	9	30	fp8_block	None	grouped_mm	fa2	full	True	8	8192	1	None	None	None	None	None	None	None	34.79	28.28	6.51	0.04115	0.2124	9721	21.61	3364945920	71.5	75.57
+bench.jsonl	10	30	bf16	None	grouped_mm	fa2	full	True	4	8192	1	None	None	None	None	None	None	None	3.213	0.002896	None	0.2228	None	None	21.61	3364945920	87.93	92.61
+bench.jsonl	11	30	bf16	None	grouped_mm	fa2	full	True	4	8192	1	None	None	None	None	None	None	None	9.03	5.436	3.593	0.07928	0.198	9063	21.61	3364945920	55.17	57.29
+bench.jsonl	12	30	bf16	None	grouped_mm	fa2	none	True	1	8192	1	None	None	None	130	None	None	None	6.719	5.456	1.263	0.02663	0.141	6455	21.61	3364945920	47.83	83.99
+bench.jsonl	13	30	bf16	None	grouped_mm	fa2	none	True	2	8192	1	None	None	None	130	None	None	None	7.612	5.462	2.15	0.04702	0.1656	7580	21.61	3364945920	63.94	92.95
+bench.jsonl	14	30	bf16	None	grouped_mm	fa2	full	True	4	8192	1	None	None	None	0	None	None	None	8.922	5.447	3.475	0.08023	0.2047	9370	21.61	3364945920	55.19	61.63
+bench.jsonl	15	30	bf16	None	grouped_mm	fa2	full	False	4	8192	1	None	None	None	0	None	None	None	8.241	5.446	2.795	0.08686	0.2541	1.163e+04	21.61	3364945920	51.51	61.1
+bench.jsonl	16	30	bf16	None	grouped_mm	fa2	full	False	8	8192	1	None	None	None	0	None	None	None	10.55	5.45	5.096	0.1357	0.2785	1.275e+04	21.61	3364945920	63.71	75.14
+bench.jsonl	17	30	bf16	None	grouped_mm	fa2	full	False	12	8192	1	None	None	None	0	None	None	None	12.93	5.458	7.471	0.1661	0.2849	1.304e+04	21.61	3364945920	75.92	86.18
+bench.jsonl	18	30	bf16	None	grouped_mm	fa2	full	False	16	8192	1	None	None	None	0	None	None	None	15.76	5.458	10.3	0.1817	0.2756	1.262e+04	21.61	3364945920	88.12	93.09
+bench.jsonl	19	30	bf16	None	grouped_mm	fa2	none	False	4	8192	1	None	None	None	0	None	None	None	7.961	5.462	2.499	0.08992	0.2839	1.3e+04	21.61	3364945920	81.36	85.45
+bench.jsonl	20	30	bf16	None	grouped_mm	fa2	none	False	4	8192	1	None	None	None	0	None	None	None	7.927	5.462	2.466	0.0903	0.2877	1.317e+04	21.61	3364945920	91.28	92.81
+bench.jsonl	21	30	bf16	None	grouped_mm	fa2	none	False	4	8192	1	None	None	None	0	None	None	None	7.605	5.474	2.131	0.09412	0.3323	1.521e+04	21.61	3364945920	81.36	85.45
+bench.jsonl	22	30	bf16	None	grouped_mm	fa2	full	False	12	8192	1	None	None	None	0	None	None	None	12.66	5.475	7.181	0.1697	0.2963	1.356e+04	21.61	3364945920	75.92	86.63
+bench.jsonl	23	30	bf16	None	grouped_mm	fa2	none	False	4	8192	1	None	None	None	0	None	None	None	7.568	5.477	2.091	0.09459	0.3387	1.551e+04	21.61	3364945920	90.43	92.76
+bench.jsonl	24	30	bf16	None	grouped_mm	fa2	none	False	5	8192	1	None	None	None	0	None	None	None	8.14	5.48	2.659	0.1099	0.3329	1.524e+04	21.61	3364945920	90.39	93.11
+bench.jsonl	25	30	bf16	None	grouped_mm	fa2	none	False	6	8192	1	None	None	None	0	None	None	None	8.707	5.482	3.225	0.1233	0.3295	1.509e+04	21.61	3364945920	86.23	93.03
+bench.jsonl	26	30	bf16	None	grouped_mm	fa3	none	False	4	8192	1	None	None	None	0	None	None	None	7.545	5.488	2.057	0.09488	0.3442	1.576e+04	21.61	3364945920	81.36	83.38
+bench.jsonl	27	30	bf16	None	grouped_mm	fa2	none	False	4	8192	1	None	None	None	0	None	None	None	7.625	5.49	2.135	0.09388	0.3318	1.519e+04	21.61	3364945920	81.36	85.45
+bench_decide_10081829.jsonl	1	30	bf16	rowwise	grouped_mm	fa3	none	False	6	8192	8	0.1	none	all	0	triton	4096	cpu	26.26	5.953	2.539	0.3266	0.4164	1.909e+04	21.58	3360194560	69.79	76.18
+bench_decide_10081829.jsonl	2	30	bf16	rowwise	grouped_mm	fa3	none	False	6	8192	8	0.15	none	all	0	triton	4096	cpu	25.87	5.956	2.49	0.3316	0.4245	1.946e+04	21.58	3360194560	81.78	85.65
+bench_decide_10081829.jsonl	3	30	bf16	rowwise	grouped_mm	fa3	none	False	6	8192	8	0.1	hooks	all	72	triton	4096	cpu	24.44	5.963	2.309	0.351	0.4571	2.095e+04	21.58	3360194560	76.51	83.29
+bench_decide_10081829.jsonl	4	30	fp8_rowwise	tensorwise	grouped_mm	fa3	none	False	6	8192	8	0.05	none	all	0	triton	4096	cpu	25.37	5.965	2.425	0.3382	0.4356	1.997e+04	21.58	3360194560	61.68	67.39
+bench_fp8_10081733.jsonl	1	4	bf16	None	grouped_mm	fa3	none	False	6	8192	1	0.05	none	all	0	triton	4096	None	0.5454	0.0009	None	0.5048	None	None	5.539	902266880	18.21	19.97
+bench_fp8_10081733.jsonl	2	4	fp8_rowwise	None	grouped_mm	fa3	none	False	6	8192	1	0.05	none	all	0	triton	4096	None	0.5455	0.001024	None	0.5046	None	None	5.539	902266880	20.55	23.04
+bench_fp8_10081733.jsonl	3	4	fp8_rowwise	None	fp8_grouped	fa3	none	False	6	8192	1	0.05	none	all	0	triton	4096	None	0.5586	0.0009384	None	0.4928	None	None	5.539	902266880	20.49	24.29
+bench_fp8_10081733.jsonl	4	4	fp8_rowwise	None	fp8_grouped	fa3	none	False	6	8192	1	0.05	none	all	0	triton	4096	None	0.5438	0.0009396	None	0.5062	None	None	5.539	902266880	20.08	23.51
+bench_fp8_10081733.jsonl	5	30	bf16	None	grouped_mm	fa3	none	False	6	8192	8	0.05	none	all	0	triton	4096	cpu	25.92	5.905	2.501	0.331	0.4226	1.937e+04	21.58	3360194560	83.51	88.15
+bench_fp8_10081733.jsonl	6	30	fp8_rowwise	None	grouped_mm	fa3	none	False	6	8192	8	0.05	none	all	0	triton	4096	cpu	26.38	5.913	2.558	0.3252	0.4134	1.895e+04	21.58	3360194560	88.22	91.59
+bench_fp8_10081733.jsonl	7	30	fp8_rowwise	None	fp8_grouped	fa3	none	False	6	8192	8	0.05	none	all	0	triton	4096	cpu	27.18	5.918	2.658	0.3156	0.398	1.824e+04	21.58	3360194560	88.29	91.29
+bench_fp8_10081733.jsonl	8	30	bf16	None	grouped_mm	fa3	none	False	6	8192	8	0.05	hooks	experts	72	triton	4096	cpu	25.07	5.929	2.392	0.3422	0.4415	2.024e+04	21.58	3360194560	88.84	93.13
+bench_fp8_10081733.jsonl	9	30	bf16	None	grouped_mm	fa3	none	False	6	8192	8	0.05	hooks	all	72	triton	4096	cpu	24.37	5.931	2.306	0.3519	0.4579	2.099e+04	21.58	3360194560	90.2	93.13
+bench_fp8_10081733.jsonl	10	30	fp8_rowwise	None	grouped_mm	fa3	none	False	6	8192	8	0.05	none	all	0	triton	4096	cpu	27.96	7.379	2.573	0.3068	0.4095	1.877e+04	21.58	3360194560	88.22	91.59
+bench_fp8_10081759.jsonl	1	4	bf16	rowwise	grouped_mm	fa3	none	False	6	8192	1	0.05	none	all	0	triton	4096	None	0.5508	0.0009217	None	0.4998	None	None	5.539	902266880	18.55	20.71
+bench_fp8_10081759.jsonl	2	4	fp8_rowwise	rowwise	grouped_mm	fa3	none	False	6	8192	1	0.05	none	all	0	triton	4096	None	0.5721	0.0009494	None	0.4812	None	None	5.539	902266880	24.33	25.71
+bench_fp8_10081759.jsonl	3	4	fp8_rowwise	rowwise	fp8_grouped	fa3	none	False	6	8192	1	0.05	none	all	0	triton	4096	None	0.5811	0.0009502	None	0.4738	None	None	5.539	902266880	24.27	26.12
+bench_fp8_10081759.jsonl	4	4	fp8_rowwise	rowwise	fp8_grouped	fa3	none	False	6	8192	1	0.05	none	all	0	triton	4096	None	0.5504	0.0009372	None	0.5002	None	None	5.539	902266880	20.13	22.22
+bench_fp8_10081759.jsonl	5	30	bf16	rowwise	grouped_mm	fa3	none	False	6	8192	8	0.05	none	all	0	triton	4096	cpu	26.47	5.919	2.569	0.3241	0.4116	1.887e+04	21.58	3360194560	62.37	71.1
+bench_fp8_10081759.jsonl	6	30	fp8_rowwise	rowwise	grouped_mm	fa3	none	False	6	8192	8	0.05	none	all	0	triton	4096	cpu	27.72	5.931	2.724	0.3095	0.3885	1.781e+04	21.58	3360194560	64.33	70.44
+bench_fp8_10081759.jsonl	7	30	fp8_rowwise	rowwise	fp8_grouped	fa3	none	False	6	8192	8	0.05	none	all	0	triton	4096	cpu	28.47	5.934	2.817	0.3013	0.3758	1.722e+04	21.58	3360194560	64.76	70.03
+bench_fp8_10081759.jsonl	8	30	fp8_rowwise	rowwise	grouped_mm	fa3	none	False	6	8192	8	0.05	hooks	all	72	triton	4096	cpu	26.71	5.936	2.597	0.3211	0.4072	1.866e+04	21.58	3360194560	69.04	74.24
+bench_fp8_10081759.jsonl	9	30	bf16	rowwise	grouped_mm	fa3	none	False	6	8192	8	0.05	hooks	experts	72	triton	4096	cpu	25.54	5.941	2.45	0.3359	0.4313	1.977e+04	21.58	3360194560	67.7	75.42
+bench_fp8_10081759.jsonl	10	30	bf16	rowwise	grouped_mm	fa3	none	False	6	8192	8	0.05	hooks	all	72	triton	4096	cpu	24.78	5.944	2.354	0.3462	0.4486	2.056e+04	21.58	3360194560	68.63	75.51
+bench_fp8_10081759.jsonl	11	30	fp8_rowwise	rowwise	grouped_mm	fa3	none	False	6	8192	8	0.05	none	all	0	triton	4096	cpu	29.28	7.402	2.735	0.293	0.3856	1.768e+04	21.58	3360194560	64.33	70.44
+bench_gemm_10080612.jsonl	1	30	bf16	None	grouped_mm	fa3	none	False	6	8192	8	0.05	none	None	0	triton	4096	cpu	25.96	5.953	2.501	0.3305	0.4226	1.937e+04	21.58	3360194560	83.51	88.15
+bench_gemm_10080612.jsonl	2	30	bf16	None	grouped_mm	fa3	none	False	6	8192	8	0.05	hooks	None	72	triton	4096	cpu	26.88	5.962	2.615	0.3191	0.4044	1.854e+04	21.58	3360194560	86.5	93.12
+bench_gemm_10081622.jsonl	1	30	bf16	None	grouped_mm	fa3	none	False	6	8192	8	0.05	none	all	0	triton	4096	cpu	25.9	5.901	2.5	0.3312	0.4228	1.938e+04	21.58	3360194560	83.51	88.15
+bench_gemm_10081622.jsonl	2	30	bf16	None	grouped_mm	fa3	none	False	6	8192	8	0.03	hooks	all	72	triton	4096	cpu	26.64	5.906	2.591	0.3221	0.4081	1.871e+04	21.58	3360194560	86.44	93.13
+bench_gemm_10081622.jsonl	3	30	bf16	None	grouped_mm	fa3	none	False	6	8192	8	0.05	hooks	experts	72	triton	4096	cpu	26.38	5.91	2.559	0.3252	0.4132	1.894e+04	21.58	3360194560	85.13	93.15
+bench_gemm_10081622.jsonl	4	30	bf16	None	grouped_mm	fa3	none	False	6	8192	8	0.03	hooks	experts	72	triton	4096	cpu	26.42	5.919	2.563	0.3247	0.4126	1.891e+04	21.58	3360194560	85.07	93.13
+bench_gil.jsonl	1	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	None	22.87	6.187	2.085	0.2504	0.3391	1.552e+04	21.61	3364945920	81.37	86.49
+bench_gil.jsonl	2	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	None	22.85	6.15	2.087	0.2507	0.3389	1.551e+04	21.61	3364945920	81.37	83.39
+bench_gil.jsonl	3	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	None	28.62	7.734	2.611	0.2001	0.2709	1.24e+04	21.61	3364945920	81.37	83.39
+bench_gil.jsonl	4	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	None	28.41	7.734	2.585	0.2015	0.2736	1.252e+04	21.61	3364945920	81.37	83.39
+bench_gil.jsonl	5	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	None	22.8	6.102	2.087	0.2512	0.339	1.552e+04	21.61	3364945920	81.37	85.87
+bench_gil.jsonl	6	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	None	23.8	6.976	2.104	0.2406	0.3357	1.537e+04	21.61	3364945920	81.37	83.39
+bench_gil.jsonl	7	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	None	22.8	6.118	2.085	0.2512	0.3393	1.553e+04	21.61	3364945920	81.37	85.67
+bench_gil.jsonl	8	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	None	27.75	7.45	2.537	0.2064	0.2788	1.276e+04	21.61	3364945920	81.37	83.39
+bench_gil.jsonl	9	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	None	22.82	6.159	2.083	0.2509	0.3396	1.554e+04	21.61	3364945920	81.37	85.91
+bench_gil.jsonl	10	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	None	29.2	7.818	2.673	0.1961	0.2647	1.212e+04	21.61	3364945920	81.37	84.33
+bench_gil.jsonl	11	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	None	22.89	6.218	2.084	0.2502	0.3394	1.553e+04	21.61	3364945920	81.37	83.39
+bench_kern.jsonl	1	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	cpu	22.12	5.489	2.079	0.2589	0.3406	1.559e+04	21.61	3364945920	81.37	84.85
+bench_kern.jsonl	2	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	cpu	22.12	5.489	2.079	0.2589	0.3406	1.559e+04	21.61	3364945920	81.37	83.39
+bench_kern.jsonl	3	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	cpu	21.12	5.978	1.893	0.2708	0.3728	1.709e+04	21.58	3360194560	81.12	83.71
+bench_kern.jsonl	4	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	cpu	21.11	5.975	1.892	0.2709	0.3729	1.709e+04	21.58	3360194560	81.12	83.71
+bench_kern.jsonl	5	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	cpu	21.96	7.065	1.861	0.2603	0.378	1.734e+04	21.56	3357818880	71.94	73.94
+bench_kern.jsonl	6	30	bf16	None	grouped_mm	fa3	none	False	6	8192	8	None	None	None	0	None	None	cpu	28.64	5.951	2.836	0.2995	0.3733	1.711e+04	21.58	3360194560	85.48	88.15
+bench_kern.jsonl	7	30	bf16	None	grouped_mm	fa3	none	False	6	8192	8	None	None	None	0	None	None	cpu	28.94	7.008	2.742	0.2962	0.3848	1.765e+04	21.56	3357818880	85.3	87.59
+bench_kern.jsonl	8	30	bf16	None	grouped_mm	fa3	none	False	6	8192	8	None	None	None	0	None	None	cpu	30.65	5.5	3.143	0.2803	0.338	1.547e+04	21.61	3364945920	86.18	92.28
+bench_mfu2_10071230.jsonl	1	30	bf16	None	grouped_mm	fa3	none	False	6	8192	8	None	None	None	0	torch	1024	cpu	28.68	6.036	2.831	0.2991	0.3739	1.714e+04	21.58	3360194560	85.48	88.15
+bench_mfu2_10071230.jsonl	2	30	bf16	None	grouped_mm	fa3	none	False	6	8192	8	None	None	None	0	triton	2048	cpu	26.16	6.043	2.514	0.328	0.4203	1.927e+04	21.58	3360194560	83.51	88.15
+bench_mfu2_10071230.jsonl	3	30	bf16	None	grouped_mm	fa3	none	False	6	8192	8	None	None	None	0	triton	4096	cpu	26.06	6.048	2.501	0.3292	0.4224	1.936e+04	21.58	3360194560	83.51	88.15
+bench_mfu2_10071230.jsonl	4	4	bf16	None	grouped_mm	fa3	none	False	6	8192	1	None	None	None	0	triton	4096	None	0.5466	0.000866	None	0.5036	None	None	5.539	902266880	18.21	19.97
+bench_shape.jsonl	1	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	None	28.51	8.829	2.46	0.2009	0.2868	1.313e+04	21.61	3364945920	81.37	83.39
+bench_shape.jsonl	2	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	None	22.89	6.159	2.091	0.2502	0.3383	1.548e+04	21.61	3364945920	81.37	83.39
+bench_shape.jsonl	3	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	None	28.73	9.289	2.43	0.1991	0.2897	1.328e+04	21.58	3360194560	81.12	83.71
+bench_shape.jsonl	4	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	None	24.44	8.123	2.04	0.234	0.3449	1.581e+04	21.58	3360194560	81.12	83.71
+bench_shape.jsonl	5	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	None	29.1	9.214	2.486	0.1964	0.283	1.298e+04	21.56	3357818880	71.94	73.95
+bench_shape.jsonl	6	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	None	29.01	9.221	2.474	0.197	0.2845	1.305e+04	21.56	3357818880	71.94	73.94
+bench_split.jsonl	1	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	cpu	25.9	6.39	2.439	0.2211	0.2904	1.329e+04	21.61	3364945920	81.37	83.39
+bench_split.jsonl	2	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	cpu	26.79	5.645	2.643	0.2137	0.2685	1.229e+04	21.61	3364945920	81.37	84.33
+bench_split.jsonl	3	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	cpu	23.9	6.057	2.231	0.2393	0.3169	1.453e+04	21.58	3360194560	81.12	83.71
+bench_split.jsonl	4	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	cpu	25.79	6.161	2.454	0.2218	0.2884	1.322e+04	21.58	3360194560	81.12	83.71
+bench_split.jsonl	5	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	cpu	25.85	7.075	2.347	0.2211	0.3007	1.379e+04	21.56	3357818880	71.94	73.94
+bench_split.jsonl	6	30	bf16	None	grouped_mm	fa3	none	False	4	8192	8	None	None	None	0	None	None	cpu	27.19	6.983	2.526	0.2102	0.2797	1.283e+04	21.56	3357818880	71.94	73.94
+#SEGMENTS
+header	n	step_first	step_last	tok_first_B	tok_last_B	bs_last_M	tok_s_median	mfu_p10	mfu_median	mfu_p90	mfu_max	mem_median
+start	91	10	910	0.020	1.979	2.36	16744	0.365	0.365	0.366	0.366	85.5
+resumed from /ckpt/main/step_00000919: step 919, 2.00B tokens	41	920	1320	2.003	2.983	2.56	18895	0.412	0.412	0.413	0.413	83.5
+resumed from /ckpt/main/step_00001327: step 1327, 3.00B tokens	2	1330	1340	3.009	3.034	2.56	18871	0.408	0.411	0.415	0.415	83.5
+resumed from /ckpt/main/step_00001327: step 1327, 3.00B tokens	38	1330	1700	3.009	3.983	2.70	20552	0.448	0.448	0.449	0.449	76.5
+resumed from /ckpt/main/step_00001707: step 1707, 4.00B tokens	69	1710	2390	4.011	5.985	1.52	21344	0.464	0.466	0.468	0.469	67.8
+resumed from /ckpt/main/step_00002396: step 2396, 6.00B tokens	61	2400	3000	6.015	7.978	1.72	21606	0.470	0.471	0.474	0.474	67.8
+resumed from /ckpt/main/step_00003007: step 3007, 8.00B tokens	10	3010	3100	8.012	8.326	1.77	21710	0.471	0.474	0.475	0.475	67.8

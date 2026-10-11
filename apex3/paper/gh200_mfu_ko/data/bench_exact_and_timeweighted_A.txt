@@ -1,0 +1,16 @@
+=== bench_plan exact
+bench_decide_10081829.jsonl 1 bf16 rowwise mfu_at_batch=0.41637387652458735 {'act_offload_gib': 0.0, 'gemm_offload': 'none', 'gemm_offload_part': 'all', 'max_mem_alloc_gib': 69.787, 'max_mem_reserved_gib': 76.178, 'offload': True, 'offload_accum': 'cpu', 'offload_gpu_share': 0.0}
+bench_decide_10081829.jsonl 2 bf16 rowwise mfu_at_batch=0.42449407060788347 {'act_offload_gib': 0.0, 'gemm_offload': 'none', 'gemm_offload_part': 'all', 'max_mem_alloc_gib': 81.775, 'max_mem_reserved_gib': 85.65, 'offload': True, 'offload_accum': 'cpu', 'offload_gpu_share': 0.0}
+bench_decide_10081829.jsonl 3 bf16 rowwise mfu_at_batch=0.4571034289895334 {'act_offload_gib': 72.0, 'gemm_offload': 'hooks', 'gemm_offload_part': 'all', 'max_mem_alloc_gib': 76.511, 'max_mem_reserved_gib': 83.289, 'offloaded_gib': 56.383, 'offloaded_tensors': 118, 'kept_gib': 64.485, 'overflow_gib': 0.0, 'offload': True, 'offload_accum': 'cpu', 'offload_gpu_share': 0.0}
+bench_decide_10081829.jsonl 4 fp8_rowwise tensorwise mfu_at_batch=0.43559662419549705 {'act_offload_gib': 0.0, 'gemm_offload': 'none', 'gemm_offload_part': 'all', 'max_mem_alloc_gib': 61.678, 'max_mem_reserved_gib': 67.389, 'offload': True, 'offload_accum': 'cpu', 'offload_gpu_share': 0.0}
+=== train.py mfu lines next9 vs next10 vs current
+/ckpt/apex3_next9 9e2c82f4 3
+/ckpt/apex3_next10 48fca535 3
+/home/ubuntu/apex3 48fca535 3
+=== time-weighted MFU
+seg 0.02-1.98B lines=91 workers=1 time-weighted tok/s/gpu=16720 mfu=0.3648 (vs median line)
+seg 2.00-2.98B lines=41 workers=1 time-weighted tok/s/gpu=18898 mfu=0.4123 (vs median line)
+seg 3.01-3.98B lines=38 workers=1 time-weighted tok/s/gpu=20552 mfu=0.4484 (vs median line)
+seg 4.01-5.99B lines=69 workers=2 time-weighted tok/s/gpu=21060 mfu=0.4595 (vs median line)
+seg 6.01-7.98B lines=61 workers=2 time-weighted tok/s/gpu=21364 mfu=0.4661 (vs median line)
+seg 8.01-8.40B lines=12 workers=2 time-weighted tok/s/gpu=21711 mfu=0.4737 (vs median line)

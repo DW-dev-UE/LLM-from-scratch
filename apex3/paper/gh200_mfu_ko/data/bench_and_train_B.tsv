@@ -1,0 +1,11 @@
+file	row	n_layers	precision	fp8_recipe	experts	attn	recompute	compile	micro_bs	seq_len	accum	act_budget	gemm_offload	gemm_offload_part	act_offload_gib	ce_impl	ce_chunk	offload_accum	step_s_median	optimizer_s_median	micro_s_median	mfu_vs_bf16_peak	mfu_at_batch	tokens_per_s_at_batch	gflop_per_token	active_params	max_mem_alloc_gib	max_mem_reserved_gib
+bench_plan_10090423.jsonl	1	30	bf16	rowwise	grouped_mm	fa3	none	False	6	8192	8	0.1	hooks	all	72	triton	4096	cpu	24.13	5.672	2.308	0.3555	0.4578	2.098e+04	21.58	3360194560	76.51	83.29
+bench_plan_10090423.jsonl	2	30	fp8_rowwise	tensorwise	grouped_mm	fa3	none	False	6	8192	8	0.15	hooks	all	72	triton	4096	cpu	22.85	5.68	2.147	0.3754	0.4915	2.253e+04	21.58	3360194560	67.78	74.24
+bench_plan_10090423.jsonl	3	30	fp8_rowwise	tensorwise	grouped_mm	fa3	none	False	6	8192	8	0.1	hooks	all	72	triton	4096	cpu	24.14	5.689	2.307	0.3553	0.458	2.099e+04	21.58	3360194560	61.17	68.95
+bench_plan_10090423.jsonl	4	30	fp8_rowwise	tensorwise	grouped_mm	fa3	none	False	6	8192	8	0.15	none	all	0	triton	4096	cpu	23.65	5.689	2.245	0.3627	0.4703	2.156e+04	21.58	3360194560	76.35	81.35
+bench_plan_10090423.jsonl	5	30	bf16	rowwise	grouped_mm	fa3	none	False	6	8192	8	0.15	hooks	all	72	triton	4096	cpu	24.17	5.697	2.31	0.3549	0.4573	2.096e+04	21.58	3360194560	76.75	83.52
+#SEGMENTS
+header	n	step_first	step_last	tok_first_B	tok_last_B	bs_last_M	tok_s_median	mfu_p10	mfu_median	mfu_p90	mfu_max	mem_median
+resumed from /ckpt/main/step_00001707: step 1707, 4.00B tokens	69	1710	2390	4.011	5.985	1.52	21453	0.466	0.468	0.471	0.471	67.8
+resumed from /ckpt/main/step_00002396: step 2396, 6.00B tokens	61	2400	3000	6.015	7.978	1.72	21686	0.471	0.473	0.476	0.477	67.8
+resumed from /ckpt/main/step_00003007: step 3007, 8.00B tokens	10	3010	3100	8.012	8.326	1.77	21800	0.473	0.476	0.477	0.477	67.8

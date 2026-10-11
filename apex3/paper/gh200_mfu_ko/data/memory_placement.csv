@@ -1,0 +1,9 @@
+component,location,dtype,gib,note,provisional
+BF16 working weights,GPU,BF16,39.1,20.99B x 2 B (router in FP32),0
+Activations and workspace,GPU,BF16/FP32,36.2,max allocated 75.3 GiB minus weights,1
+FP32 master weights,CPU (pinned+mapped),FP32,78.2,20.99B x 4 B,0
+FP32 gradient accumulator,CPU (pinned+mapped),FP32,78.2,BF16 grads added every micro-batch,0
+Muon momentum,CPU (pinned+mapped),FP32,74.3,19.94B x 4 B,0
+AdamW m and v,CPU (pinned+mapped),FP32,7.8,1.05B x 8 B,0
+BF16 gradient staging,CPU (pinned),BF16,39.1,one slot per parameter,0
+gate/up stash arena,CPU (pinned),BF16,72.0,56.4 GiB used per 48K micro-batch (118 tensors),0
